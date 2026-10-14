@@ -707,11 +707,9 @@ async function doSearch(q) {
 }
 
 function shareUrl() {
+  // Linkul simplu al aplicației: fiecare om vede vremea din locul unde se află.
   const u = new URL(location.href.split("#")[0]);
   u.search = "";
-  u.searchParams.set("lat", state.loc.lat.toFixed(4));
-  u.searchParams.set("lon", state.loc.lon.toFixed(4));
-  if (state.loc.name && state.loc.name !== "Locația mea") u.searchParams.set("n", state.loc.name);
   return u.toString();
 }
 
@@ -748,7 +746,7 @@ function init() {
     const url = shareUrl();
     const fb = () => { const n = $("#shareFallback"); n.hidden = false; n.innerHTML = `Copiați linkul: <input readonly value="${esc(url)}" style="width:100%;margin-top:4px;padding:6px;border-radius:6px;border:1px solid var(--line);background:transparent;color:inherit">`; const i = n.querySelector("input"); i.focus(); i.select(); };
     try {
-      navigator.clipboard.writeText(url).then(() => toast("Link copiat. Trimiteți-l echipei."), fb);
+      navigator.clipboard.writeText(url).then(() => toast("Link copiat. Fiecare va vedea vremea de unde se află."), fb);
     } catch (e) { fb(); }
   };
   $("#btnSave").onclick = () => {
@@ -762,9 +760,11 @@ function init() {
 
   const p = new URLSearchParams(location.search);
   const lat = parseFloat(p.get("lat")), lon = parseFloat(p.get("lon"));
-  // Un link trimis de cineva deschide șantierul din link; altfel pornim mereu de la locația curentă.
-  if (isFinite(lat) && isFinite(lon)) { state.mode = "link"; setLoc({ lat, lon, name: p.get("n") || null }); }
-  else locateMe(true);
+  // Oricine deschide aplicația (și din link) vede vremea de unde se află.
+  // Coordonatele dintr-un link vechi servesc doar ca rezervă dacă telefonul nu dă locația.
+  if (isFinite(lat) && isFinite(lon)) store.set("ms.last", { lat, lon, name: p.get("n") || null });
+  if (location.search) history.replaceState(null, "", location.pathname);
+  locateMe(true);
 
   // Aplicația de pe ecranul principal rămâne deschisă în fundal: la revenire după 15 min
   // reîmprospătăm, iar dacă afișăm locația curentă o determinăm din nou.
