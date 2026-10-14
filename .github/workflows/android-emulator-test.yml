@@ -1,0 +1,76 @@
+# Pornește la cerere un emulator Android, instalează APK-ul de test, îi dă o locație
+# și face capturi de ecran în engleză și română. Capturile rămân ca artefact al rulării.
+name: Android emulator test
+
+on:
+  workflow_dispatch:
+    inputs:
+      lat:
+        description: Latitudine
+        default: "47.0105"
+      lon:
+        description: Longitudine
+        default: "28.8638"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      PKG: io.github.vitalicmalachiops.meteosantier
+    steps:
+      - name: Activează accelerarea pentru emulator
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Descarcă APK-ul de test
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release download android-test --repo ${{ github.repository }} --pattern meteo-santier.apk
+
+      - name: Pornește emulatorul și testează
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          script: |
+            mkdir -p shots
+            adb install -r meteo-santier.apk
+            adb shell pm grant $PKG android.permission.ACCESS_COARSE_LOCATION
+            adb shell pm grant $PKG android.permission.ACCESS_FINE_LOCATION
+            adb emu geo fix ${{ inputs.lon }} ${{ inputs.lat }}
+            sleep 3
+            adb emu geo fix ${{ inputs.lon }} ${{ inputs.lat }}
+            adb shell am start -n $PKG/.MainActivity
+            sleep 35
+            adb exec-out screencap -p > shots/01-en-start.png
+            adb shell input swipe 540 1800 540 600 400
+            sleep 2
+            adb exec-out screencap -p > shots/02-en-scroll.png
+            adb shell input swipe 540 1800 540 600 400
+            sleep 2
+            adb exec-out screencap -p > shots/03-en-scroll2.png
+            adb shell am force-stop $PKG
+            adb shell cmd locale set-app-locales $PKG --locales ro-RO || true
+            adb shell am start -n $PKG/.MainActivity
+            sleep 25
+            adb exec-out screencap -p > shots/04-ro-start.png
+            adb shell input swipe 540 1800 540 500 400
+            sleep 2
+            adb exec-out screencap -p > shots/05-ro-scroll.png
+            adb shell input keyevent KEYCODE_HOME
+            sleep 3
+            adb exec-out screencap -p > shots/06-home.png
+            adb logcat -d | grep -iE "Capacitor|chromium|Console|AndroidRuntime|Geolocation" | tail -200 > shots/logcat.txt || true
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: emulator-shots
+          path: shots/
