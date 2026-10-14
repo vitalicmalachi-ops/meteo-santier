@@ -1,0 +1,61 @@
+# Compilează aplicația Android la fiecare modificare și o pune la un link fix de descărcare:
+# https://github.com/vitalicmalachi-ops/meteo-santier/releases/download/android-test/meteo-santier.apk
+name: Android
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - index.html
+      - app.js
+      - i18n.js
+      - android-app/**
+      - .github/workflows/android.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: android-app/package-lock.json
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Copiază site-ul în aplicație
+        working-directory: android-app
+        run: |
+          npm ci --no-audit --no-fund
+          npm run sync
+
+      - name: Compilează APK-ul de test
+        working-directory: android-app/android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon --stacktrace
+
+      - name: Publică la linkul de descărcare
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp android-app/android/app/build/outputs/apk/debug/app-debug.apk meteo-santier.apk
+          gh release delete android-test --yes --cleanup-tag || true
+          gh release create android-test meteo-santier.apk \
+            --prerelease \
+            --title "Android, versiune de test 0.1.${{ github.run_number }}" \
+            --notes "Compilat automat din commit ${{ github.sha }}. Versiune de test, semnată cu cheia de dezvoltare; se instalează direct pe telefon, nu din Google Play."

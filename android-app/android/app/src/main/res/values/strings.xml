@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Site Weather</string>
+    <string name="title_activity_main">Site Weather</string>
+    <string name="package_name">io.github.vitalicmalachiops.meteosantier</string>
+    <string name="custom_url_scheme">io.github.vitalicmalachiops.meteosantier</string>
+</resources>

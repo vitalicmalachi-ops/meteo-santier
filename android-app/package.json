@@ -1,0 +1,19 @@
+{
+  "name": "meteo-santier-android",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Meteo Șantier / Site Weather — aplicația Android, construită din același cod ca site-ul",
+  "scripts": {
+    "copy-web": "node scripts/copy-web.mjs",
+    "sync": "npm run copy-web && npx cap sync android"
+  },
+  "dependencies": {
+    "@capacitor/android": "8.5.2",
+    "@capacitor/core": "8.5.2",
+    "@capacitor/geolocation": "8.2.2",
+    "@capacitor/share": "8.0.2"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "8.5.2"
+  }
+}

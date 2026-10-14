@@ -785,16 +785,34 @@ function locateMe(atStartup) {
       toast(t("toastNoLoc"));
     }
   };
-  if (!navigator.geolocation) { fail(); return; }
   $("#placeName").textContent = t("locating");
   $("#placeCoords").textContent = "";
-  navigator.geolocation.getCurrentPosition(async pos => {
+  getPosition().then(async pos => {
     const lat = pos.coords.latitude, lon = pos.coords.longitude;
     state.mode = "gps";
     setLoc({ lat, lon, name: null });
     const n = await reverseName(lat, lon);
     if (n && state.loc && state.loc.lat === lat) { state.loc.name = n; $("#placeName").textContent = n; store.set("ms.last", state.loc); }
-  }, fail, { enableHighAccuracy: false, timeout: 12000, maximumAge: 120000 });
+  }, fail);
+}
+
+/* În aplicația Android/iOS folosim pluginurile native; în browser, API-urile web. */
+const NATIVE = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+const plugin = name => (NATIVE && window.Capacitor.Plugins && window.Capacitor.Plugins[name]) || null;
+const PUBLIC_URL = "https://vitalicmalachi-ops.github.io/meteo-santier/";
+async function getPosition() {
+  const opts = { enableHighAccuracy: false, timeout: 12000, maximumAge: 120000 };
+  const G = plugin("Geolocation");
+  if (G) {
+    const perm = await G.checkPermissions().catch(() => null);
+    if (!perm || perm.coarseLocation !== "granted") {
+      const r = await G.requestPermissions({ permissions: ["coarseLocation"] }).catch(() => null);
+      if (!r || r.coarseLocation !== "granted") throw new Error("denied");
+    }
+    return G.getCurrentPosition(opts);
+  }
+  if (!navigator.geolocation) throw new Error("unsupported");
+  return new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej, opts));
 }
 
 let searchT = null;
@@ -820,7 +838,10 @@ async function doSearch(q) {
   } catch (e) { box.innerHTML = `<div class="note">${esc(t("searchFail"))}</div>`; }
 }
 
-function shareUrl() { const u = new URL(location.href.split("#")[0]); u.search = ""; return u.toString(); }
+function shareUrl() {
+  if (NATIVE) return PUBLIC_URL;
+  const u = new URL(location.href.split("#")[0]); u.search = ""; return u.toString();
+}
 
 function renderSaved() {
   const list = store.get("ms.saved", []);
@@ -852,6 +873,8 @@ function init() {
   $("#q").addEventListener("input", e => { clearTimeout(searchT); searchT = setTimeout(() => doSearch(e.target.value), 350); });
   $("#btnShare").onclick = () => {
     const url = shareUrl();
+    const S = plugin("Share");
+    if (S) { S.share({ title: t("brand"), text: t("tagline"), url }).catch(() => {}); return; }
     const fb = () => { const n = $("#shareFallback"); n.hidden = false; n.innerHTML = `${esc(t("copyManual"))} <input readonly value="${esc(url)}">`; const i = n.querySelector("input"); i.focus(); i.select(); };
     try { navigator.clipboard.writeText(url).then(() => toast(t("toastCopied")), fb); } catch (e) { fb(); }
   };
