@@ -92,6 +92,7 @@ const state = {
   limits: loadLimits(),
   loc: null, mode: null, results: [], ens: [], soil: [], status: {}, offset: 0, fetchedAt: 0,
   thr: Number(store.get("ms.thr", 1)) || 1, open: null, reqId: 0,
+  work: Object.assign({ start: "08:00", end: "18:00" }, store.get("ms.work", {})),
   works: (() => { const w = store.get("ms.works", null); return Array.isArray(w) ? w.filter(id => WORK_IDS.includes(id)) : WORK_IDS.slice(); })()
 };
 function locale() {
@@ -205,21 +206,58 @@ function aggregate(h) {
 }
 
 function aggregateEns(h) {
+  // { "YYYY-MM-DD": { hrs: [ore], m: [[valori orare] pentru fiecare membru] } }
   const keys = Object.keys(h).filter(k => /^precipitation(_member\d+)?$/.test(k));
-  const byDay = {};
+  const out = {};
   (h.time || []).forEach((tm, i) => {
     const d = tm.slice(0, 10), hr = +tm.slice(11, 13);
-    if (!byDay[d]) byDay[d] = { hrs: [], sums: keys.map(() => 0), cnt: keys.map(() => 0) };
-    const o = byDay[d]; o.hrs.push(hr);
-    keys.forEach((k, j) => { const v = h[k][i]; if (isNum(v)) { o.sums[j] += v; o.cnt[j]++; } });
+    const o = out[d] || (out[d] = { hrs: [], m: keys.map(() => []) });
+    o.hrs.push(hr);
+    keys.forEach((k, j) => { const v = h[k][i]; o.m[j].push(isNum(v) ? v : null); });
   });
-  const out = {};
-  for (const d in byDay) {
-    const o = byDay[d];
-    if (Math.min(...o.hrs) > 3 || Math.max(...o.hrs) < 21) continue;
-    out[d] = o.sums.filter((s, j) => o.cnt[j] >= 4);
-  }
   return out;
+}
+
+/* ---------- programul de lucru ---------- */
+function toMin(s) { const [h, m] = String(s).split(":").map(Number); return (h || 0) * 60 + (m || 0); }
+// Orele din program, ca sloturi de o oră; off = 1 pentru orele de după miezul nopții (ture de noapte).
+function workSlots() {
+  const s = toMin(state.work.start); let e = toMin(state.work.end);
+  if (e <= s) e += 1440;
+  const out = [];
+  for (let h = Math.floor(s / 60); h * 60 < e; h++) out.push({ off: Math.floor(h / 24), hr: h % 24 });
+  return out;
+}
+const workLabel = () => `${state.work.start}–${state.work.end}`;
+function winAgg(days, date, slots) {
+  const H = [];
+  slots.forEach(sl => {
+    const d = days[sl.off ? addDays(date, 1) : date]; if (!d) return;
+    const x = d.hours.find(y => y.hr === sl.hr); if (x) H.push(x);
+  });
+  const P = H.filter(x => isNum(x.p));
+  const ok = P.length >= Math.max(1, Math.ceil(slots.length / 4));
+  return {
+    ok, p: ok ? sumOf(P.map(x => x.p)) : null, s: ok ? (sumOf(H.map(x => x.s)) || 0) : null,
+    g: maxOf(H.map(x => x.g)), tmin: minOf(H.map(x => x.t)), tmax: maxOf(H.map(x => x.t)), rh: median(H.map(x => x.rh))
+  };
+}
+function ensWindow(date, slots, thr) {
+  const sums = [], need = Math.max(1, Math.ceil(slots.length / 4));
+  state.ens.forEach(e => {
+    const d0 = e.days[date], d1 = e.days[addDays(date, 1)];
+    if (!d0 || !d0.m) return;
+    d0.m.forEach((_, j) => {
+      let sum = 0, c = 0;
+      slots.forEach(sl => {
+        const D = sl.off ? d1 : d0; if (!D || !D.m || !D.m[j]) return;
+        const i = D.hrs.indexOf(sl.hr); if (i < 0) return;
+        const v = D.m[j][i]; if (isNum(v)) { sum += v; c++; }
+      });
+      if (c >= need) sums.push(sum);
+    });
+  });
+  return sums.length >= 20 ? { p: sums.filter(v => v >= thr).length / sums.length, n: sums.length } : null;
 }
 
 function aggregateSoil(h) {
@@ -240,26 +278,26 @@ function aggregateSoil(h) {
 
 /* ---------- consens pe o zi ---------- */
 function consensus(date) {
-  const thr = state.thr;
-  const rows = state.results.filter(r => r.days[date] && r.days[date].ok).map(r => Object.assign({ model: r.model }, r.days[date]));
-  const n = rows.length;
-  const kinds = rows.map(r => (isNum(r.snow) && r.snow >= 0.5) ? "s" : (r.precip >= thr ? "r" : ""));
+  const thr = state.thr, slots = workSlots();
+  const Wall = state.results.map(r => winAgg(r.days, date, slots));
+  const W = Wall.filter(w => w.ok);
+  const n = W.length;
+  const kinds = W.map(w => (isNum(w.s) && w.s >= 0.5) ? "s" : (w.p >= thr ? "r" : ""));
   const wet = kinds.filter(k => k).length;
   const snowy = kinds.filter(k => k === "s").length;
   const tRows = state.results.map(r => r.days[date]).filter(Boolean);
-  let ensProb = null, ensN = 0;
-  const members = [];
-  state.ens.forEach(e => { if (e.days[date]) members.push(...e.days[date]); });
-  if (members.length >= 20) { ensN = members.length; ensProb = members.filter(v => v >= thr).length / ensN; }
+  const ens = ensWindow(date, slots, thr);
   return {
     date, n, wet, snowy, kinds: kinds.slice().sort((a, b) => (b === "s") - (a === "s") || (b === "r") - (a === "r")),
     frac: n ? wet / n : 0, snowFrac: n ? snowy / n : 0,
+    // temperaturile zilei întregi: înghețul de noapte contează pentru beton și fațade
     tmin: median(tRows.map(r => r.tmin)), tmax: median(tRows.map(r => r.tmax)),
-    precipWet: median(rows.filter(r => r.precip >= thr).map(r => r.precip)),
-    snow: median(rows.filter(r => r.snow >= 0.5).map(r => r.snow)),
-    gust: median(tRows.map(r => r.gust)), wind: median(tRows.map(r => r.wind)),
+    wtmax: median(Wall.map(w => w.tmax)),
+    precipWet: median(W.filter(w => w.p >= thr).map(w => w.p)),
+    snow: median(W.filter(w => w.s >= 0.5).map(w => w.s)),
+    gust: median(Wall.map(w => w.g)), dayGust: median(tRows.map(r => r.gust)), wind: median(tRows.map(r => r.wind)),
     dir: circMean(tRows.map(r => r.dir)), sun: median(tRows.map(r => r.sun)),
-    rh: median(tRows.map(r => r.rh)),
+    rh: median(Wall.map(w => w.rh)),
     soil0: median(state.soil.map(s => s.days[date]?.s0)),
     soil6: median(state.soil.map(s => s.days[date]?.s6)),
     prevPrecip: median(state.results.map(r => { const p = r.days[addDays(date, -1)]; return p && p.ok ? p.precip : null; })),
@@ -267,7 +305,7 @@ function consensus(date) {
       const ds = [0, -1, -2].map(k => r.days[addDays(date, k)]);
       return ds.every(x => x && x.ok) ? ds.reduce((s, x) => s + x.precip, 0) : null;
     })),
-    ensProb, ensN
+    ensProb: ens ? ens.p : null, ensN: ens ? ens.n : 0
   };
 }
 
@@ -299,14 +337,15 @@ function judgeWorks(c) {
     [N(c.soil0) && c.soil0 < 0, "warn", t("r_soil0Frozen", { t: T(c.soil0) })],
     [f >= 0.3, "warn", pr]
   ], t("r_betonOk", { t: T(c.tmin) }));
+  const tw = N(c.wtmax) ? c.wtmax : c.tmax;   // maxima în orele de lucru
   pick("asfalt", [
-    [N(c.tmax) && c.tmax < L.asfalt.tmaxStop, "stop", t("r_highBelow", { t: T(c.tmax), lim: T(L.asfalt.tmaxStop) })],
+    [N(tw) && tw < L.asfalt.tmaxStop, "stop", t("r_highBelow", { t: T(tw), lim: T(L.asfalt.tmaxStop) })],
     [f >= 0.6, "stop", pr],
-    [N(c.tmax) && c.tmax < L.asfalt.tmaxOk, "warn", t("r_asfaltThick", { t: T(c.tmax), lim: T(L.asfalt.tmaxOk) })],
+    [N(tw) && tw < L.asfalt.tmaxOk, "warn", t("r_asfaltThick", { t: T(tw), lim: T(L.asfalt.tmaxOk) })],
     [N(c.soil0) && c.soil0 < 0, "warn", t("r_baseFrozen", { t: T(c.soil0) })],
     [N(c.tmin) && c.tmin < 0, "warn", t("r_frostColdMorning")],
     [f >= 0.25, "warn", pr]
-  ], t("r_asfaltOk", { t: T(c.tmax) }));
+  ], t("r_asfaltOk", { t: T(tw) }));
   pick("hidro", [
     [N(c.tmax) && c.tmax < 0, "stop", t("r_hardFrost", { t: T(c.tmax) })],
     [c.snowFrac >= 0.5, "stop", t("r_snow")],
@@ -348,25 +387,20 @@ const LEVEL_SYM = { ok: "✓", warn: "!", stop: "✕", na: "–" };
 const lvl = l => t("lvl_" + l);
 const activeWorks = () => WORK_IDS.filter(id => state.works.includes(id));
 
-/* ---------- blocuri de 3 ore ---------- */
-function blocks(date) {
+/* ---------- oră cu oră ---------- */
+function hourly(date) {
   const res = [];
-  for (let b = 0; b < 8; b++) {
-    const from = b * 3, to = from + 3;
+  for (let h = 0; h < 24; h++) {
     let n = 0, wet = 0, snow = 0; const temps = [], gusts = [];
     state.results.forEach(r => {
       const d = r.days[date]; if (!d) return;
-      const H = d.hours.filter(x => x.hr >= from && x.hr < to);
-      const p = H.filter(x => isNum(x.p));
-      if (!p.length) return;
+      const x = d.hours.find(y => y.hr === h); if (!x || !isNum(x.p)) return;
       n++;
-      const sum = p.reduce((s, x) => s + x.p, 0);
-      const sn = H.reduce((s, x) => s + (isNum(x.s) ? x.s : 0), 0);
-      if (sn >= 0.2) { wet++; snow++; } else if (sum >= 0.3) wet++;
-      const tt = H.map(x => x.t).filter(isNum); if (tt.length) temps.push(tt.reduce((s, v) => s + v, 0) / tt.length);
-      const gg = H.map(x => x.g).filter(isNum); if (gg.length) gusts.push(Math.max(...gg));
+      if (isNum(x.s) && x.s >= 0.1) { wet++; snow++; } else if (x.p >= 0.1) wet++;
+      if (isNum(x.t)) temps.push(x.t);
+      if (isNum(x.g)) gusts.push(x.g);
     });
-    res.push({ from, n, wet, snow, frac: n ? wet / n : 0, t: median(temps), g: median(gusts) });
+    res.push({ h, n, wet, snow, frac: n ? wet / n : 0, t: median(temps), g: median(gusts) });
   }
   return res;
 }
@@ -430,7 +464,7 @@ function coordQS(loc, pastDays = 0) {
 const near = (a, b) => a && b && Math.abs(a.lat - b.lat) < 0.02 && Math.abs(a.lon - b.lon) < 0.02;
 
 function fromCache(loc) {
-  const c = store.get("ms.cache", null);
+  const c = store.get("ms.cache2", null);
   if (!c || !near(c, loc) || Date.now() - c.ts > CACHE_MIN * 60000) return false;
   Object.assign(state, { results: c.results, ens: c.ens, soil: c.soil, status: c.status, offset: c.offset, fetchedAt: c.ts });
   state.results.forEach(r => { r.model = MODELS.find(m => m.id === r.id) || r.model; });
@@ -439,7 +473,7 @@ function fromCache(loc) {
 function saveCache() {
   const c = { lat: state.loc.lat, lon: state.loc.lon, ts: state.fetchedAt, offset: state.offset, status: state.status,
     results: state.results.map(r => ({ id: r.model.id, model: r.model, days: r.days })), ens: state.ens, soil: state.soil };
-  if (!store.set("ms.cache", c)) store.del("ms.cache");
+  if (!store.set("ms.cache2", c)) store.del("ms.cache2");
 }
 
 async function loadNow(loc) {
@@ -549,7 +583,7 @@ function render() {
     const votes = c.kinds.map(k => `<i class="${k}"></i>`).join("");
     const amt = c.wet ? (c.snowFrac >= 0.5 && isNum(c.snow) ? ` · ~${fmtS(c.snow)}` : isNum(c.precipWet) ? ` · ~${fmtP(c.precipWet)}` : "") : "";
     const chips = [];
-    if (isNum(c.gust)) chips.push(`<span class="chip" title="${esc(t("chipWindTitle"))}">${svg("wind")}<span class="num">${fmtW(c.gust)}</span><span style="color:var(--muted)">${dirLabel(c.dir)}</span></span>`);
+    if (isNum(c.dayGust)) chips.push(`<span class="chip" title="${esc(t("chipWindTitle"))}">${svg("wind")}<span class="num">${fmtW(c.dayGust)}</span><span style="color:var(--muted)">${dirLabel(c.dir)}</span></span>`);
     if (isNum(c.sun)) chips.push(`<span class="chip">${svg("sunS")}${esc(t("chipSun", { h: fmt(c.sun, c.sun < 1 && c.sun > 0 ? 1 : 0) }))}</span>`);
     if (c.snowy) chips.push(`<span class="chip" style="color:var(--snow)">${svg("flake")}${esc(t("chipSnow", { a: c.snowy, b: c.n }))}</span>`);
     if (c.ensProb != null) chips.push(`<span class="chip" title="${esc(t("chipEnsTitle", { n: c.ensN }))}">${svg("drops")}${esc(t("chipEns", { p: Math.round(c.ensProb * 100) }))}</span>`);
@@ -565,7 +599,7 @@ function render() {
         <div class="d-glyph">${glyph(c)}</div>
         <div class="d-temp"><span class="tmax">${fmtT(c.tmax)}</span><span class="tmin">${fmtT(c.tmin)}</span></div>
         <div class="d-rain"><div class="votes" aria-hidden="true">${votes}</div>
-          <div class="votes-lbl"><b>${esc(rainText(c))}</b><br><span class="num">${esc(t("modelsCount", { wet: c.wet, n: c.n }))}</span>${esc(amt)}</div></div>
+          <div class="votes-lbl"><b>${esc(rainText(c))}</b><br><span class="num">${esc(t("rainWork", { wet: c.wet, n: c.n, hours: workLabel() }))}</span>${esc(amt)}</div></div>
         ${svg("chev", "chev")}
       </button>
       <div class="d-meta">${chips.join("")}</div>
@@ -628,7 +662,11 @@ function toggle(el, forceOpen) {
   el.dataset.open = String(open); det.hidden = !open;
   el.querySelector(".day-head").setAttribute("aria-expanded", String(open));
   state.open = open ? el.dataset.date : null;
-  if (open) det.innerHTML = detailHtml(el.dataset.date);
+  if (open) {
+    det.innerHTML = detailHtml(el.dataset.date);
+    const hs = det.querySelector(".hours"), first = hs && hs.querySelector(".hc.work");
+    if (first) hs.scrollLeft = Math.max(0, first.offsetLeft - hs.offsetLeft - 8);
+  }
 }
 
 function detailHtml(date) {
@@ -641,16 +679,14 @@ function detailHtml(date) {
     ? `<div class="soil-line">${svg("flake")}<span>${esc(t("soilLine", { a: fmtT(c.soil0), b: fmtT(c.soil6) }))}${isNum(c.soil0) && c.soil0 < 0 ? esc(t("soilFrost")) : ""}</span></div>` : "";
   const isToday = date === todayStr();
   const nowH = new Date(Date.now() + state.offset * 1000).getUTCHours();
-  const blk = blocks(date).map(b => {
-    const pct = Math.round(b.frac * 100);
-    const now = isToday && nowH >= b.from && nowH < b.from + 3;
-    const h = String(b.from).padStart(2, "0");
-    if (!b.n) return `<div class="blk na"><span class="h">${h}</span><span class="bar"></span><span class="pv">–</span></div>`;
-    return `<div class="blk${now ? " now" : ""}" title="${esc(t("blocksTip", { wet: b.wet, n: b.n }))}">
-      <span class="h">${h}</span>
-      <span class="bar"><span class="${b.snow * 2 >= b.wet && b.snow ? "s" : ""}" style="height:${pct}%"></span></span>
-      <span class="pv">${b.wet}/${b.n}</span><span class="t">${fmtT(b.t)}</span>
-      <span class="g">${isNum(b.g) ? fmt(toUser.wind(b.g)) : "–"}</span></div>`;
+  const workHrs = new Set(workSlots().map(x => x.hr));
+  const hrs = hourly(date).map(b => {
+    const hh = String(b.h).padStart(2, "0");
+    const cls = `hc${workHrs.has(b.h) ? " work" : ""}${isToday && nowH === b.h ? " now" : ""}${b.n ? "" : " na"}`;
+    if (!b.n) return `<div class="${cls}"><span class="h">${hh}</span><span class="bar"></span><span class="t">–</span><span class="g">–</span></div>`;
+    return `<div class="${cls}" title="${esc(t("blocksTip", { wet: b.wet, n: b.n }))}"><span class="h">${hh}</span>
+      <span class="bar"><span class="${b.snow * 2 >= b.wet && b.snow ? "s" : ""}" style="height:${Math.round(b.frac * 100)}%"></span></span>
+      <span class="t">${fmtT(b.t)}</span><span class="g">${isNum(b.g) ? fmt(toUser.wind(b.g)) : "–"}</span></div>`;
   }).join("");
   const thr = state.thr;
   const rows = state.results.map(r => {
@@ -665,9 +701,9 @@ function detailHtml(date) {
   }).join("");
   return `${works ? `<div class="section-h">${esc(t("worksTitle"))}</div><ul class="works">${works}</ul>` : ""}
     ${soil}
-    <div class="section-h">${esc(t("blocksTitle"))}</div>
-    <div class="blocks">${blk}</div>
-    <div class="legend">${esc(t("blocksLegend", { u: unitLabel.wind() }))}</div>
+    <div class="section-h">${esc(t("hourlyTitle"))}</div>
+    <div class="hours"><div class="hgrid">${hrs}</div></div>
+    <div class="legend">${esc(t("hourlyLegend", { hours: workLabel(), u: unitLabel.wind() }))}</div>
     <div class="section-h">${esc(t("modelsTitle"))}</div>
     <div class="tbl-wrap"><table>
       <thead><tr><th>${esc(t("th_model"))}</th><th>${esc(t("th_minmax"))}</th><th>${esc(t("th_rain", { u: unitLabel.precip() }))}</th><th>${esc(t("th_snow", { u: unitLabel.snow() }))}</th><th>${esc(t("th_gust", { u: unitLabel.wind() }))}</th><th>${esc(t("th_sun"))}</th></tr></thead>
@@ -710,6 +746,12 @@ function renderSettings() {
       <label>${esc(t("setPrecip"))}${sel("setPrecip", [["mm", "mm · cm"], ["in", "in"]], state.units.precip)}</label>
       <label class="wide">${esc(t("setRainThr"))}${sel("thr", thrOpts, state.thr)}</label>
     </div>
+    <h2 class="section-h">${esc(t("setWorkHours"))}</h2>
+    <div class="set-grid">
+      <label>${esc(t("workFrom"))}<input type="time" id="workStart" step="1800" value="${esc(state.work.start)}"></label>
+      <label>${esc(t("workTo"))}<input type="time" id="workEnd" step="1800" value="${esc(state.work.end)}"></label>
+      <p class="wide set-note">${esc(t("workHoursNote"))}</p>
+    </div>
     <h2 class="section-h">${esc(t("worksFollowed"))}</h2>
     <div class="work-pick">${WORK_IDS.map(w => `<label><input type="checkbox" id="wk-${w}" value="${w}"${state.works.includes(w) ? " checked" : ""}>${esc(t("w_" + w))}</label>`).join("")}</div>
     <details class="limits" id="limitsBox"${store.get("ms.limitsOpen", false) ? " open" : ""}>
@@ -729,6 +771,13 @@ function renderSettings() {
   $("#setTemp").onchange = e => { state.units.temp = e.target.value; store.set("ms.units", state.units); rerender(); };
   $("#setWind").onchange = e => { state.units.wind = e.target.value; store.set("ms.units", state.units); rerender(); };
   $("#setPrecip").onchange = e => { state.units.precip = e.target.value; store.set("ms.units", state.units); rerender(); };
+  ["workStart", "workEnd"].forEach(id => { $("#" + id).onchange = e => {
+    const v = String(e.target.value).slice(0, 5);
+    if (!/^\d\d:\d\d$/.test(v)) { renderSettings(); return; }
+    state.work[id === "workStart" ? "start" : "end"] = v;
+    store.set("ms.work", state.work);
+    if (state.results.length) render();
+  }; });
   $("#thr").onchange = e => { state.thr = Number(e.target.value); store.set("ms.thr", state.thr); if (state.results.length) render(); };
   WORK_IDS.forEach(w => { $(`#wk-${w}`).onchange = () => {
     state.works = WORK_IDS.filter(id => $(`#wk-${id}`).checked);
@@ -891,6 +940,7 @@ function toast(msg) {
 
 /* ---------- pornire ---------- */
 function init() {
+  store.del("ms.cache");   // formatul vechi al prognozei salvate
   applyStatic();
   renderSettings();
   $("#btnLocate").onclick = () => locateMe(false);

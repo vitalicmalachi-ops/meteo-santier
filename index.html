@@ -228,6 +228,24 @@ button.reset{margin-top:12px;background:transparent;border:1px solid var(--line)
 #shareFallback input{width:100%;margin-top:4px;padding:6px;border-radius:6px;border:1px solid var(--line);background:transparent;color:inherit}
 table.pl thead th.today{color:var(--ink);font-weight:700}
 
+
+/* Oră cu oră */
+.hours{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -4px;padding:0 4px 4px}
+.hgrid{display:grid;grid-template-columns:repeat(24,34px);gap:3px;width:max-content}
+.hc{display:grid;gap:3px;justify-items:center;text-align:center;padding:6px 0;border-radius:7px}
+.hc.work{background:color-mix(in srgb,var(--accent) 16%,transparent)}
+.hc.now{outline:2px solid var(--ink);outline-offset:-2px}
+.hc.na{opacity:.4}
+.hc .h{font:500 12px var(--f-mono);color:var(--muted)}
+.hc.work .h{color:var(--ink);font-weight:600}
+.hc .bar{width:12px;height:40px;border-radius:3px;background:color-mix(in srgb,var(--ink) 8%,transparent);position:relative;overflow:hidden}
+.hc .bar span{position:absolute;left:0;right:0;bottom:0;background:var(--rain)}
+.hc .bar span.s{background:var(--snow)}
+.hc .t{font:500 12.5px var(--f-mono)}
+.hc .g{font:400 11px var(--f-mono);color:var(--muted)}
+.set-grid input[type=time]{width:100%;padding:7px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:500 15px var(--f-mono)}
+.set-note{margin:0;font-size:13px;grid-column:1/-1}
+
 @media (max-width:420px){
   .day-head{grid-template-columns:66px 26px 52px minmax(0,1fr) 16px;gap:8px;padding:11px 10px 7px}
   .d-meta{padding:0 10px 11px}
