@@ -774,24 +774,38 @@ function showNoLoc() {
 }
 
 // Locația curentă a telefonului. La pornire, fără locație: ultimul loc folosit sau ecranul de căutare.
+// La pornire, dacă există un loc folosit anterior, îl arătăm imediat și căutăm locația exactă în fundal.
 function locateMe(atStartup) {
+  const last = atStartup ? store.get("ms.last", null) : null;
+  const hasLast = !!(last && isFinite(last.lat));
+  const coordsText = () => state.loc ? `${state.loc.lat.toFixed(4)}, ${state.loc.lon.toFixed(4)}` : "";
+  if (hasLast) { state.mode = "manual"; setLoc(last); $("#placeCoords").textContent = t("locating"); }
+  else { $("#placeName").textContent = t("locating"); $("#placeCoords").textContent = ""; }
+  const startLoc = state.loc;
   const fail = async () => {
+    if (state.loc !== startLoc) return;          // utilizatorul a ales între timp alt loc
     if (atStartup) {
-      const last = store.get("ms.last", null);
-      if (last && isFinite(last.lat)) { state.mode = "manual"; setLoc(last); toast(t("toastNoLocStart")); return; }
+      if (hasLast) { $("#placeCoords").textContent = coordsText(); return; }
       const ip = await ipLocation();
+      if (state.loc !== startLoc) return;
       if (ip) { state.mode = "manual"; setLoc(ip); toast(t("toastApprox")); }
       else showNoLoc();
     } else {
       $("#placeName").textContent = state.loc ? (state.loc.name || t("myLocation")) : t("noLocTitle");
+      $("#placeCoords").textContent = coordsText();
       toast(t("toastNoLoc"));
     }
   };
-  $("#placeName").textContent = t("locating");
-  $("#placeCoords").textContent = "";
   getPosition().then(async pos => {
+    if (state.loc !== startLoc) return;
     const lat = pos.coords.latitude, lon = pos.coords.longitude;
     state.mode = "gps";
+    if (hasLast && near(state.loc, { lat, lon })) {
+      // același loc ca data trecută: păstrăm prognoza afișată, actualizăm doar coordonatele
+      state.loc.lat = lat; state.loc.lon = lon; store.set("ms.last", state.loc);
+      $("#placeCoords").textContent = coordsText();
+      return;
+    }
     setLoc({ lat, lon, name: null });
     const n = await reverseName(lat, lon);
     if (n && state.loc && state.loc.lat === lat) { state.loc.name = n; $("#placeName").textContent = n; store.set("ms.last", state.loc); }
