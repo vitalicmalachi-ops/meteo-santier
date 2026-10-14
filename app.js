@@ -775,10 +775,12 @@ function showNoLoc() {
 
 // Locația curentă a telefonului. La pornire, fără locație: ultimul loc folosit sau ecranul de căutare.
 function locateMe(atStartup) {
-  const fail = () => {
+  const fail = async () => {
     if (atStartup) {
       const last = store.get("ms.last", null);
-      if (last && isFinite(last.lat)) { state.mode = "manual"; setLoc(last); toast(t("toastNoLocStart")); }
+      if (last && isFinite(last.lat)) { state.mode = "manual"; setLoc(last); toast(t("toastNoLocStart")); return; }
+      const ip = await ipLocation();
+      if (ip) { state.mode = "manual"; setLoc(ip); toast(t("toastApprox")); }
       else showNoLoc();
     } else {
       $("#placeName").textContent = state.loc ? (state.loc.name || t("myLocation")) : t("noLocTitle");
@@ -800,8 +802,17 @@ function locateMe(atStartup) {
 const NATIVE = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
 const plugin = name => (NATIVE && window.Capacitor.Plugins && window.Capacitor.Plugins[name]) || null;
 const PUBLIC_URL = "https://vitalicmalachi-ops.github.io/meteo-santier/";
+// Locație aproximativă după conexiune (orașul), când telefonul nu dă GPS și nu există un loc folosit anterior.
+async function ipLocation() {
+  try {
+    const r = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?localityLanguage=${state.lang}`);
+    const j = await r.json();
+    if (!isNum(j.latitude) || !isNum(j.longitude) || (j.latitude === 0 && j.longitude === 0)) return null;
+    return { lat: j.latitude, lon: j.longitude, name: j.city || j.locality || j.principalSubdivision || null };
+  } catch (e) { return null; }
+}
 async function getPosition() {
-  const opts = { enableHighAccuracy: false, timeout: 12000, maximumAge: 120000 };
+  const opts = { enableHighAccuracy: false, timeout: 25000, maximumAge: 300000 };
   const G = plugin("Geolocation");
   if (G) {
     const perm = await G.checkPermissions().catch(() => null);

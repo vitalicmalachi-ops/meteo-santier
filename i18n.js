@@ -731,17 +731,17 @@ cs: {
 
 /* Starea de acum (temperatura curentă, umiditate) și ecranul fără locație */
 const I18N_EXTRA = {
-  en: { nowHum: "Humidity {v}%", nowFeels: "Feels like {t}", nowTitle: "Now", noLocBtn: "Search for a place" },
-  ro: { nowHum: "Umiditate {v}%", nowFeels: "Se simte {t}", nowTitle: "Acum", noLocBtn: "Caută localitatea" },
-  ru: { nowHum: "Влажность {v}%", nowFeels: "Ощущается {t}", nowTitle: "Сейчас", noLocBtn: "Найти место" },
-  uk: { nowHum: "Вологість {v}%", nowFeels: "Відчувається {t}", nowTitle: "Зараз", noLocBtn: "Знайти місце" },
-  de: { nowHum: "Luftfeuchte {v} %", nowFeels: "Gefühlt {t}", nowTitle: "Jetzt", noLocBtn: "Ort suchen" },
-  fr: { nowHum: "Humidité {v} %", nowFeels: "Ressenti {t}", nowTitle: "Maintenant", noLocBtn: "Chercher un lieu" },
-  es: { nowHum: "Humedad {v} %", nowFeels: "Sensación {t}", nowTitle: "Ahora", noLocBtn: "Buscar un lugar" },
-  it: { nowHum: "Umidità {v}%", nowFeels: "Percepita {t}", nowTitle: "Ora", noLocBtn: "Cerca un luogo" },
-  pl: { nowHum: "Wilgotność {v}%", nowFeels: "Odczuwalna {t}", nowTitle: "Teraz", noLocBtn: "Wyszukaj miejsce" },
-  tr: { nowHum: "Nem %{v}", nowFeels: "Hissedilen {t}", nowTitle: "Şimdi", noLocBtn: "Yer ara" },
-  pt: { nowHum: "Humidade {v}%", nowFeels: "Sensação {t}", nowTitle: "Agora", noLocBtn: "Procurar um local" },
-  cs: { nowHum: "Vlhkost {v} %", nowFeels: "Pocitově {t}", nowTitle: "Nyní", noLocBtn: "Vyhledat místo" }
+  en: { toastApprox: "Approximate location from your connection. Tap “My location” for the exact place.", nowHum: "Humidity {v}%", nowFeels: "Feels like {t}", nowTitle: "Now", noLocBtn: "Search for a place" },
+  ro: { toastApprox: "Locație aproximativă, după conexiune. Apăsați „Locația mea” pentru locul exact.", nowHum: "Umiditate {v}%", nowFeels: "Se simte {t}", nowTitle: "Acum", noLocBtn: "Caută localitatea" },
+  ru: { toastApprox: "Примерное место по подключению. Нажмите «Где я» для точного места.", nowHum: "Влажность {v}%", nowFeels: "Ощущается {t}", nowTitle: "Сейчас", noLocBtn: "Найти место" },
+  uk: { toastApprox: "Приблизне місце за підключенням. Натисніть «Де я» для точного місця.", nowHum: "Вологість {v}%", nowFeels: "Відчувається {t}", nowTitle: "Зараз", noLocBtn: "Знайти місце" },
+  de: { toastApprox: "Ungefährer Standort aus Ihrer Verbindung. Tippen Sie auf „Mein Standort“ für den genauen Ort.", nowHum: "Luftfeuchte {v} %", nowFeels: "Gefühlt {t}", nowTitle: "Jetzt", noLocBtn: "Ort suchen" },
+  fr: { toastApprox: "Position approximative d'après votre connexion. Touchez « Ma position » pour le lieu exact.", nowHum: "Humidité {v} %", nowFeels: "Ressenti {t}", nowTitle: "Maintenant", noLocBtn: "Chercher un lieu" },
+  es: { toastApprox: "Ubicación aproximada según tu conexión. Toca «Mi ubicación» para el lugar exacto.", nowHum: "Humedad {v} %", nowFeels: "Sensación {t}", nowTitle: "Ahora", noLocBtn: "Buscar un lugar" },
+  it: { toastApprox: "Posizione approssimativa dalla connessione. Tocca «La mia posizione» per il luogo esatto.", nowHum: "Umidità {v}%", nowFeels: "Percepita {t}", nowTitle: "Ora", noLocBtn: "Cerca un luogo" },
+  pl: { toastApprox: "Przybliżona lokalizacja z połączenia. Dotknij „Moja lokalizacja”, aby ustalić dokładne miejsce.", nowHum: "Wilgotność {v}%", nowFeels: "Odczuwalna {t}", nowTitle: "Teraz", noLocBtn: "Wyszukaj miejsce" },
+  tr: { toastApprox: "Bağlantınıza göre yaklaşık konum. Tam yer için “Konumum”a dokunun.", nowHum: "Nem %{v}", nowFeels: "Hissedilen {t}", nowTitle: "Şimdi", noLocBtn: "Yer ara" },
+  pt: { toastApprox: "Localização aproximada pela ligação. Toque em «A minha localização» para o local exato.", nowHum: "Humidade {v}%", nowFeels: "Sensação {t}", nowTitle: "Agora", noLocBtn: "Procurar um local" },
+  cs: { toastApprox: "Přibližná poloha podle připojení. Klepněte na „Moje poloha“ pro přesné místo.", nowHum: "Vlhkost {v} %", nowFeels: "Pocitově {t}", nowTitle: "Nyní", noLocBtn: "Vyhledat místo" }
 };
 for (const k in I18N_EXTRA) Object.assign(I18N[k], I18N_EXTRA[k]);

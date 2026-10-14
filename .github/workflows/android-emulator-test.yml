@@ -47,11 +47,11 @@ jobs:
             adb install -r meteo-santier.apk
             adb shell pm grant $PKG android.permission.ACCESS_COARSE_LOCATION
             adb shell pm grant $PKG android.permission.ACCESS_FINE_LOCATION
-            adb emu geo fix ${{ inputs.lon }} ${{ inputs.lat }}
-            sleep 3
-            adb emu geo fix ${{ inputs.lon }} ${{ inputs.lat }}
+            adb shell settings put secure location_mode 3
+            (for i in $(seq 1 60); do adb emu geo fix ${{ inputs.lon }} ${{ inputs.lat }} >/dev/null 2>&1; sleep 2; done) &
+            sleep 6
             adb shell am start -n $PKG/.MainActivity
-            sleep 35
+            sleep 50
             adb exec-out screencap -p > shots/01-en-start.png
             adb shell input swipe 540 1800 540 600 400
             sleep 2
