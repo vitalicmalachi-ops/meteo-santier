@@ -92,7 +92,6 @@ const state = {
   limits: loadLimits(),
   loc: null, mode: null, results: [], ens: [], soil: [], status: {}, offset: 0, fetchedAt: 0,
   thr: Number(store.get("ms.thr", 1)) || 1, open: null, reqId: 0,
-  work: Object.assign({ start: "08:00", end: "18:00" }, store.get("ms.work", {})),
   works: (() => { const w = store.get("ms.works", null); return Array.isArray(w) ? w.filter(id => WORK_IDS.includes(id)) : WORK_IDS.slice(); })()
 };
 function locale() {
@@ -218,17 +217,12 @@ function aggregateEns(h) {
   return out;
 }
 
-/* ---------- programul de lucru ---------- */
-function toMin(s) { const [h, m] = String(s).split(":").map(Number); return (h || 0) * 60 + (m || 0); }
-// Orele din program, ca sloturi de o oră; off = 1 pentru orele de după miezul nopții (ture de noapte).
+/* ---------- intervalul de calcul: ziua întreagă, 00–24 ---------- */
 function workSlots() {
-  const s = toMin(state.work.start); let e = toMin(state.work.end);
-  if (e <= s) e += 1440;
   const out = [];
-  for (let h = Math.floor(s / 60); h * 60 < e; h++) out.push({ off: Math.floor(h / 24), hr: h % 24 });
+  for (let h = 0; h < 24; h++) out.push({ off: 0, hr: h });
   return out;
 }
-const workLabel = () => `${state.work.start}–${state.work.end}`;
 function winAgg(days, date, slots) {
   const H = [];
   slots.forEach(sl => {
@@ -599,7 +593,7 @@ function render() {
         <div class="d-glyph">${glyph(c)}</div>
         <div class="d-temp"><span class="tmax">${fmtT(c.tmax)}</span><span class="tmin">${fmtT(c.tmin)}</span></div>
         <div class="d-rain"><div class="votes" aria-hidden="true">${votes}</div>
-          <div class="votes-lbl"><b>${esc(rainText(c))}</b><br><span class="num">${esc(t("rainWork", { wet: c.wet, n: c.n, hours: workLabel() }))}</span>${esc(amt)}</div></div>
+          <div class="votes-lbl"><b>${esc(rainText(c))}</b><br><span class="num">${esc(t("modelsCount", { wet: c.wet, n: c.n }))}</span>${esc(amt)}</div></div>
         ${svg("chev", "chev")}
       </button>
       <div class="d-meta">${chips.join("")}</div>
@@ -664,7 +658,8 @@ function toggle(el, forceOpen) {
   state.open = open ? el.dataset.date : null;
   if (open) {
     det.innerHTML = detailHtml(el.dataset.date);
-    const hs = det.querySelector(".hours"), first = hs && hs.querySelector(".hc.work");
+    const hs = det.querySelector(".hours");
+    const first = hs && (hs.querySelector(".hc.now") || hs.querySelectorAll(".hc")[6]);
     if (first) hs.scrollLeft = Math.max(0, first.offsetLeft - hs.offsetLeft - 8);
   }
 }
@@ -679,10 +674,9 @@ function detailHtml(date) {
     ? `<div class="soil-line">${svg("flake")}<span>${esc(t("soilLine", { a: fmtT(c.soil0), b: fmtT(c.soil6) }))}${isNum(c.soil0) && c.soil0 < 0 ? esc(t("soilFrost")) : ""}</span></div>` : "";
   const isToday = date === todayStr();
   const nowH = new Date(Date.now() + state.offset * 1000).getUTCHours();
-  const workHrs = new Set(workSlots().map(x => x.hr));
   const hrs = hourly(date).map(b => {
     const hh = String(b.h).padStart(2, "0");
-    const cls = `hc${workHrs.has(b.h) ? " work" : ""}${isToday && nowH === b.h ? " now" : ""}${b.n ? "" : " na"}`;
+    const cls = `hc${isToday && nowH === b.h ? " now" : ""}${b.n ? "" : " na"}`;
     if (!b.n) return `<div class="${cls}"><span class="h">${hh}</span><span class="bar"></span><span class="t">–</span><span class="g">–</span></div>`;
     return `<div class="${cls}" title="${esc(t("blocksTip", { wet: b.wet, n: b.n }))}"><span class="h">${hh}</span>
       <span class="bar"><span class="${b.snow * 2 >= b.wet && b.snow ? "s" : ""}" style="height:${Math.round(b.frac * 100)}%"></span></span>
@@ -703,7 +697,7 @@ function detailHtml(date) {
     ${soil}
     <div class="section-h">${esc(t("hourlyTitle"))}</div>
     <div class="hours"><div class="hgrid">${hrs}</div></div>
-    <div class="legend">${esc(t("hourlyLegend", { hours: workLabel(), u: unitLabel.wind() }))}</div>
+    <div class="legend">${esc(t("hourlyLegend", { u: unitLabel.wind() }))}</div>
     <div class="section-h">${esc(t("modelsTitle"))}</div>
     <div class="tbl-wrap"><table>
       <thead><tr><th>${esc(t("th_model"))}</th><th>${esc(t("th_minmax"))}</th><th>${esc(t("th_rain", { u: unitLabel.precip() }))}</th><th>${esc(t("th_snow", { u: unitLabel.snow() }))}</th><th>${esc(t("th_gust", { u: unitLabel.wind() }))}</th><th>${esc(t("th_sun"))}</th></tr></thead>
@@ -746,12 +740,6 @@ function renderSettings() {
       <label>${esc(t("setPrecip"))}${sel("setPrecip", [["mm", "mm · cm"], ["in", "in"]], state.units.precip)}</label>
       <label class="wide">${esc(t("setRainThr"))}${sel("thr", thrOpts, state.thr)}</label>
     </div>
-    <h2 class="section-h">${esc(t("setWorkHours"))}</h2>
-    <div class="set-grid">
-      <label>${esc(t("workFrom"))}<input type="time" id="workStart" step="1800" value="${esc(state.work.start)}"></label>
-      <label>${esc(t("workTo"))}<input type="time" id="workEnd" step="1800" value="${esc(state.work.end)}"></label>
-      <p class="wide set-note">${esc(t("workHoursNote"))}</p>
-    </div>
     <h2 class="section-h">${esc(t("worksFollowed"))}</h2>
     <div class="work-pick">${WORK_IDS.map(w => `<label><input type="checkbox" id="wk-${w}" value="${w}"${state.works.includes(w) ? " checked" : ""}>${esc(t("w_" + w))}</label>`).join("")}</div>
     <details class="limits" id="limitsBox"${store.get("ms.limitsOpen", false) ? " open" : ""}>
@@ -771,13 +759,6 @@ function renderSettings() {
   $("#setTemp").onchange = e => { state.units.temp = e.target.value; store.set("ms.units", state.units); rerender(); };
   $("#setWind").onchange = e => { state.units.wind = e.target.value; store.set("ms.units", state.units); rerender(); };
   $("#setPrecip").onchange = e => { state.units.precip = e.target.value; store.set("ms.units", state.units); rerender(); };
-  ["workStart", "workEnd"].forEach(id => { $("#" + id).onchange = e => {
-    const v = String(e.target.value).slice(0, 5);
-    if (!/^\d\d:\d\d$/.test(v)) { renderSettings(); return; }
-    state.work[id === "workStart" ? "start" : "end"] = v;
-    store.set("ms.work", state.work);
-    if (state.results.length) render();
-  }; });
   $("#thr").onchange = e => { state.thr = Number(e.target.value); store.set("ms.thr", state.thr); if (state.results.length) render(); };
   WORK_IDS.forEach(w => { $(`#wk-${w}`).onchange = () => {
     state.works = WORK_IDS.filter(id => $(`#wk-${id}`).checked);
@@ -940,7 +921,7 @@ function toast(msg) {
 
 /* ---------- pornire ---------- */
 function init() {
-  store.del("ms.cache");   // formatul vechi al prognozei salvate
+  store.del("ms.cache"); store.del("ms.work");   // date vechi, nu se mai folosesc
   applyStatic();
   renderSettings();
   $("#btnLocate").onclick = () => locateMe(false);
