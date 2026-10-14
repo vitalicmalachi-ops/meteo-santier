@@ -51,7 +51,7 @@ jobs:
             (for i in $(seq 1 60); do adb emu geo fix ${{ inputs.lon }} ${{ inputs.lat }} >/dev/null 2>&1; sleep 2; done) &
             sleep 6
             adb shell am start -n $PKG/.MainActivity
-            sleep 50
+            sleep 60
             adb exec-out screencap -p > shots/01-en-start.png
             adb shell input swipe 540 1800 540 600 400
             sleep 2

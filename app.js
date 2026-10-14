@@ -820,9 +820,13 @@ async function getPosition() {
       const r = await G.requestPermissions({ permissions: ["coarseLocation"] }).catch(() => null);
       if (!r || r.coarseLocation !== "granted") throw new Error("denied");
     }
-    return G.getCurrentPosition(opts);
+    // Pluginul folosește serviciile Google; dacă ele nu răspund, încercăm localizarea standard a sistemului.
+    try { return await G.getCurrentPosition(opts); } catch (e) { return webPosition(Object.assign({}, opts, { timeout: 15000 })); }
   }
-  if (!navigator.geolocation) throw new Error("unsupported");
+  return webPosition(opts);
+}
+function webPosition(opts) {
+  if (!navigator.geolocation) return Promise.reject(new Error("unsupported"));
   return new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej, opts));
 }
 
