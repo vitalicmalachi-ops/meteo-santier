@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="ro">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Meteo Șantier</title>
-<meta name="description" content="Prognoză pe 7 zile cu consens între 13 modele meteo, pentru planificarea lucrărilor pe șantier.">
+<title>Site Weather</title>
+<meta name="description" content="7-day site forecast from 13 weather models, with the work you can do each day.">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Meteo Șantier">
 <meta name="theme-color" content="#1D2120">
@@ -193,6 +193,41 @@ footer p{margin:0;max-width:65ch}
 footer a{color:inherit}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:999px;font-size:14px;font-weight:600;max-width:calc(100% - 32px)}
 
+
+/* Starea de acum, lângă numele locului */
+.place-row{display:flex;justify-content:space-between;align-items:flex-start;gap:14px}
+.place-row .place{flex:1}
+.now{flex:none;text-align:right;display:grid;gap:4px;justify-items:end}
+.now-t{font:500 clamp(34px,10vw,46px)/.95 var(--f-mono);font-variant-numeric:tabular-nums;color:var(--band-ink);letter-spacing:-.02em}
+.now-h{font-size:13px;line-height:1.3;color:var(--band-muted)}
+
+/* Fără locație */
+.noloc{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;display:grid;gap:10px;justify-items:start}
+.noloc h2{margin:0;font:750 22px/1.1 var(--f-display);font-stretch:85%}
+.noloc p{margin:0;color:var(--muted)}
+.noloc button{background:var(--accent);color:#1D2120;border:0;border-radius:999px;padding:9px 16px;font-weight:600;cursor:pointer;min-height:40px}
+
+/* Setări */
+.settings{display:grid;gap:14px}
+.set-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px 14px}
+.set-grid label{display:grid;gap:4px;font-size:13px;color:var(--muted)}
+.set-grid label.wide{grid-column:1/-1}
+.set-grid select{width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font-size:15px}
+details.limits{border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:0 14px}
+details.limits summary{cursor:pointer;padding:12px 0;font-weight:600;color:var(--ink)}
+details.limits[open]{padding-bottom:14px}
+details.limits p{margin:0 0 12px}
+.lim-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.lim-grid fieldset{border:0;border-top:1px solid var(--line);margin:0;padding:10px 0 0;display:grid;gap:8px;min-width:0}
+.lim-grid legend{font-weight:600;color:var(--ink);padding:0;font-size:14px}
+.lim-grid label{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;font-size:13.5px;color:var(--muted)}
+.lim-in{display:inline-flex;align-items:center;gap:6px}
+.lim-in input{width:76px;padding:6px 8px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:500 15px var(--f-mono);text-align:right}
+.lim-in i{font-style:normal;font:12px var(--f-mono);color:var(--muted);width:34px}
+button.reset{margin-top:12px;background:transparent;border:1px solid var(--line);color:var(--ink);border-radius:999px;padding:7px 14px;cursor:pointer}
+#shareFallback input{width:100%;margin-top:4px;padding:6px;border-radius:6px;border:1px solid var(--line);background:transparent;color:inherit}
+table.pl thead th.today{color:var(--ink);font-weight:700}
+
 @media (max-width:420px){
   .day-head{grid-template-columns:66px 26px 52px minmax(0,1fr) 16px;gap:8px;padding:11px 10px 7px}
   .d-meta{padding:0 10px 11px}
@@ -208,19 +243,25 @@ footer a{color:inherit}
 <body>
 <header>
   <div class="wrap">
-    <div class="brand"><b>Meteo Șantier</b><span id="updated"></span></div>
-    <div class="place">
-      <h1 id="placeName">Se determină locația…</h1>
-      <div class="coords" id="placeCoords"></div>
+    <div class="brand"><b data-i18n="brand">Site Weather</b><span id="updated"></span></div>
+    <div class="place-row">
+      <div class="place">
+        <h1 id="placeName"></h1>
+        <div class="coords" id="placeCoords"></div>
+      </div>
+      <div class="now" id="now" role="group" hidden>
+        <div class="now-t" id="nowT"></div>
+        <div class="now-h" id="nowH"></div>
+      </div>
     </div>
     <div class="actions">
-      <button class="btn primary" id="btnLocate" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3.5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="7.5"/></svg>Locația mea</button>
-      <button class="btn" id="btnSearch" type="button" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l5 5"/></svg>Alt loc</button>
-      <button class="btn" id="btnShare" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg>Copiază link</button>
-      <button class="btn" id="btnSave" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M6 3h12v18l-6-4-6 4z"/></svg>Salvează locul</button>
+      <button class="btn primary" id="btnLocate" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="3.5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="7.5"/></svg><span data-i18n="btnLocate"></span></button>
+      <button class="btn" id="btnSearch" type="button" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l5 5"/></svg><span data-i18n="btnSearch"></span></button>
+      <button class="btn" id="btnShare" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg><span data-i18n="btnShare"></span></button>
+      <button class="btn" id="btnSave" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12v18l-6-4-6 4z"/></svg><span data-i18n="btnSave"></span></button>
     </div>
     <div class="search" id="searchBox" hidden>
-      <input id="q" type="search" placeholder="Localitate: Stăuceni, Codru, Ialoveni…" autocomplete="off" enterkeyhint="search">
+      <input id="q" type="search" autocomplete="off" enterkeyhint="search">
       <div class="results" id="results"></div>
     </div>
     <div class="saved" id="saved"></div>
@@ -231,11 +272,16 @@ footer a{color:inherit}
 
 <main>
   <div class="wrap">
-    <div class="status loading" id="status"><span class="dot"></span><span id="statusText">Se încarcă modelele meteo…</span></div>
+    <div class="status loading" id="status"><span class="dot"></span><span id="statusText"></span></div>
+    <section class="noloc" id="noLoc" hidden>
+      <h2 data-i18n="noLocTitle"></h2>
+      <p data-i18n="noLocText"></p>
+      <button type="button" id="noLocBtn" data-i18n="noLocBtn"></button>
+    </section>
     <div id="errBox"></div>
     <section class="summary" id="summary" hidden></section>
     <section class="planner" id="planner" hidden></section>
-    <section class="days" id="days" aria-label="Prognoza pe 7 zile">
+    <section class="days" id="days">
       <div class="skel"></div><div class="skel"></div><div class="skel"></div><div class="skel"></div>
     </section>
   </div>
@@ -243,734 +289,11 @@ footer a{color:inherit}
 
 <footer>
   <div class="wrap">
-    <label for="thr">Contez o zi ca ploioasă la:
-      <select id="thr">
-        <option value="0.5">0,5 mm (orice ploaie)</option>
-        <option value="1">1 mm (ploaie reală)</option>
-        <option value="3">3 mm (ploaie serioasă)</option>
-      </select>
-    </label>
-    <div class="section-h">Lucrări urmărite</div>
-    <div class="work-pick" id="workPick"></div>
-    <div class="section-h">Modele folosite</div>
-    <div class="models" id="modelList"></div>
-    <p>Pătrățelele de lângă fiecare zi sunt modelele: albastru înseamnă că modelul dă ploaie, gri-albăstrui ninsoare, gol fără precipitații. Temperaturile, vântul și soarele sunt mediana modelelor. „Ansamblu” arată în câte din peste 100 de rulări perturbate ale modelelor ECMWF, GFS și ICON plouă.</p>
-    <p>Praguri orientative: betonare fără măsuri de iarnă la minimă ≥ +5 °C și sol neînghețat; asfaltare la maximă ≥ +10 °C (+5 °C straturi groase); hidroizolații pe suprafață uscată, fără ploaie ieri; fațade peste +5 °C, umiditate sub 85%, rafale sub 40 km/h; acoperiș cu atenție de la 36 km/h, oprit de la 50 km/h; macara cu atenție de la 36 km/h (10 m/s), oprire probabilă de la 54 km/h (15 m/s); săpături: noroi de la 10 mm în 3 zile, teren îmbibat de la 25 mm. Temperatura solului vine de la modelele ICON, GFS și ECMWF. Verificați fișele tehnice și normativele în vigoare.</p>
-    <p>Date meteo: <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo.com</a> (CC BY 4.0), din modelele serviciilor meteo naționale.</p>
+    <section class="settings" id="settings"></section>
   </div>
 </footer>
 
-<script>
-"use strict";
-const API = "https://api.open-meteo.com/v1/forecast";
-const ENS_API = "https://ensemble-api.open-meteo.com/v1/ensemble";
-const GEO_API = "https://geocoding-api.open-meteo.com/v1/search";
-const CHISINAU = { lat: 47.0105, lon: 28.8638, name: "Chișinău" };
-const HOURLY = "temperature_2m,precipitation,snowfall,wind_speed_10m,wind_gusts_10m,wind_direction_10m,sunshine_duration,relative_humidity_2m";
-// Temperatura solului: ICON și GFS dau suprafața și 6 cm, ECMWF stratul 0–7 cm.
-const SOIL_SOURCES = [
-  { id: "icon_seamless", vars: "soil_temperature_0cm,soil_temperature_6cm" },
-  { id: "gfs_seamless", vars: "soil_temperature_0cm,soil_temperature_6cm" },
-  { id: "ecmwf_ifs025", vars: "soil_temperature_0_to_7cm" }
-];
-
-const WORKS = [
-  { id: "beton", label: "Betonare", short: "Beton" },
-  { id: "asfalt", label: "Asfaltare", short: "Asfalt" },
-  { id: "hidro", label: "Hidroizolații, bitum", short: "Hidroiz." },
-  { id: "fatada", label: "Fațade: tencuieli, vopsitorii", short: "Fațade" },
-  { id: "acoperis", label: "Acoperiș, montaj la înălțime", short: "Acoperiș" },
-  { id: "macara", label: "Macara", short: "Macara" },
-  { id: "sapaturi", label: "Săpături, terasamente", short: "Săpături" }
-];
-
-const MODELS = [
-  { id: "ecmwf_ifs025", name: "ECMWF IFS", org: "Centrul European" },
-  { id: "ecmwf_aifs025_single", name: "ECMWF AIFS", org: "Centrul European, model AI" },
-  { id: "icon_seamless", name: "ICON", org: "DWD, Germania" },
-  { id: "gfs_seamless", name: "GFS", org: "NOAA, SUA" },
-  { id: "meteofrance_seamless", name: "ARPEGE", org: "Météo-France" },
-  { id: "ukmo_seamless", name: "UKMO", org: "Met Office, Marea Britanie" },
-  { id: "gem_seamless", name: "GEM", org: "Canada" },
-  { id: "jma_seamless", name: "JMA", org: "Japonia" },
-  { id: "kma_seamless", name: "KMA", org: "Coreea de Sud" },
-  { id: "cma_grapes_global", name: "GRAPES", org: "China" },
-  { id: "bom_access_global", name: "ACCESS", org: "Australia" },
-  { id: "knmi_harmonie_arome_europe", name: "HARMONIE-NL", org: "KNMI, doar 2–3 zile" },
-  { id: "dmi_harmonie_arome_europe", name: "HARMONIE-DK", org: "DMI, doar 2–3 zile" }
-];
-const ENS_MODELS = ["ecmwf_ifs025", "gfs025", "icon_seamless"];
-
-const DOW = ["Duminică", "Luni", "Marți", "Miercuri", "Joi", "Vineri", "Sâmbătă"];
-const MON = ["ian", "feb", "mar", "apr", "mai", "iun", "iul", "aug", "sep", "oct", "noi", "dec"];
-
-const store = {
-  get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
-  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
-};
-
-const state = {
-  loc: null, results: [], ens: [], soil: [], status: {}, offset: 0,
-  thr: Number(store.get("ms.thr", 1)) || 1, open: null, reqId: 0,
-  works: (() => { const w = store.get("ms.works", null); return Array.isArray(w) ? w.filter(id => WORKS.some(x => x.id === id)) : WORKS.map(x => x.id); })()
-};
-function addDays(d, n) {
-  const [y, m, dd] = d.split("-").map(Number);
-  return new Date(Date.UTC(y, m - 1, dd) + n * 864e5).toISOString().slice(0, 10);
-}
-
-/* ---------- utilitare ---------- */
-const isNum = v => typeof v === "number" && isFinite(v);
-function median(arr) {
-  const a = arr.filter(isNum).sort((x, y) => x - y);
-  if (!a.length) return null;
-  const m = a.length >> 1;
-  return a.length % 2 ? a[m] : (a[m - 1] + a[m]) / 2;
-}
-const minOf = arr => { const a = arr.filter(isNum); return a.length ? Math.min(...a) : null; };
-const maxOf = arr => { const a = arr.filter(isNum); return a.length ? Math.max(...a) : null; };
-function fmt(x, dec = 0) {
-  if (!isNum(x)) return "–";
-  return x.toLocaleString("ro-RO", { minimumFractionDigits: dec, maximumFractionDigits: dec });
-}
-function fmtT(x) { if (!isNum(x)) return "–"; const r = Math.round(x); return (r === 0 ? 0 : r) + "°"; }
-function stripKeys(obj, id) {
-  const o = {}; const suf = "_" + id;
-  for (const k in obj) o[k.endsWith(suf) ? k.slice(0, -suf.length) : k] = obj[k];
-  return o;
-}
-function dirLabel(deg) {
-  if (!isNum(deg)) return "";
-  return ["N", "NE", "E", "SE", "S", "SV", "V", "NV"][Math.round(((deg % 360) + 360) % 360 / 45) % 8];
-}
-function circMean(degs, weights) {
-  let x = 0, y = 0, n = 0;
-  degs.forEach((d, i) => {
-    if (!isNum(d)) return;
-    const w = weights && isNum(weights[i]) ? Math.max(weights[i], 0.1) : 1;
-    x += Math.cos(d * Math.PI / 180) * w; y += Math.sin(d * Math.PI / 180) * w; n++;
-  });
-  if (!n) return null;
-  return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
-}
-const sumOf = arr => { const a = arr.filter(isNum); return a.length ? a.reduce((s, v) => s + v, 0) : null; };
-function covers(hours, key) {
-  const hs = hours.filter(h => isNum(h[key])).map(h => h.hr);
-  return hs.length >= 4 && Math.min(...hs) <= 3 && Math.max(...hs) >= 21;
-}
-function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
-
-/* ---------- agregare pe zile (din datele orare ale fiecărui model) ---------- */
-function aggregate(h) {
-  const days = new Map();
-  (h.time || []).forEach((t, i) => {
-    const d = t.slice(0, 10), hr = +t.slice(11, 13);
-    if (!days.has(d)) days.set(d, []);
-    days.get(d).push({
-      hr, t: h.temperature_2m?.[i], p: h.precipitation?.[i], s: h.snowfall?.[i],
-      w: h.wind_speed_10m?.[i], g: h.wind_gusts_10m?.[i], dir: h.wind_direction_10m?.[i], sun: h.sunshine_duration?.[i],
-      rh: h.relative_humidity_2m?.[i]
-    });
-  });
-  const out = {};
-  for (const [d, H] of days) {
-    const ok = covers(H, "p");
-    const sunOk = covers(H, "sun");
-    out[d] = {
-      date: d, ok, hours: H,
-      tmin: covers(H, "t") ? minOf(H.map(x => x.t)) : null,
-      tmax: covers(H, "t") ? maxOf(H.map(x => x.t)) : null,
-      precip: ok ? sumOf(H.map(x => x.p)) : null,
-      snow: ok ? sumOf(H.map(x => x.s)) : null,
-      gust: covers(H, "g") ? maxOf(H.map(x => x.g)) : null,
-      wind: covers(H, "w") ? maxOf(H.map(x => x.w)) : null,
-      dir: circMean(H.map(x => x.dir), H.map(x => x.w)),
-      sun: sunOk ? sumOf(H.map(x => x.sun)) / 3600 : null,
-      rh: median(H.filter(x => x.hr >= 8 && x.hr <= 18).map(x => x.rh))
-    };
-  }
-  return out;
-}
-
-function aggregateSoil(h) {
-  const s0k = h.soil_temperature_0cm ? "soil_temperature_0cm" : "soil_temperature_0_to_7cm";
-  const s6k = h.soil_temperature_6cm ? "soil_temperature_6cm" : "soil_temperature_0_to_7cm";
-  const byDay = {};
-  (h.time || []).forEach((t, i) => {
-    const d = t.slice(0, 10), hr = +t.slice(11, 13);
-    (byDay[d] = byDay[d] || []).push({ hr, s0: h[s0k]?.[i], s6: h[s6k]?.[i] });
-  });
-  const out = {};
-  for (const d in byDay) {
-    const H = byDay[d];
-    out[d] = { s0: covers(H, "s0") ? minOf(H.map(x => x.s0)) : null, s6: covers(H, "s6") ? minOf(H.map(x => x.s6)) : null };
-  }
-  return out;
-}
-
-function aggregateEns(h) {
-  // întoarce { "YYYY-MM-DD": [suma zilnică pentru fiecare membru] }
-  const keys = Object.keys(h).filter(k => /^precipitation(_member\d+)?$/.test(k));
-  const byDay = {};
-  (h.time || []).forEach((t, i) => {
-    const d = t.slice(0, 10), hr = +t.slice(11, 13);
-    if (!byDay[d]) byDay[d] = { hrs: [], sums: keys.map(() => 0), cnt: keys.map(() => 0) };
-    const o = byDay[d]; o.hrs.push(hr);
-    keys.forEach((k, j) => { const v = h[k][i]; if (isNum(v)) { o.sums[j] += v; o.cnt[j]++; } });
-  });
-  const out = {};
-  for (const d in byDay) {
-    const o = byDay[d];
-    if (Math.min(...o.hrs) > 3 || Math.max(...o.hrs) < 21) continue;
-    out[d] = o.sums.filter((s, j) => o.cnt[j] >= 4);
-  }
-  return out;
-}
-
-/* ---------- consens pe o zi ---------- */
-function consensus(date) {
-  const thr = state.thr;
-  const rows = state.results.filter(r => r.days[date] && r.days[date].ok)
-    .map(r => Object.assign({ model: r.model }, r.days[date]));
-  const n = rows.length;
-  const kinds = rows.map(r => (isNum(r.snow) && r.snow >= 0.5) ? "s" : (r.precip >= thr ? "r" : ""));
-  const wet = kinds.filter(k => k).length;
-  const snowy = kinds.filter(k => k === "s").length;
-  const tRows = state.results.map(r => r.days[date]).filter(Boolean);
-  let ensProb = null, ensN = 0;
-  const members = [];
-  state.ens.forEach(e => { if (e.days[date]) members.push(...e.days[date]); });
-  if (members.length >= 20) { ensN = members.length; ensProb = members.filter(v => v >= thr).length / ensN; }
-  return {
-    date, n, wet, snowy, kinds: kinds.slice().sort((a, b) => (b === "s") - (a === "s") || (b === "r") - (a === "r")),
-    frac: n ? wet / n : 0, snowFrac: n ? snowy / n : 0,
-    tmin: median(tRows.map(r => r.tmin)), tmax: median(tRows.map(r => r.tmax)),
-    tminLo: minOf(tRows.map(r => r.tmin)), tmaxHi: maxOf(tRows.map(r => r.tmax)),
-    precip: median(rows.map(r => r.precip)), precipWet: median(rows.filter(r => r.precip >= thr).map(r => r.precip)),
-    precipMax: maxOf(rows.map(r => r.precip)), snow: median(rows.filter(r => r.snow >= 0.5).map(r => r.snow)),
-    gust: median(tRows.map(r => r.gust)), wind: median(tRows.map(r => r.wind)),
-    dir: circMean(tRows.map(r => r.dir)), sun: median(tRows.map(r => r.sun)),
-    rh: median(tRows.map(r => r.rh)),
-    soil0: median(state.soil.map(s => s.days[date]?.s0)),
-    soil6: median(state.soil.map(s => s.days[date]?.s6)),
-    // ploaia de ieri și suma pe ultimele 3 zile (azi inclusiv), mediana modelelor
-    prevPrecip: median(state.results.map(r => { const p = r.days[addDays(date, -1)]; return p && p.ok ? p.precip : null; })),
-    rain3: median(state.results.map(r => {
-      const ds = [0, -1, -2].map(k => r.days[addDays(date, k)]);
-      return ds.every(x => x && x.ok) ? ds.reduce((s, x) => s + x.precip, 0) : null;
-    })),
-    ensProb, ensN, rows: tRows.map((r, i) => r)
-  };
-}
-
-/* ---------- condiții pentru fiecare tip de lucrare ----------
-   Praguri orientative, după practica uzuală de șantier; verificați fișele tehnice și normativele. */
-function judgeWorks(c) {
-  const N = isNum, f = c.frac, g = c.gust;
-  const res = {};
-  const pr = `ploaie la ${c.wet} din ${c.n} modele`;
-  const kmh = x => `${fmt(x)} km/h (${fmt(x / 3.6)} m/s)`;
-  const pick = (id, rules, okText) => {
-    for (const [cond, level, reason] of rules) if (cond) { res[id] = { level, reason }; return; }
-    res[id] = { level: "ok", reason: okText };
-  };
-  pick("beton", [
-    [N(c.tmin) && c.tmin < 0, "stop", `îngheț noaptea, minima ${fmtT(c.tmin)}`],
-    [N(c.soil6) && c.soil6 < 0, "stop", `sol înghețat la 6 cm (${fmtT(c.soil6)}): nu se toarnă pe teren înghețat`],
-    [f >= 0.6, "stop", pr],
-    [N(c.tmin) && c.tmin < 5, "warn", `minima ${fmtT(c.tmin)}: aditivi, acoperire sau încălzire`],
-    [N(c.soil0) && c.soil0 < 0, "warn", `sol înghețat la suprafață (${fmtT(c.soil0)})`],
-    [f >= 0.3, "warn", pr]
-  ], `minima ${fmtT(c.tmin)}, fără ploaie`);
-  pick("asfalt", [
-    [N(c.tmax) && c.tmax < 5, "stop", `maxima ${fmtT(c.tmax)}, sub +5°`],
-    [f >= 0.6, "stop", pr],
-    [N(c.tmax) && c.tmax < 10, "warn", `maxima ${fmtT(c.tmax)}: sub +10° doar straturi groase`],
-    [N(c.soil0) && c.soil0 < 0, "warn", `fundație înghețată la suprafață (${fmtT(c.soil0)})`],
-    [N(c.tmin) && c.tmin < 0, "warn", `îngheț noaptea: suprafață rece dimineața`],
-    [f >= 0.25, "warn", pr]
-  ], `maxima ${fmtT(c.tmax)}, fără ploaie`);
-  pick("hidro", [
-    [N(c.tmax) && c.tmax < 0, "stop", `ger toată ziua, maxima ${fmtT(c.tmax)}`],
-    [c.snowFrac >= 0.5, "stop", "ninsoare"],
-    [f >= 0.6, "stop", pr],
-    [f >= 0.25, "warn", pr],
-    [N(c.prevPrecip) && c.prevPrecip >= state.thr, "warn", `ieri ~${fmt(c.prevPrecip, 1)} mm: suprafața poate fi udă`],
-    [N(c.tmin) && c.tmin < 5, "warn", `minima ${fmtT(c.tmin)}: aderență slabă la rece`]
-  ], "uscat azi și ieri");
-  pick("fatada", [
-    [N(c.tmin) && c.tmin < 0, "stop", `îngheț noaptea, minima ${fmtT(c.tmin)}`],
-    [f >= 0.6, "stop", pr],
-    [N(g) && g >= 54, "stop", `rafale ${kmh(g)}`],
-    [N(c.tmin) && c.tmin < 5, "warn", `minima ${fmtT(c.tmin)}, sub +5°`],
-    [f >= 0.25, "warn", pr],
-    [N(c.rh) && c.rh >= 85, "warn", `umiditate ziua ${fmt(c.rh)}%: usucă greu`],
-    [N(g) && g >= 40, "warn", `rafale ${kmh(g)}`]
-  ], "fără ploaie, peste +5°");
-  pick("acoperis", [
-    [N(g) && g >= 50, "stop", `rafale ${kmh(g)}`],
-    [c.snowFrac >= 0.5, "stop", "zăpadă pe acoperiș"],
-    [N(g) && g >= 36, "warn", `rafale ${kmh(g)}`],
-    [N(c.tmin) && c.tmin < 0, "warn", "risc de polei dimineața"],
-    [f >= 0.5, "warn", "ploaie: suprafețe alunecoase"]
-  ], N(g) ? `rafale ${kmh(g)}` : "vânt slab");
-  if (N(g)) pick("macara", [
-    [g >= 54, "stop", `rafale ${kmh(g)}: oprire probabilă`],
-    [g >= 36, "warn", `rafale ${kmh(g)}: lucru cu atenție`]
-  ], `rafale ${kmh(g)}`);
-  else res.macara = { level: "na", reason: "fără date despre rafale" };
-  pick("sapaturi", [
-    [N(c.rain3) && c.rain3 >= 25, "stop", `~${fmt(c.rain3)} mm în 3 zile: teren îmbibat`],
-    [N(c.rain3) && c.rain3 >= 10, "warn", `~${fmt(c.rain3)} mm în 3 zile: noroi`],
-    [N(c.soil6) && c.soil6 < 0, "warn", `pământ înghețat la 6 cm (${fmtT(c.soil6)})`],
-    [f >= 0.6, "warn", pr]
-  ], N(c.rain3) ? `~${fmt(c.rain3, 1)} mm în 3 zile` : "fără ploaie");
-  return res;
-}
-const LEVEL_TXT = { ok: "se poate", warn: "cu atenție", stop: "nu", na: "fără date" };
-const LEVEL_SYM = { ok: "✓", warn: "!", stop: "✕", na: "–" };
-const activeWorks = () => WORKS.filter(w => state.works.includes(w.id));
-
-function rainText(c) {
-  if (!c.n) return "fără date";
-  if (c.snowFrac >= 0.5) return "Ninsoare probabilă";
-  if (c.frac >= 0.75) return "Ploaie aproape sigură";
-  if (c.frac >= 0.5) return "Ploaie probabilă";
-  if (c.frac >= 0.25) return "Incert";
-  if (c.wet > 0) return "Ploaie puțin probabilă";
-  return "Fără ploaie";
-}
-
-/* ---------- blocuri de 3 ore ---------- */
-function blocks(date) {
-  const res = [];
-  for (let b = 0; b < 8; b++) {
-    const from = b * 3, to = from + 3;
-    let n = 0, wet = 0, snow = 0; const temps = [], gusts = [], ps = [];
-    state.results.forEach(r => {
-      const d = r.days[date]; if (!d) return;
-      const H = d.hours.filter(x => x.hr >= from && x.hr < to);
-      const p = H.filter(x => isNum(x.p));
-      if (!p.length) return;
-      n++;
-      const sum = p.reduce((s, x) => s + x.p, 0);
-      const sn = H.reduce((s, x) => s + (isNum(x.s) ? x.s : 0), 0);
-      ps.push(sum);
-      if (sn >= 0.2) { wet++; snow++; } else if (sum >= 0.3) wet++;
-      const tt = H.map(x => x.t).filter(isNum); if (tt.length) temps.push(tt.reduce((s, v) => s + v, 0) / tt.length);
-      const gg = H.map(x => x.g).filter(isNum); if (gg.length) gusts.push(Math.max(...gg));
-    });
-    res.push({ from, n, wet, snow, frac: n ? wet / n : 0, t: median(temps), g: median(gusts), p: median(ps) });
-  }
-  return res;
-}
-
-/* ---------- pictograme ---------- */
-const ICON = {
-  sun: '<circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/>',
-  cloud: '<path d="M7 18.5h10.2a4 4 0 0 0 .4-7.98A6 6 0 0 0 6 11.3a3.6 3.6 0 0 0 1 7.2z"/>',
-  part: '<path d="M8.5 3v1.6M3 8.5h1.6M4.6 4.6l1.1 1.1M12.4 4.6l-1.1 1.1"/><path d="M5.6 10.6a3.4 3.4 0 0 1 5.9-3"/><path d="M9 20h8.6a3.4 3.4 0 0 0 .3-6.8 5.1 5.1 0 0 0-9.8.8A3 3 0 0 0 9 20z"/>',
-  rain: '<path d="M7 15h10.2a4 4 0 0 0 .4-7.98A6 6 0 0 0 6 7.8a3.6 3.6 0 0 0 1 7.2z"/><path d="M8.5 18l-1 2.5M12.5 18l-1 2.5M16.5 18l-1 2.5"/>',
-  shower: '<path d="M7 15h10.2a4 4 0 0 0 .4-7.98A6 6 0 0 0 6 7.8a3.6 3.6 0 0 0 1 7.2z"/><path d="M12.5 18l-1 2.5"/>',
-  snow: '<path d="M7 14.5h10.2a4 4 0 0 0 .4-7.98A6 6 0 0 0 6 7.3a3.6 3.6 0 0 0 1 7.2z"/><path d="M8 18.5h.01M12 18.5h.01M16 18.5h.01M10 21h.01M14 21h.01" stroke-width="2.6"/>',
-  wind: '<path d="M3 9h11a3 3 0 1 0-3-3M3 15h15a3 3 0 1 1-3 3"/>',
-  sunS: '<circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2"/>',
-  drops: '<path d="M12 3.5s5.5 6 5.5 10a5.5 5.5 0 0 1-11 0c0-4 5.5-10 5.5-10z"/>',
-  flake: '<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9"/>',
-  chev: '<path d="M6 9l6 6 6-6"/>'
-};
-function svg(name, cls, color) {
-  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"${cls ? ` class="${cls}"` : ""}${color ? ` style="color:var(${color})"` : ""} aria-hidden="true">${ICON[name]}</svg>`;
-}
-function glyph(c) {
-  if (c.snowFrac >= 0.5) return svg("snow", "", "--snow");
-  if (c.frac >= 0.5) return svg("rain", "", "--rain");
-  if (c.frac >= 0.25) return svg("shower", "", "--rain");
-  if (isNum(c.sun) && c.sun >= 6) return svg("sun", "", "--sun");
-  if (isNum(c.sun) && c.sun >= 2) return svg("part", "", "--muted");
-  return svg("cloud", "", "--muted");
-}
-
-/* ---------- date ---------- */
-function todayStr() { return new Date(Date.now() + state.offset * 1000).toISOString().slice(0, 10); }
-function dayLabel(d) {
-  const [y, m, dd] = d.split("-").map(Number);
-  const dt = new Date(Date.UTC(y, m - 1, dd));
-  const t = todayStr();
-  const tm = new Date(Date.UTC(...t.split("-").map((v, i) => i === 1 ? v - 1 : +v)) + 864e5).toISOString().slice(0, 10);
-  const dow = DOW[dt.getUTCDay()];
-  const big = d === t ? "Azi" : d === tm ? "Mâine" : dow;
-  const small = (d === t || d === tm ? dow.slice(0, 3) + ", " : "") + dd + " " + MON[m - 1];
-  return { big, small, short: d === t ? "Azi" : d === tm ? "Mâine" : dow.slice(0, 2) + " " + dd };
-}
-
-/* ---------- încărcare ---------- */
-async function fetchJson(url) {
-  const r = await fetch(url);
-  let j = null; try { j = await r.json(); } catch (e) {}
-  if (!r.ok || !j || j.error) throw new Error((j && j.reason) || ("HTTP " + r.status));
-  return j;
-}
-function coordQS(loc, pastDays = 0) {
-  return `latitude=${loc.lat.toFixed(4)}&longitude=${loc.lon.toFixed(4)}&timezone=auto&forecast_days=7${pastDays ? `&past_days=${pastDays}` : ""}`;
-}
-
-async function load() {
-  const loc = state.loc; if (!loc) return;
-  const id = ++state.reqId;
-  state.results = []; state.ens = []; state.soil = []; state.status = {}; state.open = null;
-  setStatus("loading", `Se încarcă ${MODELS.length} modele meteo…`);
-  $("#errBox").innerHTML = "";
-  $("#days").innerHTML = '<div class="skel"></div><div class="skel"></div><div class="skel"></div><div class="skel"></div>';
-  $("#summary").hidden = true;
-  $("#planner").hidden = true;
-  renderModels();
-  let done = 0;
-  // 2 zile din urmă: ploaia căzută deja contează pentru săpături și hidroizolații
-  const jobs = MODELS.map(m => fetchJson(`${API}?${coordQS(loc, 2)}&models=${m.id}&hourly=${HOURLY}`)
-    .then(j => {
-      if (id !== state.reqId) return;
-      if (isNum(j.utc_offset_seconds)) state.offset = j.utc_offset_seconds;
-      const days = aggregate(stripKeys(j.hourly || {}, m.id));
-      const any = Object.values(days).some(d => d.ok);
-      state.status[m.id] = any ? "ok" : "off";
-      if (any) state.results.push({ model: m, days });
-    })
-    .catch(() => { if (id === state.reqId) state.status[m.id] = "off"; })
-    .finally(() => {
-      if (id !== state.reqId) return;
-      done++;
-      setStatus("loading", `Am primit ${done} din ${MODELS.length} modele…`);
-      renderModels();
-    }));
-  const ensJobs = ENS_MODELS.map(e => fetchJson(`${ENS_API}?${coordQS(loc)}&models=${e}&hourly=precipitation`)
-    .then(j => { if (id === state.reqId) state.ens.push({ id: e, days: aggregateEns(stripKeys(j.hourly || {}, e)) }); })
-    .catch(() => {}));
-  const soilJobs = SOIL_SOURCES.map(s => fetchJson(`${API}?${coordQS(loc)}&models=${s.id}&hourly=${s.vars}`)
-    .then(j => {
-      if (id !== state.reqId) return;
-      const days = aggregateSoil(stripKeys(j.hourly || {}, s.id));
-      if (Object.values(days).some(d => isNum(d.s0) || isNum(d.s6))) state.soil.push({ id: s.id, days });
-    })
-    .catch(() => {}));
-  await Promise.allSettled(jobs.concat(ensJobs, soilJobs));
-  if (id !== state.reqId) return;
-  state.results.sort((a, b) => MODELS.indexOf(a.model) - MODELS.indexOf(b.model));
-  if (!state.results.length) {
-    setStatus("err", "Prognoza nu s-a încărcat.");
-    $("#days").innerHTML = "";
-    $("#errBox").innerHTML = '<div class="err-box">Niciun model nu a răspuns. Verificați conexiunea la internet și încercați din nou. Dacă ați deschis fișierul în previzualizarea unei aplicații (Claude, Fișiere, Telegram), deschideți în schimb linkul publicat, în Safari sau Chrome.<button type="button" id="retry">Reîncearcă</button></div>';
-    $("#retry").onclick = load;
-    return;
-  }
-  const now = new Date();
-  $("#updated").textContent = "actualizat " + now.toLocaleTimeString("ro-RO", { hour: "2-digit", minute: "2-digit" });
-  setStatus("ok", `${state.results.length} modele${state.ens.length ? " + ansamblu" : ""} · apăsați pe o zi pentru detalii pe ore`);
-  render();
-}
-
-/* ---------- desenare ---------- */
-function $(s) { return document.querySelector(s); }
-function setStatus(kind, text) {
-  const el = $("#status"); el.className = "status " + kind; $("#statusText").textContent = text;
-}
-function allDates() {
-  const s = new Set(); state.results.forEach(r => Object.keys(r.days).forEach(d => s.add(d)));
-  const t = todayStr();
-  return [...s].sort().filter(d => d >= t).slice(0, 7);
-}
-
-function render() {
-  const dates = allDates();
-  const cs = dates.map(consensus);
-  renderSummary(cs);
-  renderPlanner(cs);
-  const t = todayStr();
-  $("#days").innerHTML = cs.map(c => {
-    const L = dayLabel(c.date);
-    const votes = c.kinds.map(k => `<i class="${k}"></i>`).join("");
-    const amt = c.wet ? (c.snowFrac >= 0.5 && isNum(c.snow) ? ` · ~${fmt(c.snow, 0)} cm` : isNum(c.precipWet) ? ` · ~${fmt(c.precipWet, c.precipWet < 10 ? 1 : 0)} mm` : "") : "";
-    const chips = [];
-    if (isNum(c.gust)) chips.push(`<span class="chip" title="Rafale maxime, mediana modelelor">${svg("wind")}<span class="num">${fmt(c.gust)} km/h</span><span style="color:var(--muted)">${fmt(c.gust / 3.6)} m/s ${dirLabel(c.dir)}</span></span>`);
-    if (isNum(c.sun)) chips.push(`<span class="chip">${svg("sunS")}<span class="num">${fmt(c.sun, c.sun < 1 && c.sun > 0 ? 1 : 0)} h</span> soare</span>`);
-    if (c.snowy) chips.push(`<span class="chip" style="color:var(--snow)">${svg("flake")}zăpadă ${c.snowy}/${c.n}</span>`);
-    if (c.ensProb != null) chips.push(`<span class="chip" title="${c.ensN} rulări de ansamblu">${svg("drops")}ansamblu ${Math.round(c.ensProb * 100)}%</span>`);
-    if (isNum(c.soil0) && c.soil0 <= 2) {
-      const frozen = c.soil0 < 0;
-      chips.push(`<span class="chip" style="color:var(${frozen ? "--snow" : "--muted"})" title="Temperatura minimă a solului la suprafață">${svg("flake")}sol <span class="num">${fmtT(c.soil0)}</span>${frozen ? " îngheț" : ""}</span>`);
-    }
-    const J = judgeWorks(c);
-    activeWorks().forEach(w => { const j = J[w.id]; if (j && j.level !== "na") chips.push(`<span class="chip flag ${j.level}" title="${esc(w.label)}: ${esc(j.reason)}">${w.short}</span>`); });
-    return `<article class="day${c.date === t ? " today" : ""}" data-date="${c.date}" data-open="false">
-      <button class="day-head" type="button" aria-expanded="false" aria-controls="det-${c.date}">
-        <div class="d-date"><b>${L.big}</b><span>${L.small}</span></div>
-        <div class="d-glyph">${glyph(c)}</div>
-        <div class="d-temp"><span class="tmax">${fmtT(c.tmax)}</span><span class="tmin">${fmtT(c.tmin)}</span></div>
-        <div class="d-rain"><div class="votes" aria-hidden="true">${votes}</div>
-          <div class="votes-lbl"><b>${rainText(c)}</b><br><span class="num">${c.wet}/${c.n}</span> modele${amt}</div></div>
-        ${svg("chev", "chev")}
-      </button>
-      <div class="d-meta">${chips.join("")}</div>
-      <div class="d-detail" id="det-${c.date}" hidden></div>
-    </article>`;
-  }).join("");
-  document.querySelectorAll(".day-head").forEach(b => b.addEventListener("click", () => toggle(b.closest(".day"))));
-  if (state.open) { const el = document.querySelector(`.day[data-date="${state.open}"]`); if (el) toggle(el, true); }
-}
-
-function renderSummary(cs) {
-  const good = [], rain = [], unsure = [], snow = [], wind = [], frost = [], soilFrost = [];
-  cs.forEach(c => {
-    const s = dayLabel(c.date).short;
-    if (c.snowFrac >= 0.5) snow.push(s);
-    else if (c.frac >= 0.5) rain.push(s);
-    else if (c.frac >= 0.25) unsure.push(s);
-    if (isNum(c.gust) && c.gust >= 54) wind.push(s);
-    if (isNum(c.tmin) && c.tmin < 0) frost.push(s);
-    if (isNum(c.soil0) && c.soil0 < 0) soilFrost.push(s);
-    if (c.frac < 0.25 && c.snowFrac < 0.25 && !(isNum(c.gust) && c.gust >= 54)) good.push(s);
-  });
-  const row = (label, color, arr) => arr.length ? `<div class="sum-row"><div class="k"><i style="background:var(${color})"></i>${label}</div><div class="v">${arr.map(x => `<span class="tag">${x}</span>`).join("")}</div></div>` : "";
-  const html = row("Zile fără ploaie", "--ok", good) + row("Ploaie probabilă", "--rain", rain) + row("Incerte", "--warn", unsure)
-    + row("Ninsoare", "--snow", snow) + row("Vânt puternic", "--stop", wind) + row("Îngheț în aer", "--snow", frost)
-    + row("Îngheț la sol", "--snow", soilFrost);
-  const el = $("#summary");
-  el.innerHTML = `<h2>Săptămâna pe scurt</h2><div>${html}</div>`;
-  el.hidden = !html;
-}
-
-function renderPlanner(cs) {
-  const ws = activeWorks();
-  const el = $("#planner");
-  if (!ws.length || !cs.length) { el.hidden = true; return; }
-  const head = cs.map(c => { const L = dayLabel(c.date); return `<th scope="col">${L.short.replace(" ", "<br>")}</th>`; }).join("");
-  const J = cs.map(judgeWorks);
-  const body = ws.map(w => `<tr><th scope="row">${w.short}</th>${cs.map((c, i) => {
-    const j = J[i][w.id] || { level: "na", reason: "" };
-    const L = dayLabel(c.date);
-    return `<td><button type="button" class="cell ${j.level}" data-date="${c.date}" aria-label="${esc(w.label)}, ${esc(L.big)}: ${LEVEL_TXT[j.level]}. ${esc(j.reason)}" title="${esc(j.reason)}">${LEVEL_SYM[j.level]}</button></td>`;
-  }).join("")}</tr>`).join("");
-  el.innerHTML = `<h2>Calendar lucrări</h2>
-    <div class="pl-wrap"><table class="pl"><thead><tr><th></th>${head}</tr></thead><tbody>${body}</tbody></table></div>
-    <div class="pl-legend"><span><b class="cell ok">✓</b>se poate</span><span><b class="cell warn">!</b>cu atenție</span><span><b class="cell stop">✕</b>nu</span><span>Apăsați o căsuță pentru motiv.</span></div>`;
-  el.hidden = false;
-  el.querySelectorAll("button.cell").forEach(b => b.onclick = () => {
-    const day = document.querySelector(`.day[data-date="${b.dataset.date}"]`);
-    if (!day) return;
-    toggle(day, true);
-    day.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
-  });
-}
-
-function toggle(el, forceOpen) {
-  const det = el.querySelector(".d-detail");
-  const open = forceOpen || el.dataset.open !== "true";
-  document.querySelectorAll('.day[data-open="true"]').forEach(o => {
-    if (o !== el) { o.dataset.open = "false"; o.querySelector(".d-detail").hidden = true; o.querySelector(".day-head").setAttribute("aria-expanded", "false"); }
-  });
-  el.dataset.open = String(open); det.hidden = !open;
-  el.querySelector(".day-head").setAttribute("aria-expanded", String(open));
-  state.open = open ? el.dataset.date : null;
-  if (open) det.innerHTML = detailHtml(el.dataset.date);
-}
-
-function detailHtml(date) {
-  const bl = blocks(date);
-  const isToday = date === todayStr();
-  const nowH = new Date(Date.now() + state.offset * 1000).getUTCHours();
-  const blk = bl.map(b => {
-    const pct = Math.round(b.frac * 100);
-    const now = isToday && nowH >= b.from && nowH < b.from + 3;
-    if (!b.n) return `<div class="blk na"><span class="h">${String(b.from).padStart(2, "0")}</span><span class="bar"></span><span class="pv">–</span></div>`;
-    return `<div class="blk${now ? " now" : ""}" title="${b.wet} din ${b.n} modele dau precipitații">
-      <span class="h">${String(b.from).padStart(2, "0")}</span>
-      <span class="bar"><span class="${b.snow * 2 >= b.wet && b.snow ? "s" : ""}" style="height:${pct}%"></span></span>
-      <span class="pv">${b.wet}/${b.n}</span>
-      <span class="t">${fmtT(b.t)}</span>
-      <span class="g">${isNum(b.g) ? fmt(b.g) : "–"}</span></div>`;
-  }).join("");
-  const thr = state.thr;
-  const rows = state.results.map(r => {
-    const d = r.days[date]; if (!d) return "";
-    const wet = d.ok && d.precip >= thr;
-    return `<tr><td>${esc(r.model.name)} <small>${esc(r.model.org)}</small></td>
-      <td>${fmtT(d.tmin)} / ${fmtT(d.tmax)}</td>
-      <td class="${wet ? "wet" : ""}">${d.ok ? fmt(d.precip, 1) : "–"}</td>
-      <td>${d.ok && isNum(d.snow) ? fmt(d.snow, 1) : "–"}</td>
-      <td>${isNum(d.gust) ? fmt(d.gust) : "–"}</td>
-      <td>${isNum(d.sun) ? fmt(d.sun, 1) : "–"}</td></tr>`;
-  }).join("");
-  const c = consensus(date);
-  const J = judgeWorks(c);
-  const works = activeWorks().map(w => {
-    const j = J[w.id] || { level: "na", reason: "" };
-    return `<li><span class="cell ${j.level}" aria-hidden="true">${LEVEL_SYM[j.level]}</span><span><b>${esc(w.label)}</b> · ${LEVEL_TXT[j.level]}<br><small>${esc(j.reason)}</small></span></li>`;
-  }).join("");
-  const soil = (isNum(c.soil0) || isNum(c.soil6))
-    ? `<div class="soil-line">${svg("flake")}<span>Sol, minima zilei: la suprafață <b class="num">${fmtT(c.soil0)}</b>, la 6 cm <b class="num">${fmtT(c.soil6)}</b>${isNum(c.soil0) && c.soil0 < 0 ? " · îngheț la sol" : ""}</span></div>` : "";
-  return `${works ? `<div class="section-h">Lucrări</div><ul class="works">${works}</ul>` : ""}
-    ${soil}
-    <div class="section-h">Pe intervale de 3 ore</div>
-    <div class="blocks">${blk}</div>
-    <div class="legend">Bara arată câte modele dau precipitații în interval; dedesubt temperatura medie și rafalele maxime (km/h).</div>
-    <div class="section-h">Ce spune fiecare model</div>
-    <div class="tbl-wrap"><table>
-      <thead><tr><th>Model</th><th>Min / Max</th><th>Ploaie mm</th><th>Zăpadă cm</th><th>Rafale km/h</th><th>Soare h</th></tr></thead>
-      <tbody>${rows}</tbody></table></div>`;
-}
-
-function renderModels() {
-  $("#modelList").innerHTML = MODELS.map(m => {
-    const s = state.status[m.id];
-    return `<span class="${s === "off" ? "off" : ""}" title="${esc(m.org)}">${esc(m.name)}</span>`;
-  }).join("");
-}
-
-/* ---------- locație ---------- */
-function setLoc(loc, opts = {}) {
-  state.loc = { lat: +loc.lat, lon: +loc.lon, name: loc.name || null };
-  $("#placeName").textContent = state.loc.name || "Locația mea";
-  $("#placeCoords").textContent = `${state.loc.lat.toFixed(4)}, ${state.loc.lon.toFixed(4)}`;
-  store.set("ms.last", state.loc);
-  renderSaved();
-  if (!opts.noLoad) load();
-}
-
-async function reverseName(lat, lon) {
-  try {
-    const r = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=ro`);
-    const j = await r.json();
-    return j.locality || j.city || j.principalSubdivision || null;
-  } catch (e) { return null; }
-}
-
-// Locația curentă a telefonului. La eșec: la pornire se folosește ultimul loc văzut (sau Chișinău),
-// la apăsarea butonului rămâne locul afișat.
-function locateMe(atStartup) {
-  const fail = () => {
-    if (atStartup) {
-      const last = store.get("ms.last", null);
-      setLoc(last && isFinite(last.lat) ? last : CHISINAU);
-      toast("Nu am primit locația telefonului. Afișez ultimul loc folosit.");
-    } else {
-      $("#placeName").textContent = state.loc ? (state.loc.name || "Locația mea") : "Chișinău";
-      toast("Telefonul nu a dat locația. Permiteți accesul la locație sau căutați localitatea.");
-    }
-  };
-  if (!navigator.geolocation) { fail(); return; }
-  $("#placeName").textContent = "Se determină locația…";
-  $("#placeCoords").textContent = "";
-  navigator.geolocation.getCurrentPosition(async pos => {
-    const lat = pos.coords.latitude, lon = pos.coords.longitude;
-    state.mode = "gps";
-    setLoc({ lat, lon, name: "Locația mea" });
-    const n = await reverseName(lat, lon);
-    if (n && state.loc && state.loc.lat === lat) { state.loc.name = n; $("#placeName").textContent = n; store.set("ms.last", state.loc); }
-  }, fail, { enableHighAccuracy: false, timeout: 12000, maximumAge: 120000 });
-}
-
-let searchT = null;
-async function doSearch(q) {
-  const box = $("#results");
-  if (q.trim().length < 2) { box.innerHTML = ""; return; }
-  try {
-    const j = await fetchJson(`${GEO_API}?name=${encodeURIComponent(q.trim())}&count=8&language=ro&format=json`);
-    const list = j.results || [];
-    box.innerHTML = list.length ? list.map((r, i) => `<button type="button" data-i="${i}">${esc(r.name)} <small>${esc([r.admin1, r.country].filter(Boolean).join(", "))}</small></button>`).join("")
-      : '<div class="note">Nu am găsit localitatea. Încercați fără diacritice sau alt nume.</div>';
-    box.querySelectorAll("button").forEach(b => b.onclick = () => {
-      const r = list[+b.dataset.i];
-      state.mode = "manual";
-      setLoc({ lat: r.latitude, lon: r.longitude, name: r.name });
-      $("#searchBox").hidden = true; $("#btnSearch").setAttribute("aria-expanded", "false"); $("#q").value = ""; box.innerHTML = "";
-    });
-  } catch (e) { box.innerHTML = '<div class="note">Căutarea nu a funcționat. Verificați internetul.</div>'; }
-}
-
-function shareUrl() {
-  // Linkul simplu al aplicației: fiecare om vede vremea din locul unde se află.
-  const u = new URL(location.href.split("#")[0]);
-  u.search = "";
-  return u.toString();
-}
-
-function renderSaved() {
-  const list = store.get("ms.saved", []);
-  $("#saved").innerHTML = list.map((s, i) => {
-    const cur = state.loc && Math.abs(s.lat - state.loc.lat) < 1e-3 && Math.abs(s.lon - state.loc.lon) < 1e-3;
-    return `<button type="button" data-i="${i}" aria-current="${cur}">${esc(s.name)}</button>`;
-  }).join("");
-  $("#saved").querySelectorAll("button").forEach(b => b.onclick = () => { state.mode = "manual"; setLoc(list[+b.dataset.i]); });
-}
-
-let toastT = null;
-function toast(msg) {
-  let el = document.querySelector(".toast");
-  if (!el) { el = document.createElement("div"); el.className = "toast"; el.setAttribute("role", "status"); document.body.appendChild(el); }
-  el.textContent = msg; el.hidden = false;
-  clearTimeout(toastT); toastT = setTimeout(() => { el.hidden = true; }, 3200);
-}
-
-/* ---------- pornire ---------- */
-function renderWorkPick() {
-  const el = $("#workPick");
-  el.innerHTML = WORKS.map(w => `<label><input type="checkbox" id="wk-${w.id}" value="${w.id}"${state.works.includes(w.id) ? " checked" : ""}>${esc(w.label)}</label>`).join("");
-  el.querySelectorAll("input").forEach(i => i.onchange = () => {
-    state.works = WORKS.map(w => w.id).filter(id => el.querySelector(`#wk-${id}`).checked);
-    store.set("ms.works", state.works);
-    if (state.results.length) render();
-  });
-}
-
-function init() {
-  renderWorkPick();
-  $("#thr").value = String(state.thr);
-  $("#thr").onchange = e => { state.thr = Number(e.target.value); store.set("ms.thr", state.thr); if (state.results.length) render(); };
-  $("#btnLocate").onclick = () => locateMe(false);
-  $("#btnSearch").onclick = () => {
-    const bx = $("#searchBox"); bx.hidden = !bx.hidden;
-    $("#btnSearch").setAttribute("aria-expanded", String(!bx.hidden));
-    if (!bx.hidden) $("#q").focus();
-  };
-  $("#q").addEventListener("input", e => { clearTimeout(searchT); searchT = setTimeout(() => doSearch(e.target.value), 350); });
-  $("#btnShare").onclick = () => {
-    if (!state.loc) return;
-    const url = shareUrl();
-    const fb = () => { const n = $("#shareFallback"); n.hidden = false; n.innerHTML = `Copiați linkul: <input readonly value="${esc(url)}" style="width:100%;margin-top:4px;padding:6px;border-radius:6px;border:1px solid var(--line);background:transparent;color:inherit">`; const i = n.querySelector("input"); i.focus(); i.select(); };
-    try {
-      navigator.clipboard.writeText(url).then(() => toast("Link copiat. Fiecare va vedea vremea de unde se află."), fb);
-    } catch (e) { fb(); }
-  };
-  $("#btnSave").onclick = () => {
-    if (!state.loc) return;
-    const list = store.get("ms.saved", []);
-    const name = (state.loc.name && state.loc.name !== "Locația mea") ? state.loc.name : `Loc ${list.length + 1}`;
-    if (list.some(s => Math.abs(s.lat - state.loc.lat) < 1e-3 && Math.abs(s.lon - state.loc.lon) < 1e-3)) { toast("Locul e deja salvat."); return; }
-    list.push({ lat: state.loc.lat, lon: state.loc.lon, name });
-    store.set("ms.saved", list.slice(-8)); renderSaved(); toast(`Salvat: ${name}`);
-  };
-
-  const p = new URLSearchParams(location.search);
-  const lat = parseFloat(p.get("lat")), lon = parseFloat(p.get("lon"));
-  // Oricine deschide aplicația (și din link) vede vremea de unde se află.
-  // Coordonatele dintr-un link vechi servesc doar ca rezervă dacă telefonul nu dă locația.
-  if (isFinite(lat) && isFinite(lon)) store.set("ms.last", { lat, lon, name: p.get("n") || null });
-  if (location.search) history.replaceState(null, "", location.pathname);
-  locateMe(true);
-
-  // Aplicația de pe ecranul principal rămâne deschisă în fundal: la revenire după 15 min
-  // reîmprospătăm, iar dacă afișăm locația curentă o determinăm din nou.
-  let hiddenAt = 0;
-  document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "hidden") { hiddenAt = Date.now(); return; }
-    if (hiddenAt && Date.now() - hiddenAt > 15 * 60 * 1000) {
-      if (state.mode === "gps") locateMe(false); else if (state.loc) load();
-    }
-  });
-  setInterval(() => { if (document.visibilityState === "visible" && state.results.length) load(); }, 30 * 60 * 1000);
-}
-
-if (typeof window !== "undefined" && window.document && !window.__TEST__) init();
-</script>
+<script src="i18n.js"></script>
+<script src="app.js"></script>
 </body>
 </html>
