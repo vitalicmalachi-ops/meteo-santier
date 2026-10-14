@@ -246,6 +246,14 @@ table.pl thead th.today{color:var(--ink);font-weight:700}
 .set-grid input[type=time]{width:100%;padding:7px 10px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:500 15px var(--f-mono)}
 .set-note{margin:0;font-size:13px;grid-column:1/-1}
 
+
+/* Setări pliate: se deschid doar la cerere, închise la fiecare pornire */
+details.set-box{border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:0 14px}
+details.set-box>summary{cursor:pointer;padding:14px 0;font:700 13px/1 var(--f-display);font-stretch:110%;letter-spacing:.12em;text-transform:uppercase;color:var(--ink)}
+details.set-box[open]{padding-bottom:14px;display:grid;gap:14px}
+details.set-box[open]>summary{padding-bottom:0}
+details.set-box details.limits{background:var(--bg)}
+
 @media (max-width:420px){
   .day-head{grid-template-columns:66px 26px 52px minmax(0,1fr) 16px;gap:8px;padding:11px 10px 7px}
   .d-meta{padding:0 10px 11px}

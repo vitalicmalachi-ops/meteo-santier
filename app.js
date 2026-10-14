@@ -732,7 +732,8 @@ function renderSettings() {
     return `<label for="lim-${w}-${x.k}"><span>${esc(t(limitLabelKey(w, x.k)))}</span><span class="lim-in"><input type="number" inputmode="decimal" step="${step}" id="lim-${w}-${x.k}" data-w="${w}" data-k="${x.k}" data-u="${x.u}" value="${Number(v.toFixed(dec))}"><i>${esc(unitLabel[x.u]())}</i></span></label>`;
   }).join("")}</fieldset>`).join("");
   $("#settings").innerHTML = `
-    <h2 class="section-h">${esc(t("settingsTitle"))}</h2>
+    <details class="set-box" id="setBox"${state.setOpen ? " open" : ""}>
+    <summary>${esc(t("settingsTitle"))}</summary>
     <div class="set-grid">
       <label>${esc(t("setLang"))}${sel("setLang", LANGS, state.lang)}</label>
       <label>${esc(t("setTemp"))}${sel("setTemp", [["C", "°C"], ["F", "°F"]], state.units.temp)}</label>
@@ -742,11 +743,12 @@ function renderSettings() {
     </div>
     <h2 class="section-h">${esc(t("worksFollowed"))}</h2>
     <div class="work-pick">${WORK_IDS.map(w => `<label><input type="checkbox" id="wk-${w}" value="${w}"${state.works.includes(w) ? " checked" : ""}>${esc(t("w_" + w))}</label>`).join("")}</div>
-    <details class="limits" id="limitsBox"${store.get("ms.limitsOpen", false) ? " open" : ""}>
+    <details class="limits" id="limitsBox"${state.limitsOpen ? " open" : ""}>
       <summary>${esc(t("limitsTitle"))}</summary>
       <p>${esc(t("limitsNote"))}</p>
       <div class="lim-grid">${limits}</div>
       <button type="button" class="reset" id="resetLimits">${esc(t("resetLimits"))}</button>
+    </details>
     </details>
     <h2 class="section-h">${esc(t("modelsUsed"))}</h2>
     <div class="models" id="modelList"></div>
@@ -765,7 +767,8 @@ function renderSettings() {
     store.set("ms.works", state.works);
     if (state.results.length) render();
   }; });
-  $("#limitsBox").addEventListener("toggle", e => store.set("ms.limitsOpen", e.target.open));
+  $("#limitsBox").addEventListener("toggle", e => { state.limitsOpen = e.target.open; });
+  $("#setBox").addEventListener("toggle", e => { state.setOpen = e.target.open; });
   document.querySelectorAll(".lim-grid input").forEach(i => i.onchange = () => {
     const v = parseFloat(String(i.value).replace(",", "."));
     if (!isFinite(v)) { renderSettings(); return; }
@@ -921,7 +924,7 @@ function toast(msg) {
 
 /* ---------- pornire ---------- */
 function init() {
-  store.del("ms.cache"); store.del("ms.work");   // date vechi, nu se mai folosesc
+  store.del("ms.cache"); store.del("ms.work"); store.del("ms.limitsOpen");   // date vechi, nu se mai folosesc
   applyStatic();
   renderSettings();
   $("#btnLocate").onclick = () => locateMe(false);
