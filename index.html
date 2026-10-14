@@ -663,18 +663,29 @@ async function reverseName(lat, lon) {
   } catch (e) { return null; }
 }
 
-function locateMe(fallback) {
-  if (!navigator.geolocation) { if (fallback) setLoc(CHISINAU); return; }
+// Locația curentă a telefonului. La eșec: la pornire se folosește ultimul loc văzut (sau Chișinău),
+// la apăsarea butonului rămâne locul afișat.
+function locateMe(atStartup) {
+  const fail = () => {
+    if (atStartup) {
+      const last = store.get("ms.last", null);
+      setLoc(last && isFinite(last.lat) ? last : CHISINAU);
+      toast("Nu am primit locația telefonului. Afișez ultimul loc folosit.");
+    } else {
+      $("#placeName").textContent = state.loc ? (state.loc.name || "Locația mea") : "Chișinău";
+      toast("Telefonul nu a dat locația. Permiteți accesul la locație sau căutați localitatea.");
+    }
+  };
+  if (!navigator.geolocation) { fail(); return; }
   $("#placeName").textContent = "Se determină locația…";
+  $("#placeCoords").textContent = "";
   navigator.geolocation.getCurrentPosition(async pos => {
     const lat = pos.coords.latitude, lon = pos.coords.longitude;
+    state.mode = "gps";
     setLoc({ lat, lon, name: "Locația mea" });
     const n = await reverseName(lat, lon);
     if (n && state.loc && state.loc.lat === lat) { state.loc.name = n; $("#placeName").textContent = n; store.set("ms.last", state.loc); }
-  }, () => {
-    if (fallback) setLoc(CHISINAU);
-    else { $("#placeName").textContent = state.loc ? (state.loc.name || "Locația mea") : "Chișinău"; toast("Telefonul nu a dat locația. Permiteți accesul la locație în browser sau căutați localitatea."); }
-  }, { enableHighAccuracy: false, timeout: 12000, maximumAge: 600000 });
+  }, fail, { enableHighAccuracy: false, timeout: 12000, maximumAge: 120000 });
 }
 
 let searchT = null;
@@ -688,6 +699,7 @@ async function doSearch(q) {
       : '<div class="note">Nu am găsit localitatea. Încercați fără diacritice sau alt nume.</div>';
     box.querySelectorAll("button").forEach(b => b.onclick = () => {
       const r = list[+b.dataset.i];
+      state.mode = "manual";
       setLoc({ lat: r.latitude, lon: r.longitude, name: r.name });
       $("#searchBox").hidden = true; $("#btnSearch").setAttribute("aria-expanded", "false"); $("#q").value = ""; box.innerHTML = "";
     });
@@ -709,7 +721,7 @@ function renderSaved() {
     const cur = state.loc && Math.abs(s.lat - state.loc.lat) < 1e-3 && Math.abs(s.lon - state.loc.lon) < 1e-3;
     return `<button type="button" data-i="${i}" aria-current="${cur}">${esc(s.name)}</button>`;
   }).join("");
-  $("#saved").querySelectorAll("button").forEach(b => b.onclick = () => setLoc(list[+b.dataset.i]));
+  $("#saved").querySelectorAll("button").forEach(b => b.onclick = () => { state.mode = "manual"; setLoc(list[+b.dataset.i]); });
 }
 
 let toastT = null;
@@ -750,12 +762,19 @@ function init() {
 
   const p = new URLSearchParams(location.search);
   const lat = parseFloat(p.get("lat")), lon = parseFloat(p.get("lon"));
-  if (isFinite(lat) && isFinite(lon)) setLoc({ lat, lon, name: p.get("n") || null });
-  else {
-    const last = store.get("ms.last", null);
-    if (last && isFinite(last.lat)) setLoc(last);
-    else locateMe(true);
-  }
+  // Un link trimis de cineva deschide șantierul din link; altfel pornim mereu de la locația curentă.
+  if (isFinite(lat) && isFinite(lon)) { state.mode = "link"; setLoc({ lat, lon, name: p.get("n") || null }); }
+  else locateMe(true);
+
+  // Aplicația de pe ecranul principal rămâne deschisă în fundal: la revenire după 15 min
+  // reîmprospătăm, iar dacă afișăm locația curentă o determinăm din nou.
+  let hiddenAt = 0;
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") { hiddenAt = Date.now(); return; }
+    if (hiddenAt && Date.now() - hiddenAt > 15 * 60 * 1000) {
+      if (state.mode === "gps") locateMe(false); else if (state.loc) load();
+    }
+  });
   setInterval(() => { if (document.visibilityState === "visible" && state.results.length) load(); }, 30 * 60 * 1000);
 }
 
