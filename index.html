@@ -1,0 +1,760 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Meteo Șantier</title>
+<meta name="description" content="Prognoză pe 7 zile cu consens între 13 modele meteo, pentru planificarea lucrărilor pe șantier.">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Meteo Șantier">
+<meta name="theme-color" content="#1D2120">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,500..800&family=IBM+Plex+Mono:wght@400;500&family=Source+Sans+3:wght@400;600&display=swap">
+<style>
+/* Layout: o tablă de șantier — bandă de antet cu linia de avertizare, apoi rândurile zilelor ca o listă de pontaj, detaliile se deschid sub fiecare zi. */
+:root{
+  --bg:#ECEDE8; --surface:#F8F8F4; --ink:#1D2120; --muted:#5C6460; --line:#CDD1C9;
+  --band:#1D2120; --band-ink:#F1F2EC; --band-muted:#A9B0AB;
+  --accent:#F2B300; --sun:#B97F00; --rain:#2C6AAE; --snow:#6E86A3;
+  --ok:#2C7A4B; --warn:#A86D12; --stop:#B23A2E;
+  --f-display:"Archivo","Arial Narrow",system-ui,sans-serif;
+  --f-body:"Source Sans 3",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#141716; --surface:#1C201F; --ink:#E8EBE5; --muted:#9BA39F; --line:#2F3533;
+  --band:#0C0E0D; --band-ink:#EEF0EA; --band-muted:#8E9692;
+  --sun:#F2B300; --rain:#69A5E6; --snow:#A7B9CE; --ok:#5DBB84; --warn:#E2A84B; --stop:#E8705F;
+  color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#141716; --surface:#1C201F; --ink:#E8EBE5; --muted:#9BA39F; --line:#2F3533;
+  --band:#0C0E0D; --band-ink:#EEF0EA; --band-muted:#8E9692;
+  --sun:#F2B300; --rain:#69A5E6; --snow:#A7B9CE; --ok:#5DBB84; --warn:#E2A84B; --stop:#E8705F;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 var(--f-body)}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+.wrap{max-width:760px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.num{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+
+/* Antet */
+header{background:var(--band);color:var(--band-ink);padding-top:env(safe-area-inset-top,0px)}
+header .wrap{padding-block:18px 16px;display:grid;gap:12px}
+.brand{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.brand b{font:800 13px/1 var(--f-display);font-stretch:110%;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+.brand span{font:12px var(--f-mono);color:var(--band-muted)}
+.place{min-width:0}
+.place h1{margin:0;font:750 clamp(28px,8vw,40px)/1.02 var(--f-display);font-stretch:72%;letter-spacing:-.01em;text-wrap:balance;overflow-wrap:anywhere}
+.place .coords{font:12px var(--f-mono);color:var(--band-muted);margin-top:4px}
+.actions{display:flex;flex-wrap:wrap;gap:8px}
+.btn{display:inline-flex;align-items:center;gap:6px;border:1px solid color-mix(in srgb,var(--band-ink) 28%,transparent);background:transparent;color:var(--band-ink);padding:7px 12px;border-radius:999px;font-size:14px;font-weight:600;cursor:pointer;min-height:36px}
+.btn:hover{background:color-mix(in srgb,var(--band-ink) 10%,transparent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#1D2120}
+.btn svg{width:16px;height:16px;flex:none}
+.hazard{height:7px;background:repeating-linear-gradient(-45deg,var(--accent) 0 9px,var(--band) 9px 18px)}
+
+.search{display:grid;gap:8px}
+.search input{width:100%;padding:10px 12px;border-radius:10px;border:1px solid color-mix(in srgb,var(--band-ink) 30%,transparent);background:color-mix(in srgb,var(--band-ink) 8%,transparent);color:var(--band-ink)}
+.search input::placeholder{color:var(--band-muted)}
+.results{display:grid;gap:2px}
+.results button{text-align:left;background:transparent;border:0;padding:8px 10px;border-radius:8px;color:var(--band-ink);cursor:pointer}
+.results button:hover{background:color-mix(in srgb,var(--band-ink) 10%,transparent)}
+.results small{color:var(--band-muted)}
+.saved{display:flex;gap:6px;flex-wrap:wrap}
+.saved button{border:0;background:color-mix(in srgb,var(--band-ink) 12%,transparent);color:var(--band-ink);border-radius:6px;padding:4px 10px;font-size:13px;cursor:pointer}
+.saved button[aria-current="true"]{background:var(--accent);color:#1D2120}
+.note{font-size:13px;color:var(--band-muted)}
+
+main .wrap{padding-block:18px 28px;display:grid;gap:18px}
+.status{font-size:14px;color:var(--muted);display:flex;gap:8px;align-items:baseline}
+.status .dot{width:8px;height:8px;border-radius:50%;background:var(--ok);flex:none;transform:translateY(-1px)}
+.status.loading .dot{background:var(--accent);animation:pulse 1s infinite alternate}
+.status.err{color:var(--stop)}
+.status.err .dot{background:var(--stop)}
+@keyframes pulse{to{opacity:.3}}
+.err-box{border:1px solid var(--stop);border-radius:10px;padding:12px 14px;color:var(--stop);display:grid;gap:8px;justify-items:start}
+.err-box button{border:1px solid currentColor;background:transparent;color:inherit;border-radius:999px;padding:5px 12px;cursor:pointer}
+
+/* Rezumat */
+.summary{display:grid;gap:8px}
+.summary h2,.section-h{margin:0;font:700 12px/1 var(--f-display);font-stretch:110%;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.sum-row{display:grid;grid-template-columns:140px 1fr;gap:10px;align-items:baseline;padding:8px 0;border-top:1px solid var(--line)}
+.sum-row:first-of-type{border-top:0}
+.sum-row .k{font-weight:600;display:flex;align-items:center;gap:8px}
+.sum-row .k i{width:10px;height:10px;border-radius:2px;flex:none}
+.sum-row .v{display:flex;flex-wrap:wrap;gap:6px;min-width:0}
+.tag{font:500 13px var(--f-mono);background:var(--surface);border:1px solid var(--line);border-radius:5px;padding:1px 7px}
+
+/* Zile */
+.days{display:grid;gap:10px}
+.day{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.day.today{border-color:color-mix(in srgb,var(--ink) 35%,var(--line))}
+.day-head{all:unset;box-sizing:border-box;width:100%;display:grid;grid-template-columns:78px 30px 62px minmax(0,1fr) 18px;gap:10px;align-items:center;padding:12px 12px 8px;cursor:pointer}
+.day-head:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.d-date b{display:block;font:750 19px/1.05 var(--f-display);font-stretch:80%}
+.d-date span{font-size:13px;color:var(--muted)}
+.d-glyph svg{width:30px;height:30px;display:block}
+.d-temp{display:flex;flex-direction:column;line-height:1.1}
+.d-temp .tmax{font:500 19px var(--f-mono)}
+.d-temp .tmin{font:400 14px var(--f-mono);color:var(--muted)}
+.d-rain{min-width:0;display:grid;gap:4px}
+.votes{display:flex;flex-wrap:wrap;gap:2px}
+.votes i{width:9px;height:14px;border-radius:2px;border:1px solid var(--line);background:transparent}
+.votes i.r{background:var(--rain);border-color:var(--rain)}
+.votes i.s{background:var(--snow);border-color:var(--snow)}
+.votes-lbl{font-size:13px;line-height:1.25;color:var(--muted)}
+.votes-lbl b{color:var(--ink);font-weight:600}
+.chev{width:18px;height:18px;color:var(--muted);transition:transform .2s}
+.day[data-open="true"] .chev{transform:rotate(180deg)}
+.d-meta{display:flex;flex-wrap:wrap;gap:6px;padding:0 12px 12px}
+.chip{display:inline-flex;align-items:center;gap:5px;font-size:13px;padding:3px 8px;border-radius:6px;background:color-mix(in srgb,var(--ink) 6%,transparent);white-space:nowrap}
+.chip svg{width:14px;height:14px}
+.chip.flag{font-weight:600}
+.chip.flag::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.chip.ok{color:var(--ok);background:color-mix(in srgb,var(--ok) 12%,transparent)}
+.chip.warn{color:var(--warn);background:color-mix(in srgb,var(--warn) 14%,transparent)}
+.chip.stop{color:var(--stop);background:color-mix(in srgb,var(--stop) 12%,transparent)}
+
+.d-detail{border-top:1px dashed var(--line);padding:12px;display:grid;gap:14px}
+.blocks{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:4px}
+.blk{display:grid;gap:3px;justify-items:center;text-align:center;padding:6px 2px;border-radius:8px}
+.blk.now{background:color-mix(in srgb,var(--accent) 22%,transparent)}
+.blk .h{font:500 12px var(--f-mono);color:var(--muted)}
+.blk .bar{width:14px;height:40px;border-radius:3px;background:color-mix(in srgb,var(--ink) 8%,transparent);position:relative;overflow:hidden}
+.blk .bar span{position:absolute;left:0;right:0;bottom:0;background:var(--rain)}
+.blk .bar span.s{background:var(--snow)}
+.blk .pv{font:500 12px var(--f-mono)}
+.blk .t{font:500 13px var(--f-mono)}
+.blk .g{font:400 11px var(--f-mono);color:var(--muted)}
+.blk.na{opacity:.4}
+.legend{font-size:12.5px;color:var(--muted)}
+.tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{border-collapse:collapse;width:100%;min-width:440px;font-size:13px}
+th,td{padding:5px 6px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+th{font-weight:600;color:var(--muted);font-size:12px}
+td{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+td:first-child{font-family:var(--f-body)}
+td.wet{color:var(--rain);font-weight:600}
+td small{display:block;color:var(--muted);font-family:var(--f-body);font-size:11.5px}
+
+.skel{height:84px;border-radius:12px;background:linear-gradient(90deg,var(--surface),color-mix(in srgb,var(--ink) 5%,var(--surface)),var(--surface));background-size:200% 100%;animation:sh 1.4s infinite linear;border:1px solid var(--line)}
+@keyframes sh{to{background-position:-200% 0}}
+
+footer .wrap{padding-block:6px 32px;display:grid;gap:14px;font-size:14px;color:var(--muted)}
+footer label{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+footer select{padding:5px 8px;border-radius:8px;border:1px solid var(--line);background:var(--surface)}
+.models{display:flex;flex-wrap:wrap;gap:6px}
+.models span{font-size:12.5px;padding:2px 8px;border-radius:5px;border:1px solid var(--line)}
+.models span.off{opacity:.45;text-decoration:line-through}
+footer p{margin:0;max-width:65ch}
+footer a{color:inherit}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:999px;font-size:14px;font-weight:600;max-width:calc(100% - 32px)}
+
+@media (max-width:420px){
+  .day-head{grid-template-columns:66px 26px 52px minmax(0,1fr) 16px;gap:8px;padding:11px 10px 7px}
+  .d-meta{padding:0 10px 11px}
+  .d-date b{font-size:17px}
+  .d-glyph svg{width:26px;height:26px}
+  .d-temp .tmax{font-size:17px}
+  .sum-row{grid-template-columns:1fr;gap:4px}
+  .d-detail{padding:12px 10px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="brand"><b>Meteo Șantier</b><span id="updated"></span></div>
+    <div class="place">
+      <h1 id="placeName">Se determină locația…</h1>
+      <div class="coords" id="placeCoords"></div>
+    </div>
+    <div class="actions">
+      <button class="btn primary" id="btnLocate" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3.5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="7.5"/></svg>Locația mea</button>
+      <button class="btn" id="btnSearch" type="button" aria-expanded="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l5 5"/></svg>Alt loc</button>
+      <button class="btn" id="btnShare" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg>Copiază link</button>
+      <button class="btn" id="btnSave" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M6 3h12v18l-6-4-6 4z"/></svg>Salvează locul</button>
+    </div>
+    <div class="search" id="searchBox" hidden>
+      <input id="q" type="search" placeholder="Localitate: Stăuceni, Codru, Ialoveni…" autocomplete="off" enterkeyhint="search">
+      <div class="results" id="results"></div>
+    </div>
+    <div class="saved" id="saved"></div>
+    <div class="note" id="shareFallback" hidden></div>
+  </div>
+  <div class="hazard" aria-hidden="true"></div>
+</header>
+
+<main>
+  <div class="wrap">
+    <div class="status loading" id="status"><span class="dot"></span><span id="statusText">Se încarcă modelele meteo…</span></div>
+    <div id="errBox"></div>
+    <section class="summary" id="summary" hidden></section>
+    <section class="days" id="days" aria-label="Prognoza pe 7 zile">
+      <div class="skel"></div><div class="skel"></div><div class="skel"></div><div class="skel"></div>
+    </section>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <label for="thr">Contez o zi ca ploioasă la:
+      <select id="thr">
+        <option value="0.5">0,5 mm (orice ploaie)</option>
+        <option value="1">1 mm (ploaie reală)</option>
+        <option value="3">3 mm (ploaie serioasă)</option>
+      </select>
+    </label>
+    <div class="section-h">Modele folosite</div>
+    <div class="models" id="modelList"></div>
+    <p>Pătrățelele de lângă fiecare zi sunt modelele: albastru înseamnă că modelul dă ploaie, gri-albăstrui ninsoare, gol fără precipitații. Temperaturile, vântul și soarele sunt mediana modelelor. „Ansamblu” arată în câte din peste 100 de rulări perturbate ale modelelor ECMWF, GFS și ICON plouă.</p>
+    <p>Praguri orientative: betonare fără măsuri de iarnă la minimă ≥ +5 °C; macara cu atenție la rafale peste 36 km/h (10 m/s), oprire probabilă peste 54 km/h (15 m/s). Verificați fișa tehnică a utilajului și normativele în vigoare.</p>
+    <p>Date meteo: <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo.com</a> (CC BY 4.0), din modelele serviciilor meteo naționale.</p>
+  </div>
+</footer>
+
+<script>
+"use strict";
+const API = "https://api.open-meteo.com/v1/forecast";
+const ENS_API = "https://ensemble-api.open-meteo.com/v1/ensemble";
+const GEO_API = "https://geocoding-api.open-meteo.com/v1/search";
+const CHISINAU = { lat: 47.0105, lon: 28.8638, name: "Chișinău" };
+const HOURLY = "temperature_2m,precipitation,snowfall,wind_speed_10m,wind_gusts_10m,wind_direction_10m,sunshine_duration";
+
+const MODELS = [
+  { id: "ecmwf_ifs025", name: "ECMWF IFS", org: "Centrul European" },
+  { id: "ecmwf_aifs025_single", name: "ECMWF AIFS", org: "Centrul European, model AI" },
+  { id: "icon_seamless", name: "ICON", org: "DWD, Germania" },
+  { id: "gfs_seamless", name: "GFS", org: "NOAA, SUA" },
+  { id: "meteofrance_seamless", name: "ARPEGE", org: "Météo-France" },
+  { id: "ukmo_seamless", name: "UKMO", org: "Met Office, Marea Britanie" },
+  { id: "gem_seamless", name: "GEM", org: "Canada" },
+  { id: "jma_seamless", name: "JMA", org: "Japonia" },
+  { id: "kma_seamless", name: "KMA", org: "Coreea de Sud" },
+  { id: "cma_grapes_global", name: "GRAPES", org: "China" },
+  { id: "bom_access_global", name: "ACCESS", org: "Australia" },
+  { id: "knmi_harmonie_arome_europe", name: "HARMONIE-NL", org: "KNMI, doar 2–3 zile" },
+  { id: "dmi_harmonie_arome_europe", name: "HARMONIE-DK", org: "DMI, doar 2–3 zile" }
+];
+const ENS_MODELS = ["ecmwf_ifs025", "gfs025", "icon_seamless"];
+
+const DOW = ["Duminică", "Luni", "Marți", "Miercuri", "Joi", "Vineri", "Sâmbătă"];
+const MON = ["ian", "feb", "mar", "apr", "mai", "iun", "iul", "aug", "sep", "oct", "noi", "dec"];
+
+const store = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+};
+
+const state = {
+  loc: null, results: [], ens: [], status: {}, offset: 0,
+  thr: Number(store.get("ms.thr", 1)) || 1, open: null, reqId: 0
+};
+
+/* ---------- utilitare ---------- */
+const isNum = v => typeof v === "number" && isFinite(v);
+function median(arr) {
+  const a = arr.filter(isNum).sort((x, y) => x - y);
+  if (!a.length) return null;
+  const m = a.length >> 1;
+  return a.length % 2 ? a[m] : (a[m - 1] + a[m]) / 2;
+}
+const minOf = arr => { const a = arr.filter(isNum); return a.length ? Math.min(...a) : null; };
+const maxOf = arr => { const a = arr.filter(isNum); return a.length ? Math.max(...a) : null; };
+function fmt(x, dec = 0) {
+  if (!isNum(x)) return "–";
+  return x.toLocaleString("ro-RO", { minimumFractionDigits: dec, maximumFractionDigits: dec });
+}
+function fmtT(x) { if (!isNum(x)) return "–"; const r = Math.round(x); return (r === 0 ? 0 : r) + "°"; }
+function stripKeys(obj, id) {
+  const o = {}; const suf = "_" + id;
+  for (const k in obj) o[k.endsWith(suf) ? k.slice(0, -suf.length) : k] = obj[k];
+  return o;
+}
+function dirLabel(deg) {
+  if (!isNum(deg)) return "";
+  return ["N", "NE", "E", "SE", "S", "SV", "V", "NV"][Math.round(((deg % 360) + 360) % 360 / 45) % 8];
+}
+function circMean(degs, weights) {
+  let x = 0, y = 0, n = 0;
+  degs.forEach((d, i) => {
+    if (!isNum(d)) return;
+    const w = weights && isNum(weights[i]) ? Math.max(weights[i], 0.1) : 1;
+    x += Math.cos(d * Math.PI / 180) * w; y += Math.sin(d * Math.PI / 180) * w; n++;
+  });
+  if (!n) return null;
+  return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
+}
+const sumOf = arr => { const a = arr.filter(isNum); return a.length ? a.reduce((s, v) => s + v, 0) : null; };
+function covers(hours, key) {
+  const hs = hours.filter(h => isNum(h[key])).map(h => h.hr);
+  return hs.length >= 4 && Math.min(...hs) <= 3 && Math.max(...hs) >= 21;
+}
+function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
+
+/* ---------- agregare pe zile (din datele orare ale fiecărui model) ---------- */
+function aggregate(h) {
+  const days = new Map();
+  (h.time || []).forEach((t, i) => {
+    const d = t.slice(0, 10), hr = +t.slice(11, 13);
+    if (!days.has(d)) days.set(d, []);
+    days.get(d).push({
+      hr, t: h.temperature_2m?.[i], p: h.precipitation?.[i], s: h.snowfall?.[i],
+      w: h.wind_speed_10m?.[i], g: h.wind_gusts_10m?.[i], dir: h.wind_direction_10m?.[i], sun: h.sunshine_duration?.[i]
+    });
+  });
+  const out = {};
+  for (const [d, H] of days) {
+    const ok = covers(H, "p");
+    const sunOk = covers(H, "sun");
+    out[d] = {
+      date: d, ok, hours: H,
+      tmin: covers(H, "t") ? minOf(H.map(x => x.t)) : null,
+      tmax: covers(H, "t") ? maxOf(H.map(x => x.t)) : null,
+      precip: ok ? sumOf(H.map(x => x.p)) : null,
+      snow: ok ? sumOf(H.map(x => x.s)) : null,
+      gust: covers(H, "g") ? maxOf(H.map(x => x.g)) : null,
+      wind: covers(H, "w") ? maxOf(H.map(x => x.w)) : null,
+      dir: circMean(H.map(x => x.dir), H.map(x => x.w)),
+      sun: sunOk ? sumOf(H.map(x => x.sun)) / 3600 : null
+    };
+  }
+  return out;
+}
+
+function aggregateEns(h) {
+  // întoarce { "YYYY-MM-DD": [suma zilnică pentru fiecare membru] }
+  const keys = Object.keys(h).filter(k => /^precipitation(_member\d+)?$/.test(k));
+  const byDay = {};
+  (h.time || []).forEach((t, i) => {
+    const d = t.slice(0, 10), hr = +t.slice(11, 13);
+    if (!byDay[d]) byDay[d] = { hrs: [], sums: keys.map(() => 0), cnt: keys.map(() => 0) };
+    const o = byDay[d]; o.hrs.push(hr);
+    keys.forEach((k, j) => { const v = h[k][i]; if (isNum(v)) { o.sums[j] += v; o.cnt[j]++; } });
+  });
+  const out = {};
+  for (const d in byDay) {
+    const o = byDay[d];
+    if (Math.min(...o.hrs) > 3 || Math.max(...o.hrs) < 21) continue;
+    out[d] = o.sums.filter((s, j) => o.cnt[j] >= 4);
+  }
+  return out;
+}
+
+/* ---------- consens pe o zi ---------- */
+function consensus(date) {
+  const thr = state.thr;
+  const rows = state.results.filter(r => r.days[date] && r.days[date].ok)
+    .map(r => Object.assign({ model: r.model }, r.days[date]));
+  const n = rows.length;
+  const kinds = rows.map(r => (isNum(r.snow) && r.snow >= 0.5) ? "s" : (r.precip >= thr ? "r" : ""));
+  const wet = kinds.filter(k => k).length;
+  const snowy = kinds.filter(k => k === "s").length;
+  const tRows = state.results.map(r => r.days[date]).filter(Boolean);
+  let ensProb = null, ensN = 0;
+  const members = [];
+  state.ens.forEach(e => { if (e.days[date]) members.push(...e.days[date]); });
+  if (members.length >= 20) { ensN = members.length; ensProb = members.filter(v => v >= thr).length / ensN; }
+  return {
+    date, n, wet, snowy, kinds: kinds.slice().sort((a, b) => (b === "s") - (a === "s") || (b === "r") - (a === "r")),
+    frac: n ? wet / n : 0, snowFrac: n ? snowy / n : 0,
+    tmin: median(tRows.map(r => r.tmin)), tmax: median(tRows.map(r => r.tmax)),
+    tminLo: minOf(tRows.map(r => r.tmin)), tmaxHi: maxOf(tRows.map(r => r.tmax)),
+    precip: median(rows.map(r => r.precip)), precipWet: median(rows.filter(r => r.precip >= thr).map(r => r.precip)),
+    precipMax: maxOf(rows.map(r => r.precip)), snow: median(rows.filter(r => r.snow >= 0.5).map(r => r.snow)),
+    gust: median(tRows.map(r => r.gust)), wind: median(tRows.map(r => r.wind)),
+    dir: circMean(tRows.map(r => r.dir)), sun: median(tRows.map(r => r.sun)),
+    ensProb, ensN, rows: tRows.map((r, i) => r)
+  };
+}
+
+function rainText(c) {
+  if (!c.n) return "fără date";
+  if (c.snowFrac >= 0.5) return "Ninsoare probabilă";
+  if (c.frac >= 0.75) return "Ploaie aproape sigură";
+  if (c.frac >= 0.5) return "Ploaie probabilă";
+  if (c.frac >= 0.25) return "Incert";
+  if (c.wet > 0) return "Ploaie puțin probabilă";
+  return "Fără ploaie";
+}
+
+function flags(c) {
+  const out = [];
+  const f = c.frac, tmin = c.tmin, g = c.gust;
+  let b = "ok", bt = "Betonare";
+  if (isNum(tmin) && tmin < 0) { b = "stop"; bt = "Betonare: îngheț"; }
+  else if (f >= 0.6) { b = "stop"; bt = "Betonare: ploaie"; }
+  else if ((isNum(tmin) && tmin < 5) || f >= 0.3) { b = "warn"; bt = isNum(tmin) && tmin < 5 ? "Betonare: frig" : "Betonare: risc ploaie"; }
+  out.push([b, bt]);
+  if (isNum(g)) {
+    if (g >= 54) out.push(["stop", "Macara: rafale"]);
+    else if (g >= 36) out.push(["warn", "Macara: atenție"]);
+    else out.push(["ok", "Macara"]);
+  }
+  let e = "ok", et = "Lucru exterior";
+  if (c.snowFrac >= 0.5 || f >= 0.6) { e = "stop"; et = "Exterior: precipitații"; }
+  else if (f >= 0.3 || c.snowFrac >= 0.25) { e = "warn"; et = "Exterior: risc"; }
+  out.push([e, et]);
+  return out;
+}
+
+/* ---------- blocuri de 3 ore ---------- */
+function blocks(date) {
+  const res = [];
+  for (let b = 0; b < 8; b++) {
+    const from = b * 3, to = from + 3;
+    let n = 0, wet = 0, snow = 0; const temps = [], gusts = [], ps = [];
+    state.results.forEach(r => {
+      const d = r.days[date]; if (!d) return;
+      const H = d.hours.filter(x => x.hr >= from && x.hr < to);
+      const p = H.filter(x => isNum(x.p));
+      if (!p.length) return;
+      n++;
+      const sum = p.reduce((s, x) => s + x.p, 0);
+      const sn = H.reduce((s, x) => s + (isNum(x.s) ? x.s : 0), 0);
+      ps.push(sum);
+      if (sn >= 0.2) { wet++; snow++; } else if (sum >= 0.3) wet++;
+      const tt = H.map(x => x.t).filter(isNum); if (tt.length) temps.push(tt.reduce((s, v) => s + v, 0) / tt.length);
+      const gg = H.map(x => x.g).filter(isNum); if (gg.length) gusts.push(Math.max(...gg));
+    });
+    res.push({ from, n, wet, snow, frac: n ? wet / n : 0, t: median(temps), g: median(gusts), p: median(ps) });
+  }
+  return res;
+}
+
+/* ---------- pictograme ---------- */
+const ICON = {
+  sun: '<circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/>',
+  cloud: '<path d="M7 18.5h10.2a4 4 0 0 0 .4-7.98A6 6 0 0 0 6 11.3a3.6 3.6 0 0 0 1 7.2z"/>',
+  part: '<path d="M8.5 3v1.6M3 8.5h1.6M4.6 4.6l1.1 1.1M12.4 4.6l-1.1 1.1"/><path d="M5.6 10.6a3.4 3.4 0 0 1 5.9-3"/><path d="M9 20h8.6a3.4 3.4 0 0 0 .3-6.8 5.1 5.1 0 0 0-9.8.8A3 3 0 0 0 9 20z"/>',
+  rain: '<path d="M7 15h10.2a4 4 0 0 0 .4-7.98A6 6 0 0 0 6 7.8a3.6 3.6 0 0 0 1 7.2z"/><path d="M8.5 18l-1 2.5M12.5 18l-1 2.5M16.5 18l-1 2.5"/>',
+  shower: '<path d="M7 15h10.2a4 4 0 0 0 .4-7.98A6 6 0 0 0 6 7.8a3.6 3.6 0 0 0 1 7.2z"/><path d="M12.5 18l-1 2.5"/>',
+  snow: '<path d="M7 14.5h10.2a4 4 0 0 0 .4-7.98A6 6 0 0 0 6 7.3a3.6 3.6 0 0 0 1 7.2z"/><path d="M8 18.5h.01M12 18.5h.01M16 18.5h.01M10 21h.01M14 21h.01" stroke-width="2.6"/>',
+  wind: '<path d="M3 9h11a3 3 0 1 0-3-3M3 15h15a3 3 0 1 1-3 3"/>',
+  sunS: '<circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2"/>',
+  drops: '<path d="M12 3.5s5.5 6 5.5 10a5.5 5.5 0 0 1-11 0c0-4 5.5-10 5.5-10z"/>',
+  flake: '<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9"/>',
+  chev: '<path d="M6 9l6 6 6-6"/>'
+};
+function svg(name, cls, color) {
+  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"${cls ? ` class="${cls}"` : ""}${color ? ` style="color:var(${color})"` : ""} aria-hidden="true">${ICON[name]}</svg>`;
+}
+function glyph(c) {
+  if (c.snowFrac >= 0.5) return svg("snow", "", "--snow");
+  if (c.frac >= 0.5) return svg("rain", "", "--rain");
+  if (c.frac >= 0.25) return svg("shower", "", "--rain");
+  if (isNum(c.sun) && c.sun >= 6) return svg("sun", "", "--sun");
+  if (isNum(c.sun) && c.sun >= 2) return svg("part", "", "--muted");
+  return svg("cloud", "", "--muted");
+}
+
+/* ---------- date ---------- */
+function todayStr() { return new Date(Date.now() + state.offset * 1000).toISOString().slice(0, 10); }
+function dayLabel(d) {
+  const [y, m, dd] = d.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, dd));
+  const t = todayStr();
+  const tm = new Date(Date.UTC(...t.split("-").map((v, i) => i === 1 ? v - 1 : +v)) + 864e5).toISOString().slice(0, 10);
+  const dow = DOW[dt.getUTCDay()];
+  const big = d === t ? "Azi" : d === tm ? "Mâine" : dow;
+  const small = (d === t || d === tm ? dow.slice(0, 3) + ", " : "") + dd + " " + MON[m - 1];
+  return { big, small, short: d === t ? "Azi" : d === tm ? "Mâine" : dow.slice(0, 2) + " " + dd };
+}
+
+/* ---------- încărcare ---------- */
+async function fetchJson(url) {
+  const r = await fetch(url);
+  let j = null; try { j = await r.json(); } catch (e) {}
+  if (!r.ok || !j || j.error) throw new Error((j && j.reason) || ("HTTP " + r.status));
+  return j;
+}
+function coordQS(loc) { return `latitude=${loc.lat.toFixed(4)}&longitude=${loc.lon.toFixed(4)}&timezone=auto&forecast_days=7`; }
+
+async function load() {
+  const loc = state.loc; if (!loc) return;
+  const id = ++state.reqId;
+  state.results = []; state.ens = []; state.status = {}; state.open = null;
+  setStatus("loading", `Se încarcă ${MODELS.length} modele meteo…`);
+  $("#errBox").innerHTML = "";
+  $("#days").innerHTML = '<div class="skel"></div><div class="skel"></div><div class="skel"></div><div class="skel"></div>';
+  $("#summary").hidden = true;
+  renderModels();
+  let done = 0;
+  const jobs = MODELS.map(m => fetchJson(`${API}?${coordQS(loc)}&models=${m.id}&hourly=${HOURLY}`)
+    .then(j => {
+      if (id !== state.reqId) return;
+      if (isNum(j.utc_offset_seconds)) state.offset = j.utc_offset_seconds;
+      const days = aggregate(stripKeys(j.hourly || {}, m.id));
+      const any = Object.values(days).some(d => d.ok);
+      state.status[m.id] = any ? "ok" : "off";
+      if (any) state.results.push({ model: m, days });
+    })
+    .catch(() => { if (id === state.reqId) state.status[m.id] = "off"; })
+    .finally(() => {
+      if (id !== state.reqId) return;
+      done++;
+      setStatus("loading", `Am primit ${done} din ${MODELS.length} modele…`);
+      renderModels();
+    }));
+  const ensJobs = ENS_MODELS.map(e => fetchJson(`${ENS_API}?${coordQS(loc)}&models=${e}&hourly=precipitation`)
+    .then(j => { if (id === state.reqId) state.ens.push({ id: e, days: aggregateEns(stripKeys(j.hourly || {}, e)) }); })
+    .catch(() => {}));
+  await Promise.allSettled(jobs.concat(ensJobs));
+  if (id !== state.reqId) return;
+  state.results.sort((a, b) => MODELS.indexOf(a.model) - MODELS.indexOf(b.model));
+  if (!state.results.length) {
+    setStatus("err", "Prognoza nu s-a încărcat.");
+    $("#days").innerHTML = "";
+    $("#errBox").innerHTML = '<div class="err-box">Niciun model nu a răspuns. Verificați conexiunea la internet și încercați din nou. Dacă ați deschis fișierul în previzualizarea unei aplicații (Claude, Fișiere, Telegram), deschideți în schimb linkul publicat, în Safari sau Chrome.<button type="button" id="retry">Reîncearcă</button></div>';
+    $("#retry").onclick = load;
+    return;
+  }
+  const now = new Date();
+  $("#updated").textContent = "actualizat " + now.toLocaleTimeString("ro-RO", { hour: "2-digit", minute: "2-digit" });
+  setStatus("ok", `${state.results.length} modele${state.ens.length ? " + ansamblu" : ""} · apăsați pe o zi pentru detalii pe ore`);
+  render();
+}
+
+/* ---------- desenare ---------- */
+function $(s) { return document.querySelector(s); }
+function setStatus(kind, text) {
+  const el = $("#status"); el.className = "status " + kind; $("#statusText").textContent = text;
+}
+function allDates() {
+  const s = new Set(); state.results.forEach(r => Object.keys(r.days).forEach(d => s.add(d)));
+  const t = todayStr();
+  return [...s].sort().filter(d => d >= t).slice(0, 7);
+}
+
+function render() {
+  const dates = allDates();
+  const cs = dates.map(consensus);
+  renderSummary(cs);
+  const t = todayStr();
+  $("#days").innerHTML = cs.map(c => {
+    const L = dayLabel(c.date);
+    const votes = c.kinds.map(k => `<i class="${k}"></i>`).join("");
+    const amt = c.wet ? (c.snowFrac >= 0.5 && isNum(c.snow) ? ` · ~${fmt(c.snow, 0)} cm` : isNum(c.precipWet) ? ` · ~${fmt(c.precipWet, c.precipWet < 10 ? 1 : 0)} mm` : "") : "";
+    const chips = [];
+    if (isNum(c.gust)) chips.push(`<span class="chip" title="Rafale maxime, mediana modelelor">${svg("wind")}<span class="num">${fmt(c.gust)} km/h</span><span style="color:var(--muted)">${fmt(c.gust / 3.6)} m/s ${dirLabel(c.dir)}</span></span>`);
+    if (isNum(c.sun)) chips.push(`<span class="chip">${svg("sunS")}<span class="num">${fmt(c.sun, c.sun < 1 && c.sun > 0 ? 1 : 0)} h</span> soare</span>`);
+    if (c.snowy) chips.push(`<span class="chip" style="color:var(--snow)">${svg("flake")}zăpadă ${c.snowy}/${c.n}</span>`);
+    if (c.ensProb != null) chips.push(`<span class="chip" title="${c.ensN} rulări de ansamblu">${svg("drops")}ansamblu ${Math.round(c.ensProb * 100)}%</span>`);
+    flags(c).forEach(([k, txt]) => chips.push(`<span class="chip flag ${k}">${txt}</span>`));
+    return `<article class="day${c.date === t ? " today" : ""}" data-date="${c.date}" data-open="false">
+      <button class="day-head" type="button" aria-expanded="false" aria-controls="det-${c.date}">
+        <div class="d-date"><b>${L.big}</b><span>${L.small}</span></div>
+        <div class="d-glyph">${glyph(c)}</div>
+        <div class="d-temp"><span class="tmax">${fmtT(c.tmax)}</span><span class="tmin">${fmtT(c.tmin)}</span></div>
+        <div class="d-rain"><div class="votes" aria-hidden="true">${votes}</div>
+          <div class="votes-lbl"><b>${rainText(c)}</b><br><span class="num">${c.wet}/${c.n}</span> modele${amt}</div></div>
+        ${svg("chev", "chev")}
+      </button>
+      <div class="d-meta">${chips.join("")}</div>
+      <div class="d-detail" id="det-${c.date}" hidden></div>
+    </article>`;
+  }).join("");
+  document.querySelectorAll(".day-head").forEach(b => b.addEventListener("click", () => toggle(b.closest(".day"))));
+  if (state.open) { const el = document.querySelector(`.day[data-date="${state.open}"]`); if (el) toggle(el, true); }
+}
+
+function renderSummary(cs) {
+  const good = [], rain = [], unsure = [], snow = [], wind = [], frost = [];
+  cs.forEach(c => {
+    const s = dayLabel(c.date).short;
+    if (c.snowFrac >= 0.5) snow.push(s);
+    else if (c.frac >= 0.5) rain.push(s);
+    else if (c.frac >= 0.25) unsure.push(s);
+    if (isNum(c.gust) && c.gust >= 54) wind.push(s);
+    if (isNum(c.tmin) && c.tmin < 0) frost.push(s);
+    if (c.frac < 0.25 && c.snowFrac < 0.25 && !(isNum(c.gust) && c.gust >= 54)) good.push(s);
+  });
+  const row = (label, color, arr) => arr.length ? `<div class="sum-row"><div class="k"><i style="background:var(${color})"></i>${label}</div><div class="v">${arr.map(x => `<span class="tag">${x}</span>`).join("")}</div></div>` : "";
+  const html = row("Zile fără ploaie", "--ok", good) + row("Ploaie probabilă", "--rain", rain) + row("Incerte", "--warn", unsure)
+    + row("Ninsoare", "--snow", snow) + row("Vânt puternic", "--stop", wind) + row("Îngheț noaptea", "--snow", frost);
+  const el = $("#summary");
+  el.innerHTML = `<h2>Săptămâna pe scurt</h2><div>${html}</div>`;
+  el.hidden = !html;
+}
+
+function toggle(el, forceOpen) {
+  const det = el.querySelector(".d-detail");
+  const open = forceOpen || el.dataset.open !== "true";
+  document.querySelectorAll('.day[data-open="true"]').forEach(o => {
+    if (o !== el) { o.dataset.open = "false"; o.querySelector(".d-detail").hidden = true; o.querySelector(".day-head").setAttribute("aria-expanded", "false"); }
+  });
+  el.dataset.open = String(open); det.hidden = !open;
+  el.querySelector(".day-head").setAttribute("aria-expanded", String(open));
+  state.open = open ? el.dataset.date : null;
+  if (open) det.innerHTML = detailHtml(el.dataset.date);
+}
+
+function detailHtml(date) {
+  const bl = blocks(date);
+  const isToday = date === todayStr();
+  const nowH = new Date(Date.now() + state.offset * 1000).getUTCHours();
+  const blk = bl.map(b => {
+    const pct = Math.round(b.frac * 100);
+    const now = isToday && nowH >= b.from && nowH < b.from + 3;
+    if (!b.n) return `<div class="blk na"><span class="h">${String(b.from).padStart(2, "0")}</span><span class="bar"></span><span class="pv">–</span></div>`;
+    return `<div class="blk${now ? " now" : ""}" title="${b.wet} din ${b.n} modele dau precipitații">
+      <span class="h">${String(b.from).padStart(2, "0")}</span>
+      <span class="bar"><span class="${b.snow * 2 >= b.wet && b.snow ? "s" : ""}" style="height:${pct}%"></span></span>
+      <span class="pv">${b.wet}/${b.n}</span>
+      <span class="t">${fmtT(b.t)}</span>
+      <span class="g">${isNum(b.g) ? fmt(b.g) : "–"}</span></div>`;
+  }).join("");
+  const thr = state.thr;
+  const rows = state.results.map(r => {
+    const d = r.days[date]; if (!d) return "";
+    const wet = d.ok && d.precip >= thr;
+    return `<tr><td>${esc(r.model.name)} <small>${esc(r.model.org)}</small></td>
+      <td>${fmtT(d.tmin)} / ${fmtT(d.tmax)}</td>
+      <td class="${wet ? "wet" : ""}">${d.ok ? fmt(d.precip, 1) : "–"}</td>
+      <td>${d.ok && isNum(d.snow) ? fmt(d.snow, 1) : "–"}</td>
+      <td>${isNum(d.gust) ? fmt(d.gust) : "–"}</td>
+      <td>${isNum(d.sun) ? fmt(d.sun, 1) : "–"}</td></tr>`;
+  }).join("");
+  return `<div class="section-h">Pe intervale de 3 ore</div>
+    <div class="blocks">${blk}</div>
+    <div class="legend">Bara arată câte modele dau precipitații în interval; dedesubt temperatura medie și rafalele maxime (km/h).</div>
+    <div class="section-h">Ce spune fiecare model</div>
+    <div class="tbl-wrap"><table>
+      <thead><tr><th>Model</th><th>Min / Max</th><th>Ploaie mm</th><th>Zăpadă cm</th><th>Rafale km/h</th><th>Soare h</th></tr></thead>
+      <tbody>${rows}</tbody></table></div>`;
+}
+
+function renderModels() {
+  $("#modelList").innerHTML = MODELS.map(m => {
+    const s = state.status[m.id];
+    return `<span class="${s === "off" ? "off" : ""}" title="${esc(m.org)}">${esc(m.name)}</span>`;
+  }).join("");
+}
+
+/* ---------- locație ---------- */
+function setLoc(loc, opts = {}) {
+  state.loc = { lat: +loc.lat, lon: +loc.lon, name: loc.name || null };
+  $("#placeName").textContent = state.loc.name || "Locația mea";
+  $("#placeCoords").textContent = `${state.loc.lat.toFixed(4)}, ${state.loc.lon.toFixed(4)}`;
+  store.set("ms.last", state.loc);
+  renderSaved();
+  if (!opts.noLoad) load();
+}
+
+async function reverseName(lat, lon) {
+  try {
+    const r = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=ro`);
+    const j = await r.json();
+    return j.locality || j.city || j.principalSubdivision || null;
+  } catch (e) { return null; }
+}
+
+function locateMe(fallback) {
+  if (!navigator.geolocation) { if (fallback) setLoc(CHISINAU); return; }
+  $("#placeName").textContent = "Se determină locația…";
+  navigator.geolocation.getCurrentPosition(async pos => {
+    const lat = pos.coords.latitude, lon = pos.coords.longitude;
+    setLoc({ lat, lon, name: "Locația mea" });
+    const n = await reverseName(lat, lon);
+    if (n && state.loc && state.loc.lat === lat) { state.loc.name = n; $("#placeName").textContent = n; store.set("ms.last", state.loc); }
+  }, () => {
+    if (fallback) setLoc(CHISINAU);
+    else { $("#placeName").textContent = state.loc ? (state.loc.name || "Locația mea") : "Chișinău"; toast("Telefonul nu a dat locația. Permiteți accesul la locație în browser sau căutați localitatea."); }
+  }, { enableHighAccuracy: false, timeout: 12000, maximumAge: 600000 });
+}
+
+let searchT = null;
+async function doSearch(q) {
+  const box = $("#results");
+  if (q.trim().length < 2) { box.innerHTML = ""; return; }
+  try {
+    const j = await fetchJson(`${GEO_API}?name=${encodeURIComponent(q.trim())}&count=8&language=ro&format=json`);
+    const list = j.results || [];
+    box.innerHTML = list.length ? list.map((r, i) => `<button type="button" data-i="${i}">${esc(r.name)} <small>${esc([r.admin1, r.country].filter(Boolean).join(", "))}</small></button>`).join("")
+      : '<div class="note">Nu am găsit localitatea. Încercați fără diacritice sau alt nume.</div>';
+    box.querySelectorAll("button").forEach(b => b.onclick = () => {
+      const r = list[+b.dataset.i];
+      setLoc({ lat: r.latitude, lon: r.longitude, name: r.name });
+      $("#searchBox").hidden = true; $("#btnSearch").setAttribute("aria-expanded", "false"); $("#q").value = ""; box.innerHTML = "";
+    });
+  } catch (e) { box.innerHTML = '<div class="note">Căutarea nu a funcționat. Verificați internetul.</div>'; }
+}
+
+function shareUrl() {
+  const u = new URL(location.href.split("#")[0]);
+  u.search = "";
+  u.searchParams.set("lat", state.loc.lat.toFixed(4));
+  u.searchParams.set("lon", state.loc.lon.toFixed(4));
+  if (state.loc.name && state.loc.name !== "Locația mea") u.searchParams.set("n", state.loc.name);
+  return u.toString();
+}
+
+function renderSaved() {
+  const list = store.get("ms.saved", []);
+  $("#saved").innerHTML = list.map((s, i) => {
+    const cur = state.loc && Math.abs(s.lat - state.loc.lat) < 1e-3 && Math.abs(s.lon - state.loc.lon) < 1e-3;
+    return `<button type="button" data-i="${i}" aria-current="${cur}">${esc(s.name)}</button>`;
+  }).join("");
+  $("#saved").querySelectorAll("button").forEach(b => b.onclick = () => setLoc(list[+b.dataset.i]));
+}
+
+let toastT = null;
+function toast(msg) {
+  let el = document.querySelector(".toast");
+  if (!el) { el = document.createElement("div"); el.className = "toast"; el.setAttribute("role", "status"); document.body.appendChild(el); }
+  el.textContent = msg; el.hidden = false;
+  clearTimeout(toastT); toastT = setTimeout(() => { el.hidden = true; }, 3200);
+}
+
+/* ---------- pornire ---------- */
+function init() {
+  $("#thr").value = String(state.thr);
+  $("#thr").onchange = e => { state.thr = Number(e.target.value); store.set("ms.thr", state.thr); if (state.results.length) render(); };
+  $("#btnLocate").onclick = () => locateMe(false);
+  $("#btnSearch").onclick = () => {
+    const bx = $("#searchBox"); bx.hidden = !bx.hidden;
+    $("#btnSearch").setAttribute("aria-expanded", String(!bx.hidden));
+    if (!bx.hidden) $("#q").focus();
+  };
+  $("#q").addEventListener("input", e => { clearTimeout(searchT); searchT = setTimeout(() => doSearch(e.target.value), 350); });
+  $("#btnShare").onclick = () => {
+    if (!state.loc) return;
+    const url = shareUrl();
+    const fb = () => { const n = $("#shareFallback"); n.hidden = false; n.innerHTML = `Copiați linkul: <input readonly value="${esc(url)}" style="width:100%;margin-top:4px;padding:6px;border-radius:6px;border:1px solid var(--line);background:transparent;color:inherit">`; const i = n.querySelector("input"); i.focus(); i.select(); };
+    try {
+      navigator.clipboard.writeText(url).then(() => toast("Link copiat. Trimiteți-l echipei."), fb);
+    } catch (e) { fb(); }
+  };
+  $("#btnSave").onclick = () => {
+    if (!state.loc) return;
+    const list = store.get("ms.saved", []);
+    const name = (state.loc.name && state.loc.name !== "Locația mea") ? state.loc.name : `Loc ${list.length + 1}`;
+    if (list.some(s => Math.abs(s.lat - state.loc.lat) < 1e-3 && Math.abs(s.lon - state.loc.lon) < 1e-3)) { toast("Locul e deja salvat."); return; }
+    list.push({ lat: state.loc.lat, lon: state.loc.lon, name });
+    store.set("ms.saved", list.slice(-8)); renderSaved(); toast(`Salvat: ${name}`);
+  };
+
+  const p = new URLSearchParams(location.search);
+  const lat = parseFloat(p.get("lat")), lon = parseFloat(p.get("lon"));
+  if (isFinite(lat) && isFinite(lon)) setLoc({ lat, lon, name: p.get("n") || null });
+  else {
+    const last = store.get("ms.last", null);
+    if (last && isFinite(last.lat)) setLoc(last);
+    else locateMe(true);
+  }
+  setInterval(() => { if (document.visibilityState === "visible" && state.results.length) load(); }, 30 * 60 * 1000);
+}
+
+if (typeof window !== "undefined" && window.document && !window.__TEST__) init();
+</script>
+</body>
+</html>
