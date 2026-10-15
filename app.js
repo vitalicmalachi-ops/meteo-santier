@@ -69,12 +69,8 @@ function detectRegion() {
   for (const l of navLangs()) { const p = l.split("-"); if (p[1] && p[1].length === 2) return p[1].toUpperCase(); }
   return "";
 }
-function defaultUnits() {
-  const r = detectRegion();
-  if (["US", "LR", "MM"].includes(r)) return { temp: "F", wind: "mph", precip: "in" };
-  if (r === "GB") return { temp: "C", wind: "mph", precip: "mm" };
-  return { temp: "C", wind: "kmh", precip: "mm" };
-}
+// Unitățile implicite sunt metrice pentru toți; °F, mph și inch se aleg din Setări.
+function defaultUnits() { return { temp: "C", wind: "kmh", precip: "mm" }; }
 function defaultLimits() {
   const o = {};
   for (const w in LIMITS) { o[w] = {}; LIMITS[w].forEach(x => { o[w][x.k] = x.d; }); }
@@ -87,13 +83,15 @@ function loadLimits() {
 }
 
 const state = {
-  lang: store.get("ms.lang", null) || detectLang(),
+  langChoice: store.get("ms.lang", null),   // null = automat, după limba telefonului
+  lang: null,
   units: Object.assign(defaultUnits(), store.get("ms.units", {})),
   limits: loadLimits(),
   loc: null, mode: null, results: [], ens: [], soil: [], status: {}, offset: 0, fetchedAt: 0,
   thr: Number(store.get("ms.thr", 1)) || 1, open: null, reqId: 0,
   works: (() => { const w = store.get("ms.works", null); return Array.isArray(w) ? w.filter(id => WORK_IDS.includes(id)) : WORK_IDS.slice(); })()
 };
+state.lang = (state.langChoice && LANGS.some(x => x[0] === state.langChoice)) ? state.langChoice : detectLang();
 function locale() {
   return navLangs().find(l => l.toLowerCase().split("-")[0] === state.lang) || state.lang;
 }
@@ -715,6 +713,8 @@ function renderModels() {
 function applyStatic() {
   document.documentElement.lang = state.lang;
   document.title = t("brand");
+  const at = document.querySelector('meta[name="apple-mobile-web-app-title"]'); if (at) at.content = t("brand");
+  const mf = document.querySelector('link[rel="manifest"]'); if (mf) mf.href = `manifest-${state.lang}.json`;
   const md = document.querySelector('meta[name="description"]'); if (md) md.content = t("tagline");
   document.querySelectorAll("[data-i18n]").forEach(el => { el.textContent = t(el.dataset.i18n); });
   $("#q").placeholder = t("searchPh");
@@ -735,7 +735,7 @@ function renderSettings() {
     <details class="set-box" id="setBox"${state.setOpen ? " open" : ""}>
     <summary>${esc(t("settingsTitle"))}</summary>
     <div class="set-grid">
-      <label>${esc(t("setLang"))}${sel("setLang", LANGS, state.lang)}</label>
+      <label>${esc(t("setLang"))}${sel("setLang", [["auto", `${t("langAuto")} · ${(LANGS.find(x => x[0] === detectLang()) || LANGS[0])[1]}`]].concat(LANGS), state.langChoice || "auto")}</label>
       <label>${esc(t("setTemp"))}${sel("setTemp", [["C", "°C"], ["F", "°F"]], state.units.temp)}</label>
       <label>${esc(t("setWind"))}${sel("setWind", [["kmh", "km/h"], ["ms", "m/s"], ["mph", "mph"]], state.units.wind)}</label>
       <label>${esc(t("setPrecip"))}${sel("setPrecip", [["mm", "mm · cm"], ["in", "in"]], state.units.precip)}</label>
@@ -757,7 +757,12 @@ function renderSettings() {
     <p>${t("credit", { link: '<a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo.com</a>' })}</p>`;
   renderModels();
   const rerender = () => { renderSettings(); renderNow(); if (state.results.length) render(); };
-  $("#setLang").onchange = e => { state.lang = e.target.value; store.set("ms.lang", state.lang); track(`lang-set/${state.lang}`, `Language chosen: ${state.lang}`, true); applyStatic(); renderUpdated(); if (state.results.length) finishLoad(); rerender(); };
+  $("#setLang").onchange = e => {
+    const v = e.target.value;
+    state.langChoice = v === "auto" ? null : v;
+    if (state.langChoice) store.set("ms.lang", state.langChoice); else store.del("ms.lang");
+    state.lang = state.langChoice || detectLang();
+    track(`lang-set/${v}`, `Language chosen: ${v}`, true); applyStatic(); renderUpdated(); if (state.results.length) finishLoad(); rerender(); };
   $("#setTemp").onchange = e => { state.units.temp = e.target.value; store.set("ms.units", state.units); rerender(); };
   $("#setWind").onchange = e => { state.units.wind = e.target.value; store.set("ms.units", state.units); rerender(); };
   $("#setPrecip").onchange = e => { state.units.precip = e.target.value; store.set("ms.units", state.units); rerender(); };

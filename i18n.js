@@ -798,3 +798,7 @@ const I18N_WORK = {
     hourlyLegend: "Sloupce ukazují, kolik modelů dává v každé hodině srážky. Pod nimi: teplota a nárazy ({u})." }
 };
 for (const k in I18N_WORK) Object.assign(I18N[k], I18N_WORK[k]);
+
+/* Limba automată, după telefon */
+const I18N_AUTO = {"en": {"langAuto": "Automatic"}, "ro": {"langAuto": "Automat"}, "ru": {"langAuto": "Автоматически"}, "uk": {"langAuto": "Автоматично"}, "de": {"langAuto": "Automatisch"}, "fr": {"langAuto": "Automatique"}, "es": {"langAuto": "Automático"}, "it": {"langAuto": "Automatica"}, "pl": {"langAuto": "Automatycznie"}, "tr": {"langAuto": "Otomatik"}, "pt": {"langAuto": "Automático"}, "cs": {"langAuto": "Automaticky"}};
+for (const k in I18N_AUTO) Object.assign(I18N[k], I18N_AUTO[k]);
