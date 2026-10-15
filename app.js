@@ -69,8 +69,14 @@ function detectRegion() {
   for (const l of navLangs()) { const p = l.split("-"); if (p[1] && p[1].length === 2) return p[1].toUpperCase(); }
   return "";
 }
-// Unitățile implicite sunt metrice pentru toți; °F, mph și inch se aleg din Setări.
-function defaultUnits() { return { temp: "C", wind: "kmh", precip: "mm" }; }
+// Unitățile implicite urmează țara în care se află locul; metric peste tot, cu excepțiile de mai jos.
+// Ce alege utilizatorul în Setări are mereu prioritate.
+function defaultUnits(cc) {
+  cc = String(cc || "").toUpperCase();
+  if (["US", "LR", "MM", "PR", "GU", "VI", "AS", "MP"].includes(cc)) return { temp: "F", wind: "mph", precip: "in" };
+  if (cc === "GB") return { temp: "C", wind: "mph", precip: "mm" };
+  return { temp: "C", wind: "kmh", precip: "mm" };
+}
 function defaultLimits() {
   const o = {};
   for (const w in LIMITS) { o[w] = {}; LIMITS[w].forEach(x => { o[w][x.k] = x.d; }); }
@@ -85,13 +91,16 @@ function loadLimits() {
 const state = {
   langChoice: store.get("ms.lang", null),   // null = automat, după limba telefonului
   lang: null,
-  units: Object.assign(defaultUnits(), store.get("ms.units", {})),
+  userUnits: store.get("ms.units", {}),   // doar ce a ales utilizatorul
+  units: null,
   limits: loadLimits(),
   loc: null, mode: null, results: [], ens: [], soil: [], status: {}, offset: 0, fetchedAt: 0,
   thr: Number(store.get("ms.thr", 1)) || 1, open: null, reqId: 0,
   works: (() => { const w = store.get("ms.works", null); return Array.isArray(w) ? w.filter(id => WORK_IDS.includes(id)) : WORK_IDS.slice(); })()
 };
 state.lang = (state.langChoice && LANGS.some(x => x[0] === state.langChoice)) ? state.langChoice : detectLang();
+function applyUnits() { state.units = Object.assign(defaultUnits(state.loc && state.loc.cc), state.userUnits); }
+applyUnits();
 function locale() {
   return navLangs().find(l => l.toLowerCase().split("-")[0] === state.lang) || state.lang;
 }
@@ -763,9 +772,9 @@ function renderSettings() {
     if (state.langChoice) store.set("ms.lang", state.langChoice); else store.del("ms.lang");
     state.lang = state.langChoice || detectLang();
     track(`lang-set/${v}`, `Language chosen: ${v}`, true); applyStatic(); renderUpdated(); if (state.results.length) finishLoad(); rerender(); };
-  $("#setTemp").onchange = e => { state.units.temp = e.target.value; store.set("ms.units", state.units); rerender(); };
-  $("#setWind").onchange = e => { state.units.wind = e.target.value; store.set("ms.units", state.units); rerender(); };
-  $("#setPrecip").onchange = e => { state.units.precip = e.target.value; store.set("ms.units", state.units); rerender(); };
+  $("#setTemp").onchange = e => { state.userUnits.temp = e.target.value; store.set("ms.units", state.userUnits); applyUnits(); rerender(); };
+  $("#setWind").onchange = e => { state.userUnits.wind = e.target.value; store.set("ms.units", state.userUnits); applyUnits(); rerender(); };
+  $("#setPrecip").onchange = e => { state.userUnits.precip = e.target.value; store.set("ms.units", state.userUnits); applyUnits(); rerender(); };
   $("#thr").onchange = e => { state.thr = Number(e.target.value); store.set("ms.thr", state.thr); if (state.results.length) render(); };
   WORK_IDS.forEach(w => { $(`#wk-${w}`).onchange = () => {
     state.works = WORK_IDS.filter(id => $(`#wk-${id}`).checked);
@@ -786,7 +795,8 @@ function renderSettings() {
 
 /* ---------- locație ---------- */
 function setLoc(loc, opts = {}) {
-  state.loc = { lat: +loc.lat, lon: +loc.lon, name: loc.name || null };
+  state.loc = { lat: +loc.lat, lon: +loc.lon, name: loc.name || null, cc: loc.cc || null };
+  setCountry(state.loc.cc, true);
   $("#placeName").textContent = state.loc.name || t("myLocation");
   $("#placeCoords").textContent = `${state.loc.lat.toFixed(4)}, ${state.loc.lon.toFixed(4)}`;
   store.set("ms.last", state.loc);
@@ -794,12 +804,20 @@ function setLoc(loc, opts = {}) {
   if (!opts.noLoad) load();
 }
 
+// Țara locului schimbă unitățile implicite; redesenăm doar dacă s-au schimbat.
+function setCountry(cc, quiet) {
+  if (!state.loc) return;
+  state.loc.cc = cc ? String(cc).toUpperCase() : state.loc.cc;
+  const before = JSON.stringify(state.units);
+  applyUnits();
+  if (!quiet && JSON.stringify(state.units) !== before) { renderSettings(); renderNow(); if (state.results.length) render(); }
+}
 async function reverseName(lat, lon) {
   try {
     const r = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=${state.lang}`);
     const j = await r.json();
-    return j.locality || j.city || j.principalSubdivision || null;
-  } catch (e) { return null; }
+    return { name: j.locality || j.city || j.principalSubdivision || null, cc: j.countryCode || null };
+  } catch (e) { return { name: null, cc: null }; }
 }
 
 function showNoLoc() {
@@ -843,11 +861,16 @@ function locateMe(atStartup) {
       // același loc ca data trecută: păstrăm prognoza afișată, actualizăm doar coordonatele
       state.loc.lat = lat; state.loc.lon = lon; store.set("ms.last", state.loc);
       $("#placeCoords").textContent = coordsText();
+      if (!state.loc.cc) reverseName(lat, lon).then(rv => { if (rv.cc && state.loc && state.loc.lat === lat) { setCountry(rv.cc); store.set("ms.last", state.loc); } });
       return;
     }
     setLoc({ lat, lon, name: null });
-    const n = await reverseName(lat, lon);
-    if (n && state.loc && state.loc.lat === lat) { state.loc.name = n; $("#placeName").textContent = n; store.set("ms.last", state.loc); }
+    const rv = await reverseName(lat, lon);
+    if (state.loc && state.loc.lat === lat) {
+      if (rv.name) { state.loc.name = rv.name; $("#placeName").textContent = rv.name; }
+      if (rv.cc) setCountry(rv.cc);
+      store.set("ms.last", state.loc);
+    }
   }, fail);
 }
 
@@ -876,7 +899,7 @@ async function ipLocation() {
     const r = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?localityLanguage=${state.lang}`);
     const j = await r.json();
     if (!isNum(j.latitude) || !isNum(j.longitude) || (j.latitude === 0 && j.longitude === 0)) return null;
-    return { lat: j.latitude, lon: j.longitude, name: j.city || j.locality || j.principalSubdivision || null };
+    return { lat: j.latitude, lon: j.longitude, name: j.city || j.locality || j.principalSubdivision || null, cc: j.countryCode || null };
   } catch (e) { return null; }
 }
 async function getPosition() {
@@ -915,7 +938,7 @@ async function doSearch(q) {
     box.querySelectorAll("button").forEach(b => b.onclick = () => {
       const r = list[+b.dataset.i];
       state.mode = "manual";
-      setLoc({ lat: r.latitude, lon: r.longitude, name: r.name });
+      setLoc({ lat: r.latitude, lon: r.longitude, name: r.name, cc: r.country_code || null });
       $("#searchBox").hidden = true; $("#btnSearch").setAttribute("aria-expanded", "false"); $("#q").value = ""; box.innerHTML = "";
     });
   } catch (e) { box.innerHTML = `<div class="note">${esc(t("searchFail"))}</div>`; }
@@ -967,7 +990,7 @@ function init() {
     const list = store.get("ms.saved", []);
     if (list.some(s => Math.abs(s.lat - state.loc.lat) < 1e-3 && Math.abs(s.lon - state.loc.lon) < 1e-3)) { toast(t("toastAlreadySaved")); return; }
     const name = state.loc.name || t("placeN", { n: list.length + 1 });
-    list.push({ lat: state.loc.lat, lon: state.loc.lon, name });
+    list.push({ lat: state.loc.lat, lon: state.loc.lon, name, cc: state.loc.cc || null });
     store.set("ms.saved", list.slice(-8)); renderSaved(); toast(t("toastSaved", { name }));
   };
 
