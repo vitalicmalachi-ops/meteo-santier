@@ -757,7 +757,7 @@ function renderSettings() {
     <p>${t("credit", { link: '<a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo.com</a>' })}</p>`;
   renderModels();
   const rerender = () => { renderSettings(); renderNow(); if (state.results.length) render(); };
-  $("#setLang").onchange = e => { state.lang = e.target.value; store.set("ms.lang", state.lang); applyStatic(); renderUpdated(); if (state.results.length) finishLoad(); rerender(); };
+  $("#setLang").onchange = e => { state.lang = e.target.value; store.set("ms.lang", state.lang); track(`lang-set/${state.lang}`, `Language chosen: ${state.lang}`, true); applyStatic(); renderUpdated(); if (state.results.length) finishLoad(); rerender(); };
   $("#setTemp").onchange = e => { state.units.temp = e.target.value; store.set("ms.units", state.units); rerender(); };
   $("#setWind").onchange = e => { state.units.wind = e.target.value; store.set("ms.units", state.units); rerender(); };
   $("#setPrecip").onchange = e => { state.units.precip = e.target.value; store.set("ms.units", state.units); rerender(); };
@@ -821,8 +821,8 @@ function locateMe(atStartup) {
       if (hasLast) { $("#placeCoords").textContent = coordsText(); return; }
       const ip = await ipLocation();
       if (state.loc !== startLoc) return;
-      if (ip) { state.mode = "manual"; setLoc(ip); toast(t("toastApprox")); }
-      else showNoLoc();
+      if (ip) { state.mode = "manual"; setLoc(ip); toast(t("toastApprox")); track("loc/approx", "Location: approximate", true); }
+      else { showNoLoc(); track("loc/none", "Location: none", true); }
     } else {
       $("#placeName").textContent = state.loc ? (state.loc.name || t("myLocation")) : t("noLocTitle");
       $("#placeCoords").textContent = coordsText();
@@ -833,6 +833,7 @@ function locateMe(atStartup) {
     if (state.loc !== startLoc) return;
     const lat = pos.coords.latitude, lon = pos.coords.longitude;
     state.mode = "gps";
+    track("loc/gps", "Location: GPS", true);
     if (hasLast && near(state.loc, { lat, lon })) {
       // același loc ca data trecută: păstrăm prognoza afișată, actualizăm doar coordonatele
       state.loc.lat = lat; state.loc.lon = lon; store.set("ms.last", state.loc);
@@ -847,6 +848,21 @@ function locateMe(atStartup) {
 
 /* În aplicația Android/iOS folosim pluginurile native; în browser, API-urile web. */
 const NATIVE = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+
+/* ---------- statistici anonime (GoatCounter: fără cookie-uri, fără date personale, fără coordonate) ---------- */
+const PLATFORM = NATIVE ? ((window.Capacitor.getPlatform && window.Capacitor.getPlatform()) || "app") : "web";
+const sentEvents = new Set();
+function track(path, title, isEvent) {
+  if (isEvent && sentEvents.has(path)) return;   // fiecare eveniment o singură dată pe deschidere
+  if (isEvent) sentEvents.add(path);
+  let tries = 0;
+  const go = () => {
+    const gc = window.goatcounter;
+    if (gc && gc.count) { try { gc.count({ path, title: title || path, event: !!isEvent }); } catch (e) {} return; }
+    if (++tries < 50) setTimeout(go, 200);   // scriptul se încarcă asincron; renunțăm după 10 s
+  };
+  go();
+}
 const plugin = name => (NATIVE && window.Capacitor.Plugins && window.Capacitor.Plugins[name]) || null;
 const PUBLIC_URL = "https://vitalicmalachi-ops.github.io/meteo-santier/";
 // Locație aproximativă după conexiune (orașul), când telefonul nu dă GPS și nu există un loc folosit anterior.
@@ -956,6 +972,8 @@ function init() {
   const lat = parseFloat(p.get("lat")), lon = parseFloat(p.get("lon"));
   if (isFinite(lat) && isFinite(lon)) store.set("ms.last", { lat, lon, name: p.get("n") || null });
   if (location.search) history.replaceState(null, "", location.pathname);
+  track("/" + PLATFORM, `${t("brand")} · ${PLATFORM}`);
+  track(`lang/${state.lang}`, `Language: ${state.lang}`, true);
   locateMe(true);
 
   // Aplicația de pe ecranul principal rămâne deschisă în fundal: la revenire după 15 min reîmprospătăm.
