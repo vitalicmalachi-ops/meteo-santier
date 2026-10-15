@@ -1,0 +1,94 @@
+10-15 03:55:04.124     0     0 I Command line: 8250.nr_uarts=1 clocksource=pit no_timer_check console=0 loop.max_part=7 ramoops.mem_address=0xff018000 ramoops.mem_size=0x10000 memmap=0x10000$0xff018000 printk.devkmsg=on bootconfig mac80211_hwsim.radios=0
+10-15 03:55:04.136     0     0 I         : Kernel command line: console=ttynull stack_depot_disable=on cgroup_disable=pressure bootconfig 8250.nr_uarts=1 clocksource=pit no_timer_check console=0 loop.max_part=7 ramoops.mem_address=0xff018000 ramoops.mem_size=0x10000 memmap=0x10000$0xff018000 printk.devkmsg=on bootconfig mac80211_hwsim.radios=0
+10-15 03:55:04.328     0     0 I printk  : console [ttyS0] enabled
+10-15 03:55:04.659     0     0 I printk  : console [ramoops-1] enabled
+10-15 03:55:05.459     0     0 I printk  : console [ttynull0] enabled
+10-15 03:55:06.625     0     0 I init    : Loading module /lib/modules/virtio_console.ko with args ''
+10-15 03:55:06.627     0     0 I init    : Loaded kernel module /lib/modules/virtio_console.ko
+10-15 03:55:10.206     0     0 I init    : starting service 'console'...
+10-15 03:55:10.220     0     0 I init    : ... started service 'console' has pid 142
+10-15 03:55:14.946     0     0 I init    : service 'console' requested start, but it is already running (flags: 2196)
+10-15 03:55:17.278   337   337 D nativeloader: InitDefaultPublicLibraries for_preload=0: libandroid.so:libaaudio.so:libamidi.so:libbinder_ndk.so:libc.so:libcamera2ndk.so:libclang_rt.hwasan-aarch64-android.so:libdl.so:libEGL.so:libGLESv1_CM.so:libGLESv2.so:libGLESv3.so:libjnigraphics.so:liblog.so:libmediandk.so:libm.so:libnativewindow.so:libOpenMAXAL.so:libOpenSLES.so:libRS.so:libstdc++.so:libsync.so:libvulkan.so:libwebviewchromium_plat_support.so:libz.so
+10-15 03:55:36.249   957   957 I AndroidRuntime: VM exiting with result code 0, cleanup skipped.
+10-15 03:55:47.868   521   549 D AppWidgetServiceImpl: Provider info from ComponentInfo{com.android.chrome/org.chromium.chrome.browser.quickactionsearchwidget.QuickActionSearchWidgetProvider$QuickActionSearchWidgetProviderSearch} won't be persisted.
+10-15 03:55:47.868   521   549 D AppWidgetServiceImpl: Provider info from ComponentInfo{com.android.chrome/org.chromium.chrome.browser.quickactionsearchwidget.QuickActionSearchWidgetProvider$QuickActionSearchWidgetProviderDino} won't be persisted.
+10-15 03:55:47.868   521   549 D AppWidgetServiceImpl: Provider info from ComponentInfo{com.android.chrome/org.chromium.chrome.browser.searchwidget.SearchWidgetProvider} won't be persisted.
+10-15 03:55:47.891   521   551 I ActivityManager: Start proc 2711:com.android.chrome/u0a150 for service {com.android.chrome/org.chromium.chrome.browser.customtabs.CustomTabsConnectionService}
+10-15 03:55:51.898   521   551 I ActivityManager: Start proc 3095:com.google.android.webview:webview_service/u0a134 for service {com.google.android.webview/org.chromium.android_webview.services.VariationsSeedServer}
+10-15 03:55:54.375  1791  2341 W earchbox:search: Long monitor contention with owner CronetInit (3120) at void il.run()(:com.google.android.gms.dynamite_cronetdynamite@231818047@23.18.18 (190800-0):3) waiters=0 in iu org.chromium.net.impl.CronetUrlRequestContext.b(java.lang.String, org.chromium.net.UrlRequest$Callback, java.util.concurrent.Executor, int, java.util.Collection, boolean, boolean, boolean, boolean, int, boolean, int, org.chromium.net.RequestFinishedInfo$Listener, int, long) for 445ms
+10-15 03:56:04.464   521   551 I ActivityManager: Start proc 3989:com.google.android.webview:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:0/u0ai9000 for  {io.github.vitalicmalachiops.meteosantier/org.chromium.content.app.SandboxedProcessService0:0}
+10-15 03:56:04.911   521   551 I ActivityManager: Start proc 4047:com.google.android.webview:webview_apk/u0a134 for service {com.google.android.webview/org.chromium.android_webview.nonembedded.AwComponentUpdateService}
+10-15 03:56:04.949  3989  3989 I cr_WebViewApkApp: Launched version=113.0.5672.136 minSdkVersion=29 isBundle=false processName=com.google.android.webview:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:0
+10-15 03:56:04.979  3848  3848 D Capacitor: Starting BridgeActivity
+10-15 03:56:05.056  3848  3848 D Capacitor: Registering plugin instance: CapacitorCookies
+10-15 03:56:05.074  3848  3848 D Capacitor: Registering plugin instance: WebView
+10-15 03:56:05.077  3848  3848 D Capacitor: Registering plugin instance: CapacitorHttp
+10-15 03:56:05.079  3848  3848 D Capacitor: Registering plugin instance: SystemBars
+10-15 03:56:05.090  3848  3848 D Capacitor: Registering plugin instance: Geolocation
+10-15 03:56:05.185  3848  3848 D Capacitor: Registering plugin instance: Share
+10-15 03:56:05.254  3848  3848 W Capacitor: Unable to read file at path public/plugins
+10-15 03:56:05.264  3848  3848 D Capacitor: Loading app at https://localhost
+10-15 03:56:05.306  3848  3848 D Capacitor: App started
+10-15 03:56:05.312  3848  3848 D Capacitor: App resumed
+10-15 03:56:05.343  3848  3980 D Capacitor: Handling local request: https://localhost/
+10-15 03:56:05.867  3848  3980 D Capacitor: Handling local request: https://localhost/i18n.js
+10-15 03:56:05.872  3848  3984 D Capacitor: Handling local request: https://localhost/app.js
+10-15 03:56:06.211  4047  4127 W cr_AWNetworkFetcherTask: 	at org.chromium.android_webview.nonembedded.NetworkFetcherTask.download(chromium-TrichromeWebViewGoogle6432.apk-stable-567263637:48)
+10-15 03:56:07.222  3848  3848 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+10-15 03:56:07.227  3848  3848 V Capacitor/Plugin: To native (Capacitor plugin): callbackId: 57353468, pluginId: Geolocation, methodName: checkPermissions
+10-15 03:56:07.231  3848  3848 V Capacitor: callback: 57353468, pluginId: Geolocation, methodName: checkPermissions, methodData: {}
+10-15 03:56:07.452  3848  3848 I Capacitor/Console: File:  - Line 333 - Msg: {"coarseLocation":"granted","location":"granted"}
+10-15 03:56:07.453  3848  3848 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+10-15 03:56:07.453  3848  3848 V Capacitor/Plugin: To native (Capacitor plugin): callbackId: 57353469, pluginId: Geolocation, methodName: getCurrentPosition
+10-15 03:56:07.454  3848  3848 V Capacitor: callback: 57353469, pluginId: Geolocation, methodName: getCurrentPosition, methodData: {"enableHighAccuracy":false,"timeout":25000,"maximumAge":300000}
+10-15 03:56:09.941  3848  3980 D Capacitor: Handling local request: https://localhost/favicon.png
+10-15 03:56:10.428  3848  3997 E chromium: [ERROR:ssl_client_socket_impl.cc(992)] handshake failed; returned -1, SSL error code 1, net_error -101
+10-15 03:56:10.439  3848  3997 E chromium: [ERROR:ssl_client_socket_impl.cc(992)] handshake failed; returned -1, SSL error code 1, net_error -101
+10-15 03:56:10.532  3848  3997 E chromium: [ERROR:ssl_client_socket_impl.cc(992)] handshake failed; returned -1, SSL error code 1, net_error -101
+10-15 03:56:10.668  3848  3997 E chromium: [ERROR:ssl_client_socket_impl.cc(992)] handshake failed; returned -1, SSL error code 1, net_error -101
+10-15 03:56:10.697  3848  3997 E chromium: [ERROR:ssl_client_socket_impl.cc(992)] handshake failed; returned -1, SSL error code 1, net_error -101
+10-15 03:56:10.768  3848  3997 E chromium: [ERROR:ssl_client_socket_impl.cc(992)] handshake failed; returned -1, SSL error code 1, net_error -101
+10-15 03:56:24.967  1419  1494 I HeterodyneSyncScheduler: Scheduling Phenotype for a PhenotypeSyncImmediately(6, org.chromium.net.cronet) one off with window [1, 2] in seconds [CONTEXT service_id=51 ]
+10-15 03:56:32.753  3848  3848 D IONGeolocationController: Error fetching location: Location request timed out
+10-15 03:56:32.760  3848  3848 D Capacitor: Sending plugin error: {"save":false,"callbackId":"57353469","pluginId":"Geolocation","methodName":"getCurrentPosition","success":false,"error":{"message":"Could not obtain location in time. Try with a higher timeout.","code":"OS-PLUG-GLOC-0010"}}
+10-15 03:56:32.774  3848  3848 E Capacitor/Console: File:  - Line 330 - Msg: [object Object]
+10-15 03:56:32.778  3848  3848 D Capacitor: onGeolocationPermissionsShowPrompt: DOING IT HERE FOR ORIGIN: https://localhost/
+10-15 03:56:32.882  3848  3848 D Capacitor: onGeolocationPermissionsShowPrompt: has required permission
+10-15 03:56:38.697  4459  5030 I cr_CronetUrlRequestContext: destroyNativeStreamLocked org.chromium.net.impl.CronetBidirectionalStream@60e4fad
+10-15 03:56:48.702  3848  3997 E chromium: [ERROR:ssl_client_socket_impl.cc(992)] handshake failed; returned -1, SSL error code 1, net_error -101
+10-15 03:56:48.970  3848  3997 E chromium: [ERROR:ssl_client_socket_impl.cc(992)] handshake failed; returned -1, SSL error code 1, net_error -101
+10-15 03:56:48.984  3848  3997 E chromium: [ERROR:ssl_client_socket_impl.cc(992)] handshake failed; returned -1, SSL error code 1, net_error -101
+10-15 03:57:10.100   521  2518 I ActivityManager: Killing 3989:com.google.android.webview:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:0/u0a192i0 (adj 0): isolated not needed
+10-15 03:57:12.795   521   551 I ActivityManager: Start proc 5810:com.google.android.webview:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:0/u0i1 for  {io.github.vitalicmalachiops.meteosantier/org.chromium.content.app.SandboxedProcessService0:0}
+10-15 03:57:12.855  5810  5810 I cr_WebViewApkApp: Launched version=113.0.5672.136 minSdkVersion=29 isBundle=false processName=com.google.android.webview:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:0
+10-15 03:57:12.903  5775  5809 E chromium: [ERROR:simple_file_enumerator.cc(21)] opendir /data/user/0/io.github.vitalicmalachiops.meteosantier/cache/WebView/Default/HTTP Cache/Code Cache/js: No such file or directory (2)
+10-15 03:57:12.903  5775  5809 E chromium: [ERROR:simple_index_file.cc(614)] Could not reconstruct index from disk
+10-15 03:57:13.065  5775  5775 D Capacitor: Starting BridgeActivity
+10-15 03:57:13.097  5775  5775 D Capacitor: Registering plugin instance: CapacitorCookies
+10-15 03:57:13.103  5775  5775 D Capacitor: Registering plugin instance: WebView
+10-15 03:57:13.109  5775  5775 D Capacitor: Registering plugin instance: CapacitorHttp
+10-15 03:57:13.113  5775  5775 D Capacitor: Registering plugin instance: SystemBars
+10-15 03:57:13.118  5775  5775 D Capacitor: Registering plugin instance: Geolocation
+10-15 03:57:13.160  5775  5775 D Capacitor: Registering plugin instance: Share
+10-15 03:57:13.251  5775  5775 W Capacitor: Unable to read file at path public/plugins
+10-15 03:57:13.263  5775  5775 D Capacitor: Loading app at https://localhost
+10-15 03:57:13.372  5775  5775 D Capacitor: App started
+10-15 03:57:13.378  5775  5775 D Capacitor: App resumed
+10-15 03:57:13.479  5775  5813 D Capacitor: Handling local request: https://localhost/
+10-15 03:57:13.773  5775  5812 D Capacitor: Handling local request: https://localhost/app.js
+10-15 03:57:13.774  5775  5813 D Capacitor: Handling local request: https://localhost/i18n.js
+10-15 03:57:15.209  5775  5775 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+10-15 03:57:15.212  5775  5775 V Capacitor/Plugin: To native (Capacitor plugin): callbackId: 72624828, pluginId: Geolocation, methodName: checkPermissions
+10-15 03:57:15.212  5775  5775 V Capacitor: callback: 72624828, pluginId: Geolocation, methodName: checkPermissions, methodData: {}
+10-15 03:57:15.658  5775  5775 I Capacitor/Console: File:  - Line 333 - Msg: {"coarseLocation":"granted","location":"granted"}
+10-15 03:57:15.659  5775  5775 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+10-15 03:57:15.660  5775  5775 V Capacitor/Plugin: To native (Capacitor plugin): callbackId: 72624829, pluginId: Geolocation, methodName: getCurrentPosition
+10-15 03:57:15.660  5775  5775 V Capacitor: callback: 72624829, pluginId: Geolocation, methodName: getCurrentPosition, methodData: {"enableHighAccuracy":false,"timeout":25000,"maximumAge":300000}
+10-15 03:57:18.668  5775  5811 D Capacitor: Handling local request: https://localhost/favicon.png
+10-15 03:57:18.931  5775  5831 E chromium: [ERROR:ssl_client_socket_impl.cc(992)] handshake failed; returned -1, SSL error code 1, net_error -101
+10-15 03:57:18.936  5775  5831 E chromium: [ERROR:ssl_client_socket_impl.cc(992)] handshake failed; returned -1, SSL error code 1, net_error -101
+10-15 03:57:19.190  5775  5831 E chromium: [ERROR:ssl_client_socket_impl.cc(992)] handshake failed; returned -1, SSL error code 1, net_error -101
+10-15 03:57:19.190  5775  5831 E chromium: [ERROR:ssl_client_socket_impl.cc(992)] handshake failed; returned -1, SSL error code 1, net_error -101
+10-15 03:57:38.892  5775  5775 D Capacitor: App paused
+10-15 03:57:40.090  5775  5775 D Capacitor: App stopped
+10-15 03:57:40.092  5775  5775 D Capacitor: Saving instance state!
