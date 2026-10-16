@@ -460,12 +460,12 @@ async function fetchJson(url) {
   return j;
 }
 function coordQS(loc, pastDays = 0) {
-  return `latitude=${loc.lat.toFixed(4)}&longitude=${loc.lon.toFixed(4)}&timezone=auto&forecast_days=7${pastDays ? `&past_days=${pastDays}` : ""}`;
+  return `latitude=${loc.lat.toFixed(4)}&longitude=${loc.lon.toFixed(4)}&timezone=auto&forecast_days=14${pastDays ? `&past_days=${pastDays}` : ""}`;
 }
 const near = (a, b) => a && b && Math.abs(a.lat - b.lat) < 0.02 && Math.abs(a.lon - b.lon) < 0.02;
 
 function fromCache(loc) {
-  const c = store.get("ms.cache2", null);
+  const c = store.get("ms.cache3", null);
   if (!c || !near(c, loc) || Date.now() - c.ts > CACHE_MIN * 60000) return false;
   Object.assign(state, { results: c.results, ens: c.ens, soil: c.soil, status: c.status, offset: c.offset, fetchedAt: c.ts });
   state.results.forEach(r => { r.model = MODELS.find(m => m.id === r.id) || r.model; });
@@ -474,7 +474,7 @@ function fromCache(loc) {
 function saveCache() {
   const c = { lat: state.loc.lat, lon: state.loc.lon, ts: state.fetchedAt, offset: state.offset, status: state.status,
     results: state.results.map(r => ({ id: r.model.id, model: r.model, days: r.days })), ens: state.ens, soil: state.soil };
-  if (!store.set("ms.cache2", c)) store.del("ms.cache2");
+  if (!store.set("ms.cache3", c)) store.del("ms.cache3");
 }
 
 async function loadNow(loc) {
@@ -571,50 +571,83 @@ function renderNow() {
 function allDates() {
   const s = new Set(); state.results.forEach(r => Object.keys(r.days).forEach(d => s.add(d)));
   const t0 = todayStr();
-  return [...s].sort().filter(d => d >= t0).slice(0, 7);
+  return [...s].sort().filter(d => d >= t0).slice(0, 14);
 }
 
 function render() {
   if (!state.results.length) return;
   const cs = allDates().map(consensus);
-  renderSummary(cs);
-  renderPlanner(cs);
-  $("#days").innerHTML = cs.map(c => {
-    const L = dayLabel(c.date);
-    const votes = c.kinds.map(k => `<i class="${k}"></i>`).join("");
-    const amt = c.wet ? (c.snowFrac >= 0.5 && isNum(c.snow) ? ` · ~${fmtS(c.snow)}` : isNum(c.precipWet) ? ` · ~${fmtP(c.precipWet)}` : "") : "";
-    const chips = [];
-    if (isNum(c.dayGust)) chips.push(`<span class="chip" title="${esc(t("chipWindTitle"))}">${svg("wind")}<span class="num">${fmtW(c.dayGust)}</span><span style="color:var(--muted)">${dirLabel(c.dir)}</span></span>`);
-    if (isNum(c.sun)) chips.push(`<span class="chip">${svg("sunS")}${esc(t("chipSun", { h: fmt(c.sun, c.sun < 1 && c.sun > 0 ? 1 : 0) }))}</span>`);
-    if (c.snowy) chips.push(`<span class="chip" style="color:var(--snow)">${svg("flake")}${esc(t("chipSnow", { a: c.snowy, b: c.n }))}</span>`);
-    if (c.ensProb != null) chips.push(`<span class="chip" title="${esc(t("chipEnsTitle", { n: c.ensN }))}">${svg("drops")}${esc(t("chipEns", { p: Math.round(c.ensProb * 100) }))}</span>`);
-    if (isNum(c.soil0) && c.soil0 <= 2) {
-      const frozen = c.soil0 < 0;
-      chips.push(`<span class="chip" style="color:var(${frozen ? "--snow" : "--muted"})" title="${esc(t("chipSoilTitle"))}">${svg("flake")}${esc(t(frozen ? "chipSoilFrost" : "chipSoil", { t: fmtT(c.soil0) }))}</span>`);
-    }
-    const J = judgeWorks(c);
-    activeWorks().forEach(w => { const j = J[w]; if (j && j.level !== "na") chips.push(`<span class="chip flag ${j.level}" title="${esc(t("w_" + w))}: ${esc(j.reason)}">${esc(t("ws_" + w))}</span>`); });
-    return `<article class="day${L.isToday ? " today" : ""}" data-date="${c.date}" data-open="false">
-      <button class="day-head" type="button" aria-expanded="false" aria-controls="det-${c.date}">
-        <div class="d-date"><b>${esc(L.big)}</b><span>${esc(L.small)}</span></div>
-        <div class="d-glyph">${glyph(c)}</div>
-        <div class="d-temp"><span class="tmax">${fmtT(c.tmax)}</span><span class="tmin">${fmtT(c.tmin)}</span></div>
-        <div class="d-rain"><div class="votes" aria-hidden="true">${votes}</div>
-          <div class="votes-lbl"><b>${esc(rainText(c))}</b><br><span class="num">${esc(t("modelsCount", { wet: c.wet, n: c.n }))}</span>${esc(amt)}</div></div>
-        ${svg("chev", "chev")}
-      </button>
-      <div class="d-meta">${chips.join("")}</div>
-      <div class="d-detail" id="det-${c.date}" hidden></div>
-    </article>`;
-  }).join("");
+  const w1 = cs.slice(0, 7), w2 = cs.slice(7, 14);
+  const sum1 = summaryHtml(w1), pl1 = plannerHtml(w1);
+  $("#summary").innerHTML = sum1; $("#summary").hidden = !sum1;
+  $("#planner").innerHTML = pl1; $("#planner").hidden = !pl1;
+  let week2 = "";
+  if (w2.length) {
+    const ns = w2.map(c => c.n).filter(n => n > 0);
+    const a = Math.min(...ns), b = Math.max(...ns);
+    const dry = w2.filter(c => c.n && c.frac < 0.25 && c.snowFrac < 0.25).length;
+    const sum2 = summaryHtml(w2, true), pl2 = plannerHtml(w2);
+    week2 = `<details class="week2" id="week2"${state.week2Open ? " open" : ""}>
+      <summary><span class="w2-t">${esc(t("week2Title"))}</span><span class="w2-r">${esc(rangeLabel(w2[0].date, w2[w2.length - 1].date))} · ${esc(t("week2Dry", { n: dry }))}</span></summary>
+      <div class="w2-body">
+        <p class="w2-note">${esc(t("week2Note", { r: a === b ? a : `${a}–${b}`, n: MODELS.length }))}</p>
+        ${sum2 ? `<section class="summary">${sum2}</section>` : ""}
+        ${pl2 ? `<section class="planner">${pl2}</section>` : ""}
+        <div class="days">${w2.map(dayCard).join("")}</div>
+      </div>
+    </details>`;
+  }
+  $("#days").innerHTML = w1.map(dayCard).join("") + week2;
+  const wk = $("#week2"); if (wk) wk.addEventListener("toggle", () => { state.week2Open = wk.open; });
   document.querySelectorAll(".day-head").forEach(b => b.addEventListener("click", () => toggle(b.closest(".day"))));
+  document.querySelectorAll(".planner button.cell").forEach(b => b.onclick = () => {
+    const day = document.querySelector(`.day[data-date="${b.dataset.date}"]`);
+    if (!day) return;
+    toggle(day, true);
+    day.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
+  });
   if (state.open) { const el = document.querySelector(`.day[data-date="${state.open}"]`); if (el) toggle(el, true); }
 }
 
-function renderSummary(cs) {
+function rangeLabel(d1, d2) {
+  const f = d => new Intl.DateTimeFormat(locale(), { timeZone: "UTC", day: "numeric", month: "short" }).format(new Date(d + "T12:00:00Z"));
+  return `${f(d1)} – ${f(d2)}`;
+}
+
+function dayCard(c) {
+  const L = dayLabel(c.date);
+  const votes = c.kinds.map(k => `<i class="${k}"></i>`).join("");
+  const amt = c.wet ? (c.snowFrac >= 0.5 && isNum(c.snow) ? ` · ~${fmtS(c.snow)}` : isNum(c.precipWet) ? ` · ~${fmtP(c.precipWet)}` : "") : "";
+  const chips = [];
+  if (isNum(c.dayGust)) chips.push(`<span class="chip" title="${esc(t("chipWindTitle"))}">${svg("wind")}<span class="num">${fmtW(c.dayGust)}</span><span style="color:var(--muted)">${dirLabel(c.dir)}</span></span>`);
+  if (isNum(c.sun)) chips.push(`<span class="chip">${svg("sunS")}${esc(t("chipSun", { h: fmt(c.sun, c.sun < 1 && c.sun > 0 ? 1 : 0) }))}</span>`);
+  if (c.snowy) chips.push(`<span class="chip" style="color:var(--snow)">${svg("flake")}${esc(t("chipSnow", { a: c.snowy, b: c.n }))}</span>`);
+  if (c.ensProb != null) chips.push(`<span class="chip" title="${esc(t("chipEnsTitle", { n: c.ensN }))}">${svg("drops")}${esc(t("chipEns", { p: Math.round(c.ensProb * 100) }))}</span>`);
+  if (isNum(c.soil0) && c.soil0 <= 2) {
+    const frozen = c.soil0 < 0;
+    chips.push(`<span class="chip" style="color:var(${frozen ? "--snow" : "--muted"})" title="${esc(t("chipSoilTitle"))}">${svg("flake")}${esc(t(frozen ? "chipSoilFrost" : "chipSoil", { t: fmtT(c.soil0) }))}</span>`);
+  }
+  const J = judgeWorks(c);
+  activeWorks().forEach(w => { const j = J[w]; if (j && j.level !== "na") chips.push(`<span class="chip flag ${j.level}" title="${esc(t("w_" + w))}: ${esc(j.reason)}">${esc(t("ws_" + w))}</span>`); });
+  return `<article class="day${L.isToday ? " today" : ""}" data-date="${c.date}" data-open="false">
+    <button class="day-head" type="button" aria-expanded="false" aria-controls="det-${c.date}">
+      <div class="d-date"><b>${esc(L.big)}</b><span>${esc(L.small)}</span></div>
+      <div class="d-glyph">${glyph(c)}</div>
+      <div class="d-temp"><span class="tmax">${fmtT(c.tmax)}</span><span class="tmin">${fmtT(c.tmin)}</span></div>
+      <div class="d-rain"><div class="votes" aria-hidden="true">${votes}</div>
+        <div class="votes-lbl"><b>${esc(rainText(c))}</b><br><span class="num">${esc(t("modelsCount", { wet: c.wet, n: c.n }))}</span>${esc(amt)}</div></div>
+      ${svg("chev", "chev")}
+    </button>
+    <div class="d-meta">${chips.join("")}</div>
+    <div class="d-detail" id="det-${c.date}" hidden></div>
+  </article>`;
+}
+
+function summaryHtml(cs, noTitle) {
   const good = [], rain = [], unsure = [], snow = [], wind = [], frost = [], soilFrost = [];
   const strong = Math.min(state.limits.macara.gustStop, state.limits.acoperis.gustStop);
   cs.forEach(c => {
+    if (!c.n) return;
     const s = dayLabel(c.date).short;
     if (c.snowFrac >= 0.5) snow.push(s);
     else if (c.frac >= 0.5) rain.push(s);
@@ -627,31 +660,22 @@ function renderSummary(cs) {
   const row = (key, color, arr) => arr.length ? `<div class="sum-row"><div class="k"><i style="background:var(${color})"></i>${esc(t(key))}</div><div class="v">${arr.map(x => `<span class="tag">${esc(x)}</span>`).join("")}</div></div>` : "";
   const html = row("sumDry", "--ok", good) + row("sumRain", "--rain", rain) + row("sumUnsure", "--warn", unsure)
     + row("sumSnow", "--snow", snow) + row("sumWind", "--stop", wind) + row("sumFrostAir", "--snow", frost) + row("sumFrostSoil", "--snow", soilFrost);
-  const el = $("#summary");
-  el.innerHTML = `<h2>${esc(t("summaryTitle"))}</h2><div>${html}</div>`;
-  el.hidden = !html;
+  return html ? `${noTitle ? "" : `<h2>${esc(t("summaryTitle"))}</h2>`}<div>${html}</div>` : "";
 }
 
-function renderPlanner(cs) {
-  const ws = activeWorks(), el = $("#planner");
-  if (!ws.length || !cs.length) { el.hidden = true; return; }
+function plannerHtml(cs) {
+  const ws = activeWorks();
+  if (!ws.length || !cs.length) return "";
   const Ls = cs.map(c => dayLabel(c.date));
   const head = Ls.map(L => `<th scope="col"${L.isToday ? ' class="today"' : ""}>${esc(L.col[0])}<br>${esc(L.col[1])}</th>`).join("");
   const J = cs.map(judgeWorks);
   const body = ws.map(w => `<tr><th scope="row">${esc(t("ws_" + w))}</th>${cs.map((c, i) => {
-    const j = J[i][w] || { level: "na", reason: "" };
+    const j = (c.n ? J[i][w] : null) || { level: "na", reason: t("rt_nodata") };
     return `<td><button type="button" class="cell ${j.level}" data-date="${c.date}" aria-label="${esc(t("w_" + w))}, ${esc(Ls[i].big)}: ${esc(lvl(j.level))}. ${esc(j.reason)}" title="${esc(j.reason)}">${LEVEL_SYM[j.level]}</button></td>`;
   }).join("")}</tr>`).join("");
-  el.innerHTML = `<h2>${esc(t("plannerTitle"))}</h2>
+  return `<h2>${esc(t("plannerTitle"))}</h2>
     <div class="pl-wrap"><table class="pl"><thead><tr><th></th>${head}</tr></thead><tbody>${body}</tbody></table></div>
     <div class="pl-legend"><span><b class="cell ok">✓</b>${esc(lvl("ok"))}</span><span><b class="cell warn">!</b>${esc(lvl("warn"))}</span><span><b class="cell stop">✕</b>${esc(lvl("stop"))}</span><span>${esc(t("legendTap"))}</span></div>`;
-  el.hidden = false;
-  el.querySelectorAll("button.cell").forEach(b => b.onclick = () => {
-    const day = document.querySelector(`.day[data-date="${b.dataset.date}"]`);
-    if (!day) return;
-    toggle(day, true);
-    day.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
-  });
 }
 
 function toggle(el, forceOpen) {
@@ -968,7 +992,7 @@ function toast(msg) {
 
 /* ---------- pornire ---------- */
 function init() {
-  store.del("ms.cache"); store.del("ms.work"); store.del("ms.limitsOpen");   // date vechi, nu se mai folosesc
+  store.del("ms.cache"); store.del("ms.cache2"); store.del("ms.work"); store.del("ms.limitsOpen");   // date vechi, nu se mai folosesc
   applyStatic();
   renderSettings();
   $("#btnLocate").onclick = () => locateMe(false);
