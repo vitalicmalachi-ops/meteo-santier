@@ -770,7 +770,7 @@ function applyStatic() {
 
 function renderSettings() {
   const sel = (id, opts, cur) => `<select id="${id}">${opts.map(([v, l]) => `<option value="${esc(v)}"${String(v) === String(cur) ? " selected" : ""}>${esc(l)}</option>`).join("")}</select>`;
-  const thrOpts = [[0.5, "thrAny"], [1, "thrReal"], [3, "thrHeavy"]].map(([v, k]) => [v, `${fmtP(v)} · ${t(k)}`]);
+  const thrOpts = [[0.5, "thrAny"], [1, "thrReal"], [1.5, ""], [2, ""], [3, "thrHeavy"]].map(([v, k]) => [v, k ? `${fmtP(v)} · ${t(k)}` : fmtP(v)]);
   const limits = WORK_IDS.map(w => `<fieldset><legend>${esc(t("w_" + w))}</legend>${LIMITS[w].map(x => {
     const v = toUser[x.u](state.limits[w][x.k]);
     const dec = x.u === "precip" && state.units.precip === "in" ? 1 : 0;
