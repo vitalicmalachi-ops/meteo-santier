@@ -225,9 +225,14 @@ function aggregateEns(h) {
 }
 
 /* ---------- intervalul de calcul: ziua întreagă, 00–24 ---------- */
-function workSlots() {
+// Pentru azi contează doar orele care au rămas: ploaia de noapte nu face „ploioasă” restul zilei.
+const DRIZZLE = 0.2;   // mm/h: sub acest prag modelele dau des „burniță” care nu cade; nu o numărăm ca ploaie
+const WET_HOUR = 0.5;  // mm/h: ploaie în vederea oră cu oră; între DRIZZLE și WET_HOUR apare ca burniță posibilă
+function nowHour() { return new Date(Date.now() + state.offset * 1000).getUTCHours(); }
+function slotsFor(date) {
+  const from = date === todayStr() ? nowHour() : 0;
   const out = [];
-  for (let h = 0; h < 24; h++) out.push({ off: 0, hr: h });
+  for (let h = from; h < 24; h++) out.push({ off: 0, hr: h });
   return out;
 }
 function winAgg(days, date, slots) {
@@ -239,7 +244,7 @@ function winAgg(days, date, slots) {
   const P = H.filter(x => isNum(x.p));
   const ok = P.length >= Math.max(1, Math.ceil(slots.length / 4));
   return {
-    ok, p: ok ? sumOf(P.map(x => x.p)) : null, s: ok ? (sumOf(H.map(x => x.s)) || 0) : null,
+    ok, p: ok ? (sumOf(P.map(x => x.p >= DRIZZLE ? x.p : 0)) || 0) : null, s: ok ? (sumOf(H.map(x => x.s)) || 0) : null,
     g: maxOf(H.map(x => x.g)), tmin: minOf(H.map(x => x.t)), tmax: maxOf(H.map(x => x.t)), rh: median(H.map(x => x.rh))
   };
 }
@@ -253,7 +258,7 @@ function ensWindow(date, slots, thr) {
       slots.forEach(sl => {
         const D = sl.off ? d1 : d0; if (!D || !D.m || !D.m[j]) return;
         const i = D.hrs.indexOf(sl.hr); if (i < 0) return;
-        const v = D.m[j][i]; if (isNum(v)) { sum += v; c++; }
+        const v = D.m[j][i]; if (isNum(v)) { sum += v >= DRIZZLE ? v : 0; c++; }
       });
       if (c >= need) sums.push(sum);
     });
@@ -279,7 +284,14 @@ function aggregateSoil(h) {
 
 /* ---------- consens pe o zi ---------- */
 function consensus(date) {
-  const thr = state.thr, slots = workSlots();
+  const thr = state.thr, slots = slotsFor(date);
+  const isToday = date === todayStr(), nowH = nowHour();
+  // ploaia de azi dinainte de ora curentă (după modele), afișată separat
+  const earlier = isToday && nowH > 0 ? median(state.results.map(r => {
+    const d = r.days[date]; if (!d) return null;
+    const H = d.hours.filter(x => x.hr < nowH && isNum(x.p));
+    return H.length ? H.reduce((a, x) => a + (x.p >= DRIZZLE ? x.p : 0), 0) : null;
+  })) : null;
   const Wall = state.results.map(r => winAgg(r.days, date, slots));
   const W = Wall.filter(w => w.ok);
   const n = W.length;
@@ -289,7 +301,7 @@ function consensus(date) {
   const tRows = state.results.map(r => r.days[date]).filter(Boolean);
   const ens = ensWindow(date, slots, thr);
   return {
-    date, n, wet, snowy, kinds: kinds.slice().sort((a, b) => (b === "s") - (a === "s") || (b === "r") - (a === "r")),
+    date, isToday, fromHour: isToday ? nowH : 0, earlier, n, wet, snowy, kinds: kinds.slice().sort((a, b) => (b === "s") - (a === "s") || (b === "r") - (a === "r")),
     frac: n ? wet / n : 0, snowFrac: n ? snowy / n : 0,
     // temperaturile zilei întregi: înghețul de noapte contează pentru beton și fațade
     tmin: median(tRows.map(r => r.tmin)), tmax: median(tRows.map(r => r.tmax)),
@@ -392,16 +404,16 @@ const activeWorks = () => WORK_IDS.filter(id => state.works.includes(id));
 function hourly(date) {
   const res = [];
   for (let h = 0; h < 24; h++) {
-    let n = 0, wet = 0, snow = 0; const temps = [], gusts = [];
+    let n = 0, wet = 0, snow = 0, drz = 0; const temps = [], gusts = [];
     state.results.forEach(r => {
       const d = r.days[date]; if (!d) return;
       const x = d.hours.find(y => y.hr === h); if (!x || !isNum(x.p)) return;
       n++;
-      if (isNum(x.s) && x.s >= 0.1) { wet++; snow++; } else if (x.p >= 0.1) wet++;
+      if (isNum(x.s) && x.s >= 0.1) { wet++; snow++; } else if (x.p >= WET_HOUR) wet++; else if (x.p >= DRIZZLE) drz++;
       if (isNum(x.t)) temps.push(x.t);
       if (isNum(x.g)) gusts.push(x.g);
     });
-    res.push({ h, n, wet, snow, frac: n ? wet / n : 0, t: median(temps), g: median(gusts) });
+    res.push({ h, n, wet, snow, drz, frac: n ? wet / n : 0, dfrac: n ? drz / n : 0, t: median(temps), g: median(gusts) });
   }
   return res;
 }
@@ -622,6 +634,7 @@ function dayCard(c) {
   if (isNum(c.dayGust)) chips.push(`<span class="chip" title="${esc(t("chipWindTitle"))}">${svg("wind")}<span class="num">${fmtW(c.dayGust)}</span><span style="color:var(--muted)">${dirLabel(c.dir)}</span></span>`);
   if (isNum(c.sun)) chips.push(`<span class="chip">${svg("sunS")}${esc(t("chipSun", { h: fmt(c.sun, c.sun < 1 && c.sun > 0 ? 1 : 0) }))}</span>`);
   if (c.snowy) chips.push(`<span class="chip" style="color:var(--snow)">${svg("flake")}${esc(t("chipSnow", { a: c.snowy, b: c.n }))}</span>`);
+  if (c.isToday && isNum(c.earlier) && c.earlier >= state.thr) chips.push(`<span class="chip" style="color:var(--rain)" title="${esc(t("earlierTitle"))}">${svg("drops")}${esc(t("earlierToday", { v: fmtP(c.earlier) }))}</span>`);
   if (c.ensProb != null) chips.push(`<span class="chip" title="${esc(t("chipEnsTitle", { n: c.ensN }))}">${svg("drops")}${esc(t("chipEns", { p: Math.round(c.ensProb * 100) }))}</span>`);
   if (isNum(c.soil0) && c.soil0 <= 2) {
     const frozen = c.soil0 < 0;
@@ -635,7 +648,7 @@ function dayCard(c) {
       <div class="d-glyph">${glyph(c)}</div>
       <div class="d-temp"><span class="tmax">${fmtT(c.tmax)}</span><span class="tmin">${fmtT(c.tmin)}</span></div>
       <div class="d-rain"><div class="votes" aria-hidden="true">${votes}</div>
-        <div class="votes-lbl"><b>${esc(rainText(c))}</b><br><span class="num">${esc(t("modelsCount", { wet: c.wet, n: c.n }))}</span>${esc(amt)}</div></div>
+        <div class="votes-lbl"><b>${esc(rainText(c))}</b><br><span class="num">${esc(t("modelsCount", { wet: c.wet, n: c.n }))}</span>${c.isToday && c.fromHour > 0 ? ` · ${esc(t("fromHour", { h: String(c.fromHour).padStart(2, "0") + ":00" }))}` : ""}${esc(amt)}</div></div>
       ${svg("chev", "chev")}
     </button>
     <div class="d-meta">${chips.join("")}</div>
@@ -707,10 +720,10 @@ function detailHtml(date) {
   const nowH = new Date(Date.now() + state.offset * 1000).getUTCHours();
   const hrs = hourly(date).map(b => {
     const hh = String(b.h).padStart(2, "0");
-    const cls = `hc${isToday && nowH === b.h ? " now" : ""}${b.n ? "" : " na"}`;
+    const cls = `hc${isToday && nowH === b.h ? " now" : ""}${isToday && b.h < nowH ? " past" : ""}${b.n ? "" : " na"}`;
     if (!b.n) return `<div class="${cls}"><span class="h">${hh}</span><span class="bar"></span><span class="t">–</span><span class="g">–</span></div>`;
-    return `<div class="${cls}" title="${esc(t("blocksTip", { wet: b.wet, n: b.n }))}"><span class="h">${hh}</span>
-      <span class="bar"><span class="${b.snow * 2 >= b.wet && b.snow ? "s" : ""}" style="height:${Math.round(b.frac * 100)}%"></span></span>
+    return `<div class="${cls}" title="${esc(t("hourTip", { wet: b.wet, drz: b.drz, n: b.n }))}"><span class="h">${hh}</span>
+      <span class="bar"><span class="dz" style="height:${Math.round((b.frac + b.dfrac) * 100)}%"></span><span class="${b.snow * 2 >= b.wet && b.snow ? "s" : ""}" style="height:${Math.round(b.frac * 100)}%"></span></span>
       <span class="t">${fmtT(b.t)}</span><span class="g">${isNum(b.g) ? fmt(toUser.wind(b.g)) : "–"}</span></div>`;
   }).join("");
   const thr = state.thr;
@@ -728,7 +741,7 @@ function detailHtml(date) {
     ${soil}
     <div class="section-h">${esc(t("hourlyTitle"))}</div>
     <div class="hours"><div class="hgrid">${hrs}</div></div>
-    <div class="legend">${esc(t("hourlyLegend", { u: unitLabel.wind() }))}</div>
+    <div class="legend">${esc(t("hourlyLegend", { u: unitLabel.wind() }))} ${esc(t("drizzleLegend", { a: fmtPn(DRIZZLE), b: fmtPn(WET_HOUR), u: unitLabel.precip() }))}</div>
     <div class="section-h">${esc(t("modelsTitle"))}</div>
     <div class="tbl-wrap"><table>
       <thead><tr><th>${esc(t("th_model"))}</th><th>${esc(t("th_minmax"))}</th><th>${esc(t("th_rain", { u: unitLabel.precip() }))}</th><th>${esc(t("th_snow", { u: unitLabel.snow() }))}</th><th>${esc(t("th_gust", { u: unitLabel.wind() }))}</th><th>${esc(t("th_sun"))}</th></tr></thead>
