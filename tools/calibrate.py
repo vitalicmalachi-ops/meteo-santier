@@ -2,7 +2,7 @@
 # modelele (Open-Meteo Historical Forecast API), pe perioade de 12 ore (06–18 și 18–06 UTC). Rulează în GitHub Actions.
 import json, sys, time, re, urllib.request, datetime as dt
 LAT, LON, STATION = 47.02, 28.87, "33815"
-END = dt.date.today() - dt.timedelta(days=1)
+END = dt.date.today() - dt.timedelta(days=0 if len(sys.argv) > 3 and sys.argv[3] == "today" else 1)
 START = END - dt.timedelta(days=int(sys.argv[2]) if len(sys.argv) > 2 else 90)
 def get(url, tries=3):
     for k in range(tries):

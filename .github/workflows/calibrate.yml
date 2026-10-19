@@ -6,6 +6,9 @@ on:
       days:
         description: Câte zile înapoi
         default: "90"
+      until:
+        description: "today = include today"
+        default: ""
 permissions:
   contents: write
 jobs:
@@ -13,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: mkdir -p out && python3 tools/calibrate.py out/calib.json ${{ inputs.days }}
+      - run: mkdir -p out && python3 tools/calibrate.py out/calib.json ${{ inputs.days }} ${{ inputs.until }}
       - name: Salvează pe ramura calib
         run: |
           cd out && git init -q -b calib && git config user.name github-actions && git config user.email github-actions@users.noreply.github.com
