@@ -37,11 +37,16 @@ for l in synops:
     g = msg[i + 1:]
     if not g: continue
     ir = g[0][0]
+    vvc = g[0][3:5]
     sec1 = []
     for x in g[2:]:
         if x in ("333", "555", "222") or x.startswith("222"): break
         sec1.append(x)
     rec = {"ir": ir}
+    if vvc.isdigit():
+        v = int(vvc)
+        rec["vis"] = (0.05 if v == 0 else v / 10) if v <= 50 else (v - 50) if 56 <= v <= 80 else (30 + (v - 80) * 5) if 81 <= v <= 89 else \
+            {90: 0.03, 91: 0.05, 92: 0.2, 93: 0.5, 94: 1, 95: 2, 96: 4, 97: 10, 98: 20, 99: 50}.get(v)
     for x in sec1:
         if len(x) == 5 and x[0] == "6" and x[1:4].isdigit() and x[4] in TR:
             rec["rr"] = rrr(x[1:4]); rec["h"] = TR[x[4]]
@@ -54,14 +59,17 @@ for l in synops:
 # 2) modelele, pe ore UTC
 models = ["ecmwf_ifs025", "icon_seamless", "gfs_seamless", "meteofrance_seamless", "ukmo_seamless", "gem_seamless", "jma_seamless", "cma_grapes_global", "ecmwf_aifs025_single"]
 mod = {}
+extra = {}
 for m in models:
     try:
-        j = json.loads(get(f"https://historical-forecast-api.open-meteo.com/v1/forecast?latitude={LAT}&longitude={LON}&start_date={START - dt.timedelta(days=1)}&end_date={END}&hourly=precipitation&models={m}&timezone=GMT"))
-        k = next(x for x in j["hourly"] if x.startswith("precipitation"))
-        mod[m] = dict(zip(j["hourly"]["time"], j["hourly"][k]))
+        j = json.loads(get(f"https://historical-forecast-api.open-meteo.com/v1/forecast?latitude={LAT}&longitude={LON}&start_date={START - dt.timedelta(days=1)}&end_date={END}&hourly=precipitation,relative_humidity_2m,wind_speed_10m,visibility,weather_code&models={m}&timezone=GMT"))
+        H = j["hourly"]; key = lambda p: next((x for x in H if x.startswith(p)), None)
+        k = key("precipitation")
+        mod[m] = dict(zip(H["time"], H[k]))
+        extra[m] = {v: dict(zip(H["time"], H[key(v)])) for v in ("relative_humidity_2m", "wind_speed_10m", "visibility", "weather_code") if key(v)}
     except Exception as e:
         mod[m] = {"error": str(e)}
     time.sleep(1)
 json.dump({"start": str(START), "end": str(END), "station": STATION, "n_synop": len(synops),
-           "obs": {f"{a}T{b:02d}": v for (a, b), v in obs.items()}, "models": mod}, open(sys.argv[1], "w"))
+           "obs": {f"{a}T{b:02d}": v for (a, b), v in obs.items()}, "models": mod, "extra": extra}, open(sys.argv[1], "w"))
 print("synop", len(synops), "obs", len(obs), "models", {m: (len(v) if "error" not in v else v["error"][:40]) for m, v in mod.items()})
