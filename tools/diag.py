@@ -1,8 +1,14 @@
 # Diagnostic: ce prezice fiecare model, oră cu oră, pentru un loc (azi și ieri). Rulează în GitHub Actions.
 import json, os, sys, urllib.request, urllib.parse
 name = os.environ.get("PLACE", "Ciorescu")
-geo = json.load(urllib.request.urlopen("https://geocoding-api.open-meteo.com/v1/search?count=1&language=ro&name=" + urllib.parse.quote(name)))
-r = geo["results"][0]; lat, lon = r["latitude"], r["longitude"]
+if "," in name and all(p.strip().replace(".", "", 1).replace("-", "", 1).isdigit() for p in name.split(",")[:2]):
+    lat, lon = map(float, name.split(",")[:2]); r = {"name": name, "admin1": None}
+else:
+    geo = json.load(urllib.request.urlopen("https://geocoding-api.open-meteo.com/v1/search?count=10&language=ro&name=" + urllib.parse.quote(name)))
+    res = geo.get("results") or []
+    r = next((x for x in res if x.get("country_code") == "MD"), res[0] if res else None)
+    if not r: sys.exit("loc negăsit: " + name)
+    lat, lon = r["latitude"], r["longitude"]
 out = {"place": r["name"], "admin": r.get("admin1"), "lat": lat, "lon": lon, "models": {}}
 models = ["ecmwf_ifs025","ecmwf_aifs025_single","icon_seamless","gfs_seamless","meteofrance_seamless","ukmo_seamless","gem_seamless","jma_seamless","kma_seamless","cma_grapes_global","bom_access_global","knmi_harmonie_arome_europe","dmi_harmonie_arome_europe"]
 for m in models:
