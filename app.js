@@ -6,7 +6,7 @@
 const API = "https://api.open-meteo.com/v1/forecast";
 const ENS_API = "https://ensemble-api.open-meteo.com/v1/ensemble";
 const GEO_API = "https://geocoding-api.open-meteo.com/v1/search";
-const HOURLY = "temperature_2m,precipitation,snowfall,wind_speed_10m,wind_gusts_10m,wind_direction_10m,sunshine_duration,relative_humidity_2m";
+const HOURLY = "temperature_2m,precipitation,snowfall,wind_speed_10m,wind_gusts_10m,wind_direction_10m,sunshine_duration,relative_humidity_2m,visibility,weather_code";
 const CURRENT = "temperature_2m,relative_humidity_2m,apparent_temperature";
 const CACHE_MIN = 30;
 
@@ -189,7 +189,7 @@ function aggregate(h) {
     days.get(d).push({
       hr, t: h.temperature_2m?.[i], p: h.precipitation?.[i], s: h.snowfall?.[i],
       w: h.wind_speed_10m?.[i], g: h.wind_gusts_10m?.[i], dir: h.wind_direction_10m?.[i], sun: h.sunshine_duration?.[i],
-      rh: h.relative_humidity_2m?.[i]
+      rh: h.relative_humidity_2m?.[i], vis: h.visibility?.[i], wc: h.weather_code?.[i]
     });
   });
   const out = {};
@@ -228,6 +228,24 @@ function aggregateEns(h) {
 // Pentru azi contează doar orele care au rămas: ploaia de noapte nu face „ploioasă” restul zilei.
 const DRIZZLE = 0.2;   // mm/h: sub acest prag modelele dau des „burniță” care nu cade; nu o numărăm ca ploaie
 const WET_HOUR = 0.5;  // mm/h: ploaie în vederea oră cu oră; între DRIZZLE și WET_HOUR apare ca burniță posibilă
+// Ceață într-o oră, pentru un model: vizibilitate sub 1 km, cod de ceață, sau aer saturat (≥99%) cu vânt slab.
+// Calibrat pe observațiile de ceață ale stației Chișinău; o oră e „cu ceață” dacă o dă cel puțin o treime din modele.
+const FOG_FRAC = 1 / 3;
+function fogHour(x) {
+  if (!x || (isNum(x.p) && x.p >= DRIZZLE)) return false;
+  if (isNum(x.vis) && x.vis < 1000) return true;
+  if (x.wc === 45 || x.wc === 48) return true;
+  return isNum(x.rh) && x.rh >= 99 && isNum(x.w) && x.w <= 12;
+}
+function fogByHour(date) {
+  const out = [];
+  for (let h = 0; h < 24; h++) {
+    let n = 0, f = 0;
+    state.results.forEach(r => { const d = r.days[date]; const x = d && d.hours.find(y => y.hr === h); if (!x || !isNum(x.rh) && !isNum(x.vis)) return; n++; if (fogHour(x)) f++; });
+    out.push({ h, n, f, frac: n ? f / n : 0 });
+  }
+  return out;
+}
 function nowHour() { return new Date(Date.now() + state.offset * 1000).getUTCHours(); }
 function slotsFor(date) {
   const from = date === todayStr() ? nowHour() : 0;
@@ -318,7 +336,13 @@ function consensus(date) {
       const ds = [0, -1, -2].map(k => r.days[addDays(date, k)]);
       return ds.every(x => x && x.ok) ? ds.reduce((s, x) => s + x.precip, 0) : null;
     })),
-    ensProb: ens ? ens.p : null, ensN: ens ? ens.n : 0
+    ensProb: ens ? ens.p : null, ensN: ens ? ens.n : 0,
+    ...(() => {
+      const fh = fogByHour(date).filter(x => x.h >= (isToday ? nowH : 0) && x.n && x.frac >= FOG_FRAC);
+      if (!fh.length) return { fog: null };
+      const a = fh[0].h, b = fh[fh.length - 1].h + 1;
+      return { fog: { from: a, to: b, hours: fh.length, frac: Math.max(...fh.map(x => x.frac)), label: `${String(a).padStart(2, "0")}–${String(b % 24 === 0 && b === 24 ? 24 : b).padStart(2, "0")}` } };
+    })()
   };
 }
 
@@ -365,6 +389,7 @@ function judgeWorks(c) {
     [f >= 0.6, "stop", pr],
     [f >= 0.25, "warn", pr],
     [N(c.prevPrecip) && c.prevPrecip >= state.thr, "warn", t("r_wetYesterday", { v: fmtP(c.prevPrecip) })],
+    [!!c.fog, "warn", c.fog ? t("r_fogDamp", { h: c.fog.label }) : ""],
     [N(c.tmin) && c.tmin < L.hidro.tmin, "warn", t("r_coldAdhesion", { t: T(c.tmin) })]
   ], t("r_hidroOk"));
   pick("fatada", [
@@ -374,6 +399,7 @@ function judgeWorks(c) {
     [N(c.tmin) && c.tmin < L.fatada.tmin, "warn", t("r_lowBelow", { t: T(c.tmin), lim: T(L.fatada.tmin) })],
     [f >= 0.25, "warn", pr],
     [N(c.rh) && c.rh >= L.fatada.rh, "warn", t("r_humid", { v: fmt(c.rh) })],
+    [!!c.fog, "warn", c.fog ? t("r_fogDamp", { h: c.fog.label }) : ""],
     [N(g) && g >= L.fatada.gustWarn, "warn", t("r_gusts", { v: fmtW(g) })]
   ], t("r_fatadaOk", { lim: T(L.fatada.tmin) }));
   pick("acoperis", [
@@ -381,11 +407,13 @@ function judgeWorks(c) {
     [c.snowFrac >= 0.5, "stop", t("r_snowRoof")],
     [N(g) && g >= L.acoperis.gustWarn, "warn", t("r_gusts", { v: fmtW(g) })],
     [N(c.tmin) && c.tmin < 0, "warn", t("r_ice")],
-    [f >= 0.5, "warn", t("r_slippery")]
+    [f >= 0.5, "warn", t("r_slippery")],
+    [!!c.fog, "warn", c.fog ? t("r_fogVis", { h: c.fog.label }) : ""]
   ], N(g) ? t("r_gusts", { v: fmtW(g) }) : t("r_calmWind"));
   if (N(g)) pick("macara", [
     [g >= L.macara.gustStop, "stop", t("r_craneStop", { v: fmtW(g) })],
-    [g >= L.macara.gustWarn, "warn", t("r_craneWarn", { v: fmtW(g) })]
+    [g >= L.macara.gustWarn, "warn", t("r_craneWarn", { v: fmtW(g) })],
+    [!!c.fog, "warn", c.fog ? t("r_fogVis", { h: c.fog.label }) : ""]
   ], t("r_gusts", { v: fmtW(g) }));
   else res.macara = { level: "na", reason: t("r_noGustData") };
   pick("sapaturi", [
@@ -430,6 +458,7 @@ const ICON = {
   sunS: '<circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2"/>',
   drops: '<path d="M12 3.5s5.5 6 5.5 10a5.5 5.5 0 0 1-11 0c0-4 5.5-10 5.5-10z"/>',
   flake: '<path d="M12 3v18M4.2 7.5l15.6 9M4.2 16.5l15.6-9"/>',
+  fog: '<path d="M4 8h16M3 12h18M5 16h14M8 20h8"/>',
   chev: '<path d="M6 9l6 6 6-6"/>'
 };
 function svg(name, cls, color) {
@@ -477,7 +506,7 @@ function coordQS(loc, pastDays = 0) {
 const near = (a, b) => a && b && Math.abs(a.lat - b.lat) < 0.02 && Math.abs(a.lon - b.lon) < 0.02;
 
 function fromCache(loc) {
-  const c = store.get("ms.cache3", null);
+  const c = store.get("ms.cache4", null);
   if (!c || !near(c, loc) || Date.now() - c.ts > CACHE_MIN * 60000) return false;
   Object.assign(state, { results: c.results, ens: c.ens, soil: c.soil, status: c.status, offset: c.offset, fetchedAt: c.ts });
   state.results.forEach(r => { r.model = MODELS.find(m => m.id === r.id) || r.model; });
@@ -486,7 +515,7 @@ function fromCache(loc) {
 function saveCache() {
   const c = { lat: state.loc.lat, lon: state.loc.lon, ts: state.fetchedAt, offset: state.offset, status: state.status,
     results: state.results.map(r => ({ id: r.model.id, model: r.model, days: r.days })), ens: state.ens, soil: state.soil };
-  if (!store.set("ms.cache3", c)) store.del("ms.cache3");
+  if (!store.set("ms.cache4", c)) store.del("ms.cache4");
 }
 
 async function loadNow(loc) {
@@ -633,6 +662,7 @@ function dayCard(c) {
   const chips = [];
   if (isNum(c.dayGust)) chips.push(`<span class="chip" title="${esc(t("chipWindTitle"))}">${svg("wind")}<span class="num">${fmtW(c.dayGust)}</span><span style="color:var(--muted)">${dirLabel(c.dir)}</span></span>`);
   if (isNum(c.sun)) chips.push(`<span class="chip">${svg("sunS")}${esc(t("chipSun", { h: fmt(c.sun, c.sun < 1 && c.sun > 0 ? 1 : 0) }))}</span>`);
+  if (c.fog) chips.push(`<span class="chip fogc" title="${esc(t("fogTitle"))}">${svg("fog")}${esc(t("chipFog", { h: c.fog.label }))}</span>`);
   if (c.snowy) chips.push(`<span class="chip" style="color:var(--snow)">${svg("flake")}${esc(t("chipSnow", { a: c.snowy, b: c.n }))}</span>`);
   if (c.isToday && isNum(c.earlier) && c.earlier >= state.thr) chips.push(`<span class="chip" style="color:var(--rain)" title="${esc(t("earlierTitle"))}">${svg("drops")}${esc(t("earlierToday", { v: fmtP(c.earlier) }))}</span>`);
   if (c.ensProb != null) chips.push(`<span class="chip" title="${esc(t("chipEnsTitle", { n: c.ensN }))}">${svg("drops")}${esc(t("chipEns", { p: Math.round(c.ensProb * 100) }))}</span>`);
@@ -657,7 +687,7 @@ function dayCard(c) {
 }
 
 function summaryHtml(cs, noTitle) {
-  const good = [], rain = [], unsure = [], snow = [], wind = [], frost = [], soilFrost = [];
+  const good = [], rain = [], unsure = [], snow = [], wind = [], frost = [], soilFrost = [], fog = [];
   const strong = Math.min(state.limits.macara.gustStop, state.limits.acoperis.gustStop);
   cs.forEach(c => {
     if (!c.n) return;
@@ -668,11 +698,12 @@ function summaryHtml(cs, noTitle) {
     if (isNum(c.gust) && c.gust >= strong) wind.push(s);
     if (isNum(c.tmin) && c.tmin < 0) frost.push(s);
     if (isNum(c.soil0) && c.soil0 < 0) soilFrost.push(s);
+    if (c.fog) fog.push(`${s} ${c.fog.label}`);
     if (c.frac < 0.25 && c.snowFrac < 0.25 && !(isNum(c.gust) && c.gust >= strong)) good.push(s);
   });
   const row = (key, color, arr) => arr.length ? `<div class="sum-row"><div class="k"><i style="background:var(${color})"></i>${esc(t(key))}</div><div class="v">${arr.map(x => `<span class="tag">${esc(x)}</span>`).join("")}</div></div>` : "";
   const html = row("sumDry", "--ok", good) + row("sumRain", "--rain", rain) + row("sumUnsure", "--warn", unsure)
-    + row("sumSnow", "--snow", snow) + row("sumWind", "--stop", wind) + row("sumFrostAir", "--snow", frost) + row("sumFrostSoil", "--snow", soilFrost);
+    + row("sumSnow", "--snow", snow) + row("sumWind", "--stop", wind) + row("sumFrostAir", "--snow", frost) + row("sumFrostSoil", "--snow", soilFrost) + row("sumFog", "--muted", fog);
   return html ? `${noTitle ? "" : `<h2>${esc(t("summaryTitle"))}</h2>`}<div>${html}</div>` : "";
 }
 
@@ -718,13 +749,15 @@ function detailHtml(date) {
     ? `<div class="soil-line">${svg("flake")}<span>${esc(t("soilLine", { a: fmtT(c.soil0), b: fmtT(c.soil6) }))}${isNum(c.soil0) && c.soil0 < 0 ? esc(t("soilFrost")) : ""}</span></div>` : "";
   const isToday = date === todayStr();
   const nowH = new Date(Date.now() + state.offset * 1000).getUTCHours();
+  const fogH = fogByHour(date);
   const hrs = hourly(date).map(b => {
+    const fz = fogH[b.h] && fogH[b.h].n && fogH[b.h].frac >= FOG_FRAC;
     const hh = String(b.h).padStart(2, "0");
     const cls = `hc${isToday && nowH === b.h ? " now" : ""}${isToday && b.h < nowH ? " past" : ""}${b.n ? "" : " na"}`;
     if (!b.n) return `<div class="${cls}"><span class="h">${hh}</span><span class="bar"></span><span class="t">–</span><span class="g">–</span></div>`;
     return `<div class="${cls}" title="${esc(t("hourTip", { wet: b.wet, drz: b.drz, n: b.n }))}"><span class="h">${hh}</span>
       <span class="bar"><span class="dz" style="height:${Math.round((b.frac + b.dfrac) * 100)}%"></span><span class="${b.snow * 2 >= b.wet && b.snow ? "s" : ""}" style="height:${Math.round(b.frac * 100)}%"></span></span>
-      <span class="t">${fmtT(b.t)}</span><span class="g">${isNum(b.g) ? fmt(toUser.wind(b.g)) : "–"}</span></div>`;
+      <span class="t">${fmtT(b.t)}</span><span class="g">${isNum(b.g) ? fmt(toUser.wind(b.g)) : "–"}</span><span class="fz${fz ? " on" : ""}" title="${fz ? esc(t("fogTip", { f: fogH[b.h].f, n: fogH[b.h].n })) : ""}">${fz ? "≋" : ""}</span></div>`;
   }).join("");
   const thr = state.thr;
   const rows = state.results.map(r => {
@@ -741,7 +774,7 @@ function detailHtml(date) {
     ${soil}
     <div class="section-h">${esc(t("hourlyTitle"))}</div>
     <div class="hours"><div class="hgrid">${hrs}</div></div>
-    <div class="legend">${esc(t("hourlyLegend", { u: unitLabel.wind() }))} ${esc(t("drizzleLegend", { a: fmtPn(DRIZZLE), b: fmtPn(WET_HOUR), u: unitLabel.precip() }))}</div>
+    <div class="legend">${esc(t("hourlyLegend", { u: unitLabel.wind() }))} ${esc(t("drizzleLegend", { a: fmtPn(DRIZZLE), b: fmtPn(WET_HOUR), u: unitLabel.precip() }))} ${esc(t("fogLegend"))}</div>
     <div class="section-h">${esc(t("modelsTitle"))}</div>
     <div class="tbl-wrap"><table>
       <thead><tr><th>${esc(t("th_model"))}</th><th>${esc(t("th_minmax"))}</th><th>${esc(t("th_rain", { u: unitLabel.precip() }))}</th><th>${esc(t("th_snow", { u: unitLabel.snow() }))}</th><th>${esc(t("th_gust", { u: unitLabel.wind() }))}</th><th>${esc(t("th_sun"))}</th></tr></thead>
@@ -1005,7 +1038,7 @@ function toast(msg) {
 
 /* ---------- pornire ---------- */
 function init() {
-  store.del("ms.cache"); store.del("ms.cache2"); store.del("ms.work"); store.del("ms.limitsOpen");   // date vechi, nu se mai folosesc
+  store.del("ms.cache"); store.del("ms.cache2"); store.del("ms.cache3"); store.del("ms.work"); store.del("ms.limitsOpen");   // date vechi, nu se mai folosesc
   applyStatic();
   renderSettings();
   $("#btnLocate").onclick = () => locateMe(false);
