@@ -647,14 +647,263 @@ function render() {
   }
   $("#days").innerHTML = w1.map(dayCard).join("") + week2;
   const wk = $("#week2"); if (wk) wk.addEventListener("toggle", () => { state.week2Open = wk.open; });
+  updateRadar();
   document.querySelectorAll(".day-head").forEach(b => b.addEventListener("click", () => toggle(b.closest(".day"))));
-  document.querySelectorAll(".planner button.cell").forEach(b => b.onclick = () => {
-    const day = document.querySelector(`.day[data-date="${b.dataset.date}"]`);
-    if (!day) return;
-    toggle(day, true);
-    day.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
-  });
+  document.querySelectorAll(".planner button.cell, .d-meta button.chip").forEach(b => b.onclick = () => openWorkSheet(b.dataset.date, b.dataset.w));
   if (state.open) { const el = document.querySelector(`.day[data-date="${state.open}"]`); if (el) toggle(el, true); }
+}
+
+/* ---------- radar: ploaia din următoarele 2 ore ----------
+   Sursa: compozitul radar european EUMETNET OPERA (date deschise, CC BY 4.0), reflectivitate la 5 minute, grilă de 2 km.
+   Fișierele stau pe un server fără CORS, așa că le citim printr-un mic proxy (Cloudflare Worker, vezi worker/).
+   Din fiecare cadru citim doar dalele de 512×512 din jurul locului (cereri HTTP Range), estimăm deplasarea ploii
+   între ultimele două cadre (potrivire de blocuri; dacă e prea puțină ploaie, vântul de la 700 hPa) și o extrapolăm. */
+const RADAR_PROXY = "";   // ex. "https://meteo-santier-radar.<cont>.workers.dev/"; gol = funcția e oprită
+const RADAR_API = "https://api.meteogate.eu/eu-eumetnet-weather-radar/collections/observations/locations/0-20010-0-OPERA";
+const RADAR_S3 = "https://s3.waw3-1.cloudferro.com/openradar-24h/";
+const RADAR_WET_DBZ = 18;          // ≈ 0,4 mm/h după Marshall–Palmer (ploaie slabă); sub asta e burniță sau ecou parazit
+const RADAR_STEP = 10, RADAR_LEAD = 120, RADAR_W = 80;   // minute, minute, raza ferestrei în pixeli (160 km)
+
+// Proiecția Lambert azimutală echivalentă (elipsoid WGS84), ca în fișierele OPERA: lat0 55°, lon0 10°, FE 1 950 000, FN −2 100 000
+function laea(lat, lon) {
+  const a = 6378137, f = 1 / 298.257223563, e2 = 2 * f - f * f, e = Math.sqrt(e2), rad = Math.PI / 180;
+  const q = p => { const s = Math.sin(p); return (1 - e2) * (s / (1 - e2 * s * s) - Math.log((1 - e * s) / (1 + e * s)) / (2 * e)); };
+  const qp = q(Math.PI / 2), p1 = 55 * rad, p = lat * rad, dl = (lon - 10) * rad;
+  const b1 = Math.asin(q(p1) / qp), b = Math.asin(q(p) / qp), Rq = a * Math.sqrt(qp / 2);
+  const D = a * Math.cos(p1) / Math.sqrt(1 - e2 * Math.sin(p1) ** 2) / (Rq * Math.cos(b1));
+  const B = Rq * Math.sqrt(2 / (1 + Math.sin(b1) * Math.sin(b) + Math.cos(b1) * Math.cos(b) * Math.cos(dl)));
+  return [B * D * Math.cos(b) * Math.sin(dl) + 1950000, (B / D) * (Math.cos(b1) * Math.sin(b) - Math.sin(b1) * Math.cos(b) * Math.cos(dl)) - 2100000];
+}
+const radarUrl = u => RADAR_PROXY + u.slice(RADAR_S3.length);
+async function rangeGet(url, a, b) {
+  const r = await fetch(url, { headers: { Range: `bytes=${a}-${b}` } });
+  if (!r.ok) throw new Error("radar " + r.status);
+  return new Uint8Array(await r.arrayBuffer());
+}
+// Citește antetul TIFF (primii 64 KB): dimensiuni, dale, georeferențiere.
+function parseTiffHeader(buf) {
+  const dv = new DataView(buf.buffer, buf.byteOffset, buf.byteLength);
+  if (dv.getUint16(0) !== 0x4949 || dv.getUint16(2, true) !== 42) throw new Error("tiff");
+  const ifd = dv.getUint32(4, true), n = dv.getUint16(ifd, true), T = {};
+  const size = { 1: 1, 2: 1, 3: 2, 4: 4, 5: 8, 11: 4, 12: 8, 16: 8 };
+  for (let i = 0; i < n; i++) {
+    const o = ifd + 2 + i * 12, tag = dv.getUint16(o, true), type = dv.getUint16(o + 2, true), cnt = dv.getUint32(o + 4, true);
+    const bytes = (size[type] || 1) * cnt, at = bytes <= 4 ? o + 8 : dv.getUint32(o + 8, true);
+    if (at + bytes > buf.byteLength) { T[tag] = null; continue; }
+    const rd = k => type === 3 ? dv.getUint16(at + k * 2, true) : type === 4 ? dv.getUint32(at + k * 4, true) : type === 12 ? dv.getFloat64(at + k * 8, true) : type === 11 ? dv.getFloat32(at + k * 4, true) : dv.getUint8(at + k);
+    T[tag] = type === 2 ? null : Array.from({ length: cnt }, (_, k) => rd(k));
+  }
+  const H = { w: T[256][0], h: T[257][0], tw: T[322][0], th: T[323][0], off: T[324], cnt: T[325], comp: T[259][0], spp: (T[277] || [1])[0],
+    scale: T[33550], tie: T[33922], pred: (T[317] || [1])[0] };
+  if (!H.off || !H.cnt || !H.scale || !H.tie || H.comp !== 8 || H.pred !== 1) throw new Error("tiff layout");
+  return H;
+}
+async function inflate(bytes) {
+  const ds = new DecompressionStream("deflate");
+  return new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(ds)).arrayBuffer());
+}
+// Fereastra (2W+1)² în jurul locului, pe grilă de 2 km (dacă fișierul are 1 km, luăm maximul din fiecare 2×2); NaN = fără acoperire.
+async function radarWindow(url, lat, lon) {
+  const H = parseTiffHeader(await rangeGet(url, 0, 65535));
+  const [x, y] = laea(lat, lon);
+  const f = Math.max(1, Math.round(2000 / H.scale[0]));
+  const c = Math.floor((x - H.tie[3]) / H.scale[0]), r = Math.floor((H.tie[4] - y) / H.scale[1]);
+  const W = RADAR_W, N = 2 * W + 1, out = new Float32Array(N * N).fill(NaN);
+  const r0 = r - W * f, c0 = c - W * f, span = N * f;         // colțul și latura ferestrei, în pixeli ai fișierului
+  const tilesX = Math.ceil(H.w / H.tw), need = new Set();
+  for (let rr = Math.floor(Math.max(0, r0) / H.th); rr <= Math.floor(Math.min(H.h - 1, r0 + span - 1) / H.th); rr++)
+    for (let cc = Math.floor(Math.max(0, c0) / H.tw); cc <= Math.floor(Math.min(H.w - 1, c0 + span - 1) / H.tw); cc++) need.add(rr * tilesX + cc);
+  await Promise.all([...need].map(async ti => {
+    const raw = await inflate(await rangeGet(url, H.off[ti], H.off[ti] + H.cnt[ti] - 1));
+    const fl = new Float32Array(raw.buffer, raw.byteOffset, raw.byteLength / 4);
+    const tr = Math.floor(ti / tilesX) * H.th, tc = (ti % tilesX) * H.tw;
+    for (let R = Math.max(tr, r0); R < Math.min(tr + H.th, r0 + span); R++) {
+      const i = Math.floor((R - r0) / f);
+      for (let C = Math.max(tc, c0); C < Math.min(tc + H.tw, c0 + span); C++) {
+        let v = fl[((R - tr) * H.tw + (C - tc)) * H.spp];
+        if (v !== v || (v < -1e6 && v > -9e6)) v = -32;              // NaN / −8 888 000 = fără ecou
+        else if (v < -9e6) continue;                                   // −9 999 000 = fără acoperire
+        const k = i * N + Math.floor((C - c0) / f);
+        out[k] = isFinite(out[k]) ? Math.max(out[k], v) : v;
+      }
+    }
+  }));
+  return out;
+}
+// Deplasarea (pixeli / interval) între două cadre, prin potrivire de blocuri pe grila redusă la 4 km.
+function radarMotion(a, b, maxShift) {
+  const N = 2 * RADAR_W + 1, M = Math.floor(N / 2);
+  const ds = g => { const o = new Float32Array(M * M); for (let i = 0; i < M; i++) for (let j = 0; j < M; j++) {
+    let s = 0; for (const [di, dj] of [[0, 0], [0, 1], [1, 0], [1, 1]]) { const v = g[(2 * i + di) * N + 2 * j + dj]; s = Math.max(s, isFinite(v) ? Math.max(0, v - 10) : 0); }
+    o[i * M + j] = s; } return o; };
+  const A = ds(a), B = ds(b);
+  let wet = 0; for (let k = 0; k < B.length; k++) if (B[k] >= RADAR_WET_DBZ - 10) wet++;
+  if (wet < 40) return null;
+  let best = null, bestS = -Infinity, s0 = 0;
+  for (let di = -maxShift; di <= maxShift; di++) for (let dj = -maxShift; dj <= maxShift; dj++) {
+    let s = 0, n = 0;
+    for (let i = maxShift; i < M - maxShift; i++) for (let j = maxShift; j < M - maxShift; j++) { s += B[i * M + j] * A[(i - di) * M + (j - dj)]; n++; }
+    s /= n; if (!di && !dj) s0 = s;
+    if (s > bestS) { bestS = s; best = [di * 2, dj * 2]; }
+  }
+  return bestS > 0 ? best : null;
+}
+async function radarSteering(lat, lon) {
+  try {
+    const j = await (await fetch(`${API}?latitude=${lat}&longitude=${lon}&hourly=wind_speed_700hPa,wind_direction_700hPa&forecast_hours=2&wind_speed_unit=kmh&timezone=GMT`)).json();
+    const v = j.hourly.wind_speed_700hPa[0], d = j.hourly.wind_direction_700hPa[0];
+    if (!isNum(v) || !isNum(d)) return [0, 0];
+    const gamma = (lon - 10) * Math.sin(55 * Math.PI / 180);          // nordul grilei e rotit față de nordul geografic
+    const k = v * 0.8 / 2 / 60, rad = (d - gamma) * Math.PI / 180;    // km/h → pixeli de 2 km pe minut; ploaia merge ceva mai încet decât vântul
+    return [Math.cos(rad) * k, -Math.sin(rad) * k];                 // spre unde suflă: rândurile cresc spre sud
+  } catch (e) { return [0, 0]; }
+}
+// Prognoza pe pași de 10 minute: ce fracție din vecinătatea punctului (care crește cu timpul) are ploaie.
+function radarNowcast(g, vPerMin) {
+  const N = 2 * RADAR_W + 1, ctr = RADAR_W, out = [];
+  let cov = 0; for (let di = -2; di <= 2; di++) for (let dj = -2; dj <= 2; dj++) if (isFinite(g[(ctr + di) * N + ctr + dj])) cov++;
+  if (cov < 13) return null;
+  for (let L = 0; L <= RADAR_LEAD; L += RADAR_STEP) {
+    const sr = ctr - vPerMin[0] * L, sc = ctr - vPerMin[1] * L, rad = 1 + L / 20;
+    let n = 0, wet = 0, mx = -99;
+    for (let i = Math.floor(sr - rad); i <= Math.ceil(sr + rad); i++) for (let j = Math.floor(sc - rad); j <= Math.ceil(sc + rad); j++) {
+      if (i < 0 || j < 0 || i >= N || j >= N || (i - sr) ** 2 + (j - sc) ** 2 > rad * rad) continue;
+      const v = g[i * N + j]; if (!isFinite(v)) continue;
+      n++; if (v >= RADAR_WET_DBZ) wet++; mx = Math.max(mx, v);
+    }
+    out.push({ L, p: n ? wet / n : null, dbz: mx });
+  }
+  return out;
+}
+const dbzToMmh = z => Math.pow(Math.pow(10, z / 10) / 200, 1 / 1.6);
+async function updateRadar(force) {
+  const el = $("#radar"), loc = state.loc;
+  if (!el) return;
+  if (!RADAR_PROXY || !loc || typeof DecompressionStream === "undefined") { el.hidden = true; return; }
+  const key = `${loc.lat.toFixed(2)},${loc.lon.toFixed(2)}`, R = state.radar;
+  if (!force && R && R.key === key && Date.now() - R.at < 8 * 60 * 1000) { renderRadar(); return; }
+  if (state.radarBusy) return;
+  state.radarBusy = true;
+  try {
+    const now = new Date(), t0 = new Date(now - 45 * 60 * 1000).toISOString().slice(0, 16) + "Z", t1 = now.toISOString().slice(0, 16) + "Z";
+    const txt = await (await fetch(`${RADAR_API}?datetime=${t0}%2F${t1}&f=CoverageJSON&format=GeoTIFF&standard_name=DBZH`)).text();
+    const links = [...new Set(txt.match(/https:\/\/s3[^"]+@DBZH\.tiff/g) || [])].filter(u => u.startsWith(RADAR_S3)).sort();
+    if (!links.length) throw new Error("no frames");
+    const last = links[links.length - 1], prev = links.length >= 3 ? links[links.length - 3] : null;  // ~10 minute între ele
+    const tOf = u => { const m = u.match(/@(\d{4})(\d\d)(\d\d)T(\d\d)(\d\d)@/); return Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]); };
+    const [g1, g0] = await Promise.all([radarWindow(radarUrl(last), loc.lat, loc.lon), prev ? radarWindow(radarUrl(prev), loc.lat, loc.lon).catch(() => null) : null]);
+    const dtMin = prev ? (tOf(last) - tOf(prev)) / 60000 : 0;
+    let v = g0 && dtMin > 0 ? radarMotion(g0, g1, 6) : null, src = "radar";
+    if (v) v = [v[0] / dtMin, v[1] / dtMin]; else { v = await radarSteering(loc.lat, loc.lon); src = "wind"; }
+    const nc = radarNowcast(g1, v);
+    const age = (Date.now() - tOf(last)) / 60000;
+    state.radar = { key, at: Date.now(), frame: tOf(last), nc, src, v, lead: Math.max(0, Math.round(age)) };
+  } catch (e) {
+    state.radar = { key, at: Date.now() - 5 * 60 * 1000, nc: null, err: String(e) };
+  } finally { state.radarBusy = false; }
+  renderRadar();
+}
+function renderRadar() {
+  const el = $("#radar"), R = state.radar;
+  if (!el || !R || !R.nc) { if (el) el.hidden = true; return; }
+  // pașii sunt relativi la momentul cadrului; îi aducem la „de acum”
+  const age = (Date.now() - R.frame) / 60000;
+  const steps = R.nc.map(s => ({ ...s, m: Math.round((s.L - age) / 5) * 5 })).filter(s => s.m >= -5 && s.m <= RADAR_LEAD);
+  if (!steps.length) { el.hidden = true; return; }
+  const wet = s => s.p != null && s.p >= 0.3;
+  const nowS = steps[0], raining = wet(nowS);
+  let text;
+  if (raining) {
+    const stop = steps.find(s => s.m > 0 && !wet(s));
+    text = stop ? t("rdr_rainStops", { m: stop.m }) : t("rdr_rainNow");
+  } else {
+    const start = steps.find(s => wet(s));
+    const horizon = Math.floor(steps[steps.length - 1].m / 10) * 10;
+    text = start ? (start.m <= 10 ? t("rdr_rainSoon") : t("rdr_rainIn", { m: start.m })) : t("rdr_dry", { m: horizon });
+  }
+  const tm = new Intl.DateTimeFormat(locale(), { hour: "2-digit", minute: "2-digit", timeZone: "UTC" }).format(new Date(R.frame + state.offset * 1000));
+  const bars = steps.filter(s => s.m >= 0).map(s => `<i style="--p:${s.p == null ? 0 : Math.min(1, s.p)}" class="${wet(s) ? "wet" : ""}" title="+${s.m} min"></i>`).join("");
+  el.hidden = false;
+  el.className = "radar" + (raining ? " now" : steps.some(wet) ? " soon" : "");
+  el.innerHTML = `${svg("drops")}<div class="rd-txt"><b>${esc(text)}</b><small>${esc(t("rdr_src", { t: tm }))}</small></div><div class="rd-bars" aria-hidden="true">${bars}</div>`;
+}
+
+/* ---------- fișa unei lucrări: motivul verdictului + „Verdict greșit?” ----------
+   Raportul e anonim: pleacă doar locul (numele localității), data, lucrarea, verdictul afișat și răspunsul omului,
+   ca eveniment în statistica GoatCounter (filtrul „report/”), unde administratorul le vede. */
+function openDay(date) {
+  const day = document.querySelector(`.day[data-date="${date}"]`);
+  if (!day) return;
+  const w2 = day.closest("details.week2"); if (w2 && !w2.open) w2.open = true;
+  toggle(day, true);
+  day.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
+}
+function sheetEl() {
+  let el = $("#sheet");
+  if (el) return el;
+  document.body.insertAdjacentHTML("beforeend", `<div class="sheet-bg" id="sheetBg" hidden></div><section class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="shTitle" hidden></section>`);
+  $("#sheetBg").onclick = closeSheet;
+  document.addEventListener("keydown", e => { if (e.key === "Escape") closeSheet(); });
+  return $("#sheet");
+}
+function closeSheet() { const el = $("#sheet"); if (el) { el.hidden = true; $("#sheetBg").hidden = true; } }
+const REP_TAGS = ["rain", "dry", "wind", "fog", "frost"];
+function repKey(date, w) { return `ms.rep.${date}.${w}`; }
+function openWorkSheet(date, w) {
+  if (!date || !w) return;
+  const c = consensus(date), j = (c.n ? judgeWorks(c)[w] : null) || { level: "na", reason: t("rt_nodata") };
+  const L = dayLabel(date), el = sheetEl();
+  const today = date === todayStr();
+  let sent = false; try { sent = !!localStorage.getItem(repKey(date, w)); } catch (e) {}
+  const report = !today ? "" : sent ? `<p class="sh-done">${esc(t("rep_already"))}</p>` : `
+    <div class="sh-rep">
+      <h3>${esc(t("rep_title"))}</h3>
+      <div class="sh-seg" role="radiogroup">
+        <button type="button" role="radio" aria-checked="false" data-ans="could">${esc(t("rep_could"))}</button>
+        <button type="button" role="radio" aria-checked="false" data-ans="couldnot">${esc(t("rep_couldnot"))}</button>
+      </div>
+      <p class="sh-q">${esc(t("rep_what"))}</p>
+      <div class="sh-tags">${REP_TAGS.map(k => `<button type="button" aria-pressed="false" data-tag="${k}">${esc(t("rep_t_" + k))}</button>`).join("")}</div>
+      <button type="button" class="btn primary sh-send" disabled>${esc(t("rep_send"))}</button>
+      <p class="sh-note">${esc(t("rep_anon"))}</p>
+    </div>`;
+  el.innerHTML = `
+    <div class="sh-head">
+      <span class="cell ${j.level}" aria-hidden="true">${LEVEL_SYM[j.level]}</span>
+      <div><b id="shTitle">${esc(t("w_" + w))}</b> · ${esc(lvl(j.level))}<br><small>${esc(L.big)}${L.small ? ", " + esc(L.small) : ""}</small></div>
+      <button type="button" class="sh-x" aria-label="${esc(t("close"))}">×</button>
+    </div>
+    <p class="sh-reason">${esc(j.reason || "—")}</p>
+    <button type="button" class="btn sh-day">${esc(t("rep_openDay"))}</button>
+    ${report}`;
+  el.hidden = false; $("#sheetBg").hidden = false;
+  el.querySelector(".sh-x").onclick = closeSheet;
+  el.querySelector(".sh-day").onclick = () => { closeSheet(); openDay(date); };
+  const send = el.querySelector(".sh-send");
+  if (send) {
+    let ans = null; const tags = new Set();
+    el.querySelectorAll("[data-ans]").forEach(b => b.onclick = () => {
+      ans = b.dataset.ans;
+      el.querySelectorAll("[data-ans]").forEach(x => x.setAttribute("aria-checked", String(x === b)));
+      send.disabled = false;
+    });
+    el.querySelectorAll("[data-tag]").forEach(b => b.onclick = () => {
+      const k = b.dataset.tag; tags.has(k) ? tags.delete(k) : tags.add(k);
+      b.setAttribute("aria-pressed", String(tags.has(k)));
+    });
+    send.onclick = () => {
+      if (!ans) return;
+      const loc = state.loc || {}, place = (loc.name || "?").replace(/[\/?#]/g, " ").trim();
+      const wx = `rain ${c.wet}/${c.n}${isNum(c.precipWet) ? " " + c.precipWet.toFixed(1) + "mm" : ""}, gust ${isNum(c.gust) ? Math.round(c.gust) : "?"}km/h${c.fog ? ", fog " + c.fog.label : ""}`;
+      const path = `report/${loc.cc || "XX"}/${place}/${date}/${w}/${j.level}-${ans}`;
+      const title = `${place} (${loc.cc || "?"}) ${date} at ${String(nowHour()).padStart(2, "0")}:00 · ${w}: app said ${j.level} (${j.reason}) · user: ${ans}` +
+        `${tags.size ? " · saw: " + [...tags].join(",") : ""} · ${wx} · thr ${state.thr}mm · v${APP_VERSION} · ${PLATFORM}`;
+      track(path, title, true);
+      try { localStorage.setItem(repKey(date, w), "1"); } catch (e) {}
+      el.querySelector(".sh-rep").outerHTML = `<p class="sh-done">${esc(t("rep_thanks"))}</p>`;
+    };
+  }
+  el.querySelector(".sh-x").focus();
 }
 
 function rangeLabel(d1, d2) {
@@ -678,7 +927,7 @@ function dayCard(c) {
     chips.push(`<span class="chip" style="color:var(${frozen ? "--snow" : "--muted"})" title="${esc(t("chipSoilTitle"))}">${svg("flake")}${esc(t(frozen ? "chipSoilFrost" : "chipSoil", { t: fmtT(c.soil0) }))}</span>`);
   }
   const J = judgeWorks(c);
-  activeWorks().forEach(w => { const j = J[w]; if (j && j.level !== "na") chips.push(`<span class="chip flag ${j.level}" title="${esc(t("w_" + w))}: ${esc(j.reason)}">${esc(t("ws_" + w))}</span>`); });
+  activeWorks().forEach(w => { const j = J[w]; if (j && j.level !== "na") chips.push(`<button type="button" class="chip flag ${j.level}" data-date="${c.date}" data-w="${w}" title="${esc(t("w_" + w))}: ${esc(j.reason)}">${esc(t("ws_" + w))}</button>`); });
   return `<article class="day${L.isToday ? " today" : ""}" data-date="${c.date}" data-open="false">
     <button class="day-head" type="button" aria-expanded="false" aria-controls="det-${c.date}">
       <div class="d-date"><b>${esc(L.big)}</b><span>${esc(L.small)}</span></div>
@@ -722,7 +971,7 @@ function plannerHtml(cs) {
   const J = cs.map(judgeWorks);
   const body = ws.map(w => `<tr><th scope="row">${esc(t("ws_" + w))}</th>${cs.map((c, i) => {
     const j = (c.n ? J[i][w] : null) || { level: "na", reason: t("rt_nodata") };
-    return `<td><button type="button" class="cell ${j.level}" data-date="${c.date}" aria-label="${esc(t("w_" + w))}, ${esc(Ls[i].big)}: ${esc(lvl(j.level))}. ${esc(j.reason)}" title="${esc(j.reason)}">${LEVEL_SYM[j.level]}</button></td>`;
+    return `<td><button type="button" class="cell ${j.level}" data-date="${c.date}" data-w="${w}" aria-label="${esc(t("w_" + w))}, ${esc(Ls[i].big)}: ${esc(lvl(j.level))}. ${esc(j.reason)}" title="${esc(j.reason)}">${LEVEL_SYM[j.level]}</button></td>`;
   }).join("")}</tr>`).join("");
   return `<h2>${esc(t("plannerTitle"))}</h2>
     <div class="pl-wrap"><table class="pl"><thead><tr><th></th>${head}</tr></thead><tbody>${body}</tbody></table></div>
@@ -829,7 +1078,32 @@ function applyStatic() {
   if (state.loc) $("#placeName").textContent = state.loc.name || t("myLocation");
 }
 
+/* ---------- precizia verificată (accuracy.json, actualizat săptămânal de GitHub Actions) ---------- */
+const SITE = "https://vitalicmalachi-ops.github.io/meteo-santier/";
+async function loadAccuracy() {
+  try {
+    const r = await fetch(`${NATIVE ? SITE : ""}accuracy.json?t=${Math.floor(Date.now() / 36e5)}`, { cache: "no-cache" });
+    if (!r.ok) return;
+    state.acc = await r.json(); renderAccuracy();
+  } catch (e) {}
+}
+function renderAccuracy() {
+  const el = $("#accuracy"), a = state.acc;
+  const st = a && (a.stations || []).find(x => x.periods);
+  if (!el) return;
+  if (!st) { el.hidden = true; return; }
+  const upd = new Intl.DateTimeFormat(locale(), { day: "numeric", month: "long" }).format(new Date(a.updated));
+  const best = (st.models || [])[0];
+  el.hidden = false;
+  el.innerHTML = `<details class="set-box acc-box"><summary>${esc(t("acc_title"))} · <span class="num">${st.pct}%</span></summary>
+    <p>${esc(t("acc_line", { d: a.days, st: st.name, ok: st.correct, n: st.periods, p: st.pct }))}</p>
+    <p>${esc(t("acc_rain", { a: st.rain_caught, b: st.rain_periods, f: st.false_alarms }))}</p>
+    ${best ? `<p>${esc(t("acc_best", { m: best.name, p: best.pct }))}</p>` : ""}
+    <p class="acc-note">${esc(t("acc_note", { thr: fmtP(a.rule.thr_mm), u: upd }))}</p></details>`;
+}
+
 function renderSettings() {
+  renderAccuracy();
   const sel = (id, opts, cur) => `<select id="${id}">${opts.map(([v, l]) => `<option value="${esc(v)}"${String(v) === String(cur) ? " selected" : ""}>${esc(l)}</option>`).join("")}</select>`;
   const thrOpts = [[0.5, "thrAny"], [1, "thrReal"], [1.5, ""], [2, ""], [3, "thrHeavy"]].map(([v, k]) => [v, k ? `${fmtP(v)} · ${t(k)}` : fmtP(v)]);
   const limits = WORK_IDS.map(w => `<fieldset><legend>${esc(t("w_" + w))}</legend>${LIMITS[w].map(x => {
@@ -1068,7 +1342,7 @@ function toast(msg) {
 /* ---------- actualizare automată ----------
    Telefonul poate păstra fișierele vechi în cache. La pornire și la revenirea în aplicație citim version.json
    fără cache; dacă versiunea publicată e alta decât cea rulată, reîncărcăm pagina cu o adresă nouă (ocolește cache-ul). */
-const APP_VERSION = "20261022-133545";
+const APP_VERSION = "20261022-135817";
 async function checkVersion() {
   if (NATIVE || location.protocol === "file:") return;   // aplicația Android are fișierele în pachet; se actualizează prin magazin
   try {
@@ -1087,6 +1361,7 @@ function init() {
   store.del("ms.cache"); store.del("ms.cache2"); store.del("ms.cache3"); store.del("ms.work"); store.del("ms.limitsOpen");   // date vechi, nu se mai folosesc
   applyStatic();
   renderSettings();
+  loadAccuracy();
   $("#btnLocate").onclick = () => locateMe(false);
   $("#btnSearch").onclick = () => {
     const bx = $("#searchBox");
@@ -1125,6 +1400,7 @@ function init() {
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "hidden") { hiddenAt = Date.now(); return; }
     checkVersion();
+    if (state.radar && Date.now() - state.radar.at > 8 * 60 * 1000) updateRadar(true); else renderRadar();
     if (hiddenAt && Date.now() - hiddenAt > 15 * 60 * 1000) {
       if (state.mode === "gps") locateMe(false); else if (state.loc) load(true);
     }

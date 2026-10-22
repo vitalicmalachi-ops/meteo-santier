@@ -264,6 +264,40 @@ details.models-box>summary{list-style:none;cursor:pointer;display:flex;align-ite
 details.models-box>summary::-webkit-details-marker{display:none}
 details.models-box .chev{width:9px;height:9px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg) translate(-2px,-2px);transition:transform .2s}
 details.models-box[open] .chev{transform:rotate(-135deg) translate(-2px,-2px)}
+button.chip{border:0;font-family:inherit;cursor:pointer}
+.sheet-bg{position:fixed;inset:0;background:rgb(0 0 0 / .35);z-index:40}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:41;max-width:560px;margin:0 auto;max-height:85vh;overflow:auto;background:var(--surface);color:var(--ink);border-radius:16px 16px 0 0;border:1px solid var(--line);border-bottom:0;padding:16px 16px calc(16px + env(safe-area-inset-bottom));box-shadow:0 -8px 30px rgb(0 0 0 / .18);display:grid;gap:12px}
+.sh-head{display:grid;grid-template-columns:36px 1fr auto;gap:12px;align-items:center}
+.sh-head .cell{height:34px;cursor:default}
+.sh-head small{color:var(--muted)}
+.sh-x{border:0;background:none;color:var(--muted);font-size:28px;line-height:1;width:40px;height:40px;cursor:pointer}
+.sh-reason{margin:0;font-size:15px}
+.sh-rep{display:grid;gap:10px;border-top:1px dashed var(--line);padding-top:12px}
+.sh-rep h3{margin:0;font:700 12px/1 var(--f-display);font-stretch:110%;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.sh-seg{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.sh-seg button,.sh-tags button{border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:10px;padding:10px 8px;font:inherit;font-size:14px;cursor:pointer}
+.sh-seg button[aria-checked="true"],.sh-tags button[aria-pressed="true"]{border-color:var(--ink);background:var(--ink);color:var(--surface)}
+.sh-tags{display:flex;flex-wrap:wrap;gap:6px}
+.sh-tags button{padding:6px 10px;font-size:13px}
+.sh-q{margin:0;font-size:13px;color:var(--muted)}
+.sheet .btn{display:flex;justify-content:center;align-items:center;width:100%;min-height:46px;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:10px;font:inherit;font-size:15px;font-weight:600;cursor:pointer}
+.sheet .btn.primary{background:var(--accent);border-color:var(--accent);color:#1D2120}
+.sh-send:disabled{opacity:.45;cursor:default}
+.sh-note,.sh-done{margin:0;font-size:12px;color:var(--muted)}
+.sh-done{font-size:14px;color:var(--ink);border-top:1px dashed var(--line);padding-top:12px}
+.accuracy{margin-bottom:12px}
+.acc-box p{margin:0;font-size:14px}
+.acc-box .acc-note{font-size:12px;color:var(--muted)}
+.acc-box summary .num{color:var(--ok)}
+.radar{display:grid;grid-template-columns:22px 1fr auto;gap:10px;align-items:center;border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:10px 12px;margin-bottom:12px}
+.radar>svg{width:20px;height:20px;color:var(--muted)}
+.radar.now>svg,.radar.soon>svg{color:var(--rain)}
+.radar.now{border-color:color-mix(in srgb,var(--rain) 55%,var(--line))}
+.rd-txt b{display:block;font-size:15px;font-weight:600}
+.rd-txt small{display:block;font-size:11px;color:var(--muted);margin-top:2px}
+.rd-bars{display:flex;gap:2px;align-items:flex-end;height:26px}
+.rd-bars i{width:5px;height:calc(4px + var(--p) * 22px);border-radius:2px;background:color-mix(in srgb,var(--rain) 25%,transparent)}
+.rd-bars i.wet{background:var(--rain)}
 details.week2{border:1px solid var(--line);border-radius:12px;background:var(--surface)}
 details.week2>summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;padding:14px}
 details.week2>summary::-webkit-details-marker{display:none}
@@ -333,6 +367,7 @@ details.week2[open]>summary::before{transform:rotate(90deg)}
       <button type="button" id="noLocBtn" data-i18n="noLocBtn"></button>
     </section>
     <div id="errBox"></div>
+    <section class="radar" id="radar" hidden aria-live="polite"></section>
     <section class="summary" id="summary" hidden></section>
     <section class="planner" id="planner" hidden></section>
     <section class="days" id="days">
@@ -343,6 +378,7 @@ details.week2[open]>summary::before{transform:rotate(90deg)}
 
 <footer>
   <div class="wrap">
+    <section class="accuracy" id="accuracy" hidden></section>
     <section class="settings" id="settings"></section>
   </div>
 </footer>
@@ -351,7 +387,7 @@ details.week2[open]>summary::before{transform:rotate(90deg)}
 <script data-goatcounter="https://meteosantier.goatcounter.com/count"
         data-goatcounter-settings='{"no_onload": true, "allow_local": true}'
         async src="https://gc.zgo.at/count.js"></script>
-<script src="i18n.js?v=20261022-133545"></script>
-<script src="app.js?v=20261022-133545"></script>
+<script src="i18n.js?v=20261022-135817"></script>
+<script src="app.js?v=20261022-135817"></script>
 </body>
 </html>

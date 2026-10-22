@@ -1,0 +1,34 @@
+# Publică proxy-ul radar pe Cloudflare Workers (planul gratuit). Are nevoie de două secrete în repository:
+# CLOUDFLARE_API_TOKEN (șablonul „Edit Cloudflare Workers”) și CLOUDFLARE_ACCOUNT_ID.
+name: Radar proxy
+on:
+  push:
+    branches: [main]
+    paths: [worker/**, .github/workflows/worker.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verifică secretele
+        id: chk
+        env:
+          T: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: if [ -z "$T" ]; then echo "Lipsește CLOUDFLARE_API_TOKEN — sar peste publicare."; echo "go=no" >> $GITHUB_OUTPUT; else echo "go=yes" >> $GITHUB_OUTPUT; fi
+      - name: Publică
+        if: steps.chk.outputs.go == 'yes'
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: worker
+      - name: Test
+        if: steps.chk.outputs.go == 'yes'
+        run: |
+          sleep 10
+          U=$(curl -s "https://api.meteogate.eu/eu-eumetnet-weather-radar/collections/observations/locations/0-20010-0-OPERA?datetime=$(date -u -d '-30 min' +%Y-%m-%dT%H:%MZ)%2F$(date -u +%Y-%m-%dT%H:%MZ)&f=CoverageJSON&format=GeoTIFF&standard_name=DBZH" | grep -o 'openradar-24h/[^"]*DBZH.tiff' | tail -1 | sed 's#openradar-24h/##')
+          echo "fișier: $U"
+          curl -s -D - -o /dev/null -H "Range: bytes=0-99" -H "Origin: https://vitalicmalachi-ops.github.io" "https://meteo-santier-radar.${{ vars.CF_SUBDOMAIN || 'SUBDOMAIN' }}.workers.dev/$U" | head -20 || true

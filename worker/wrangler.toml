@@ -1,0 +1,4 @@
+name = "meteo-santier-radar"
+main = "radar-proxy.js"
+compatibility_date = "2026-06-01"
+workers_dev = true
