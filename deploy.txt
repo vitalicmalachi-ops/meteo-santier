@@ -1,0 +1,45 @@
+account id length: 32
+
+ ⛅️ wrangler 4.152.0
+────────────────────
+Getting User settings...
+👋 You are logged in with an User API Token, associated with the email vitalicmalachi@yahoo.com.
+ℹ️  The API Token is read from the CLOUDFLARE_API_TOKEN environment variable.
+┌────────────────────────────────────┬──────────────────────────────────┐
+│ Account Name                       │ Account ID                       │
+├────────────────────────────────────┼──────────────────────────────────┤
+│ Vitalicmalachi@yahoo.com's Account │ 583fa74f5bdbaf0c05fec7308f552fa1 │
+└────────────────────────────────────┴──────────────────────────────────┘
+🔓 To see token permissions visit https://dash.cloudflare.com/profile/api-tokens
+
+ ⛅️ wrangler 4.152.0
+────────────────────
+
+Cloudflare collects anonymous telemetry about your usage of Wrangler. Learn more at https://github.com/cloudflare/workers-sdk/tree/main/packages/wrangler/telemetry.md
+Total Upload: 2.09 KiB / gzip: 0.90 KiB
+Uploaded meteo-santier-radar (2.75 sec)
+Deployed meteo-santier-radar triggers (0.85 sec)
+  https://meteo-santier-radar.vitalicmalachi.workers.dev
+Current Version ID: 0d98d2f0-c613-4214-8194-7cfce9dfa8b5
+exit 0
+url: https://meteo-santier-radar.vitalicmalachi.workers.dev
+file: 2026/10/22/OPERA/COMP/OPERA@20261022T1620@0@DBZH.tiff
+HTTP/2 206 
+date: Thu, 22 Oct 2026 16:25:58 GMT
+content-type: application/octet-stream
+content-length: 100
+content-range: bytes 0-99/5104821
+access-control-allow-origin: *
+cache-control: public, max-age=3600
+access-control-allow-headers: Range
+access-control-allow-methods: GET, OPTIONS
+access-control-expose-headers: Content-Range, Content-Length
+access-control-max-age: 86400
+report-to: {"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=yrBctZrCEk85vUF6DaTfb%2F1uL1r2MeqynTnfgFF9Yr%2BnCZDpKrKsKkI3duuX4pa%2FIQTatRnPQZnxrBOujx9eRgGV%2FUAjIERJtWpGf%2BE8M8OioV5QBTZkXmwlYFc1MSLIxC9ZydYteNHo2ISW87BcH%2ByBgz9KLthfwN%2BH9VAUpjs%2B"}]}
+nel: {"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}
+server: cloudflare
+cf-ray: a4e9dc666cc06192-PDX
+alt-svc: h3=":443"; ma=86400
+
+0000000   I   I   *  \0 300  \0  \0  \0
+0000010
