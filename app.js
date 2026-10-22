@@ -247,10 +247,12 @@ function fogByHour(date) {
   return out;
 }
 function nowHour() { return new Date(Date.now() + state.offset * 1000).getUTCHours(); }
+// Precipitațiile Open-Meteo de la ora H sunt suma orei precedente (H-1 → H),
+// deci intervalul [h, h+1) se citește din înregistrarea h+1 (23–24 = ora 00 a zilei următoare).
 function slotsFor(date) {
   const from = date === todayStr() ? nowHour() : 0;
   const out = [];
-  for (let h = from; h < 24; h++) out.push({ off: 0, hr: h });
+  for (let h = from + 1; h <= 24; h++) out.push({ off: h === 24 ? 1 : 0, hr: h % 24 });
   return out;
 }
 function winAgg(days, date, slots) {
@@ -432,16 +434,21 @@ const activeWorks = () => WORK_IDS.filter(id => state.works.includes(id));
 function hourly(date) {
   const res = [];
   for (let h = 0; h < 24; h++) {
-    let n = 0, wet = 0, snow = 0, drz = 0; const temps = [], gusts = [];
+    let n = 0, wet = 0, snow = 0, drz = 0; const temps = [], gusts = [], amts = [];
     state.results.forEach(r => {
       const d = r.days[date]; if (!d) return;
-      const x = d.hours.find(y => y.hr === h); if (!x || !isNum(x.p)) return;
+      const t0 = d.hours.find(y => y.hr === h);                     // temperatura: valoarea de la începutul orei
+      const nd = h === 23 ? r.days[addDays(date, 1)] : d;           // ploaia și rafalele: înregistrarea de la sfârșitul orei
+      const x = nd && nd.hours.find(y => y.hr === (h + 1) % 24);
+      if (!x || !isNum(x.p)) return;
       n++;
       if (isNum(x.s) && x.s >= 0.1) { wet++; snow++; } else if (x.p >= WET_HOUR) wet++; else if (x.p >= DRIZZLE) drz++;
-      if (isNum(x.t)) temps.push(x.t);
+      amts.push(x.p);
+      if (t0 && isNum(t0.t)) temps.push(t0.t);
       if (isNum(x.g)) gusts.push(x.g);
     });
-    res.push({ h, n, wet, snow, drz, frac: n ? wet / n : 0, dfrac: n ? drz / n : 0, t: median(temps), g: median(gusts) });
+    // șansa de ploaie pentru linie: modele cu ploaie, plus jumătate din cele cu burniță
+    res.push({ h, n, wet, snow, drz, frac: n ? wet / n : 0, dfrac: n ? drz / n : 0, chance: n ? (wet + drz / 2) / n : 0, amt: median(amts), t: median(temps), g: median(gusts) });
   }
   return res;
 }
@@ -722,6 +729,31 @@ function plannerHtml(cs) {
     <div class="pl-legend"><span><b class="cell ok">✓</b>${esc(lvl("ok"))}</span><span><b class="cell warn">!</b>${esc(lvl("warn"))}</span><span><b class="cell stop">✕</b>${esc(lvl("stop"))}</span><span>${esc(t("legendTap"))}</span></div>`;
 }
 
+function drawCurve(root) {
+  const grid = root.querySelector(".hgrid"), svgEl = grid && grid.querySelector("svg.curve");
+  if (!svgEl) return;
+  const g = grid.getBoundingClientRect();
+  const pts = [];
+  grid.querySelectorAll(".hc").forEach(c => {
+    const p = parseFloat(c.dataset.p), bar = c.querySelector(".bar");
+    if (!isFinite(p) || !bar) return;
+    const r = bar.getBoundingClientRect();
+    pts.push([r.left - g.left + r.width / 2, r.bottom - g.top - p * r.height]);
+  });
+  svgEl.setAttribute("width", Math.ceil(g.width)); svgEl.setAttribute("height", Math.ceil(g.height));
+  svgEl.setAttribute("viewBox", `0 0 ${Math.ceil(g.width)} ${Math.ceil(g.height)}`);
+  if (pts.length < 2) { svgEl.innerHTML = ""; return; }
+  let d = `M${pts[0][0].toFixed(1)} ${pts[0][1].toFixed(1)}`;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = pts[Math.max(0, i - 1)], p1 = pts[i], p2 = pts[i + 1], p3 = pts[Math.min(pts.length - 1, i + 2)];
+    const c1 = [p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6], c2 = [p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6];
+    const lo = Math.max(p1[1], p2[1]), hi = Math.min(p1[1], p2[1]);   // fără depășiri în afara celor două puncte
+    c1[1] = Math.min(lo, Math.max(hi, c1[1])); c2[1] = Math.min(lo, Math.max(hi, c2[1]));
+    d += ` C${c1[0].toFixed(1)} ${c1[1].toFixed(1)} ${c2[0].toFixed(1)} ${c2[1].toFixed(1)} ${p2[0].toFixed(1)} ${p2[1].toFixed(1)}`;
+  }
+  svgEl.innerHTML = `<path d="${d}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`;
+}
+
 function toggle(el, forceOpen) {
   const det = el.querySelector(".d-detail");
   const open = forceOpen || el.dataset.open !== "true";
@@ -736,6 +768,7 @@ function toggle(el, forceOpen) {
     const hs = det.querySelector(".hours");
     const first = hs && (hs.querySelector(".hc.now") || hs.querySelectorAll(".hc")[6]);
     if (first) hs.scrollLeft = Math.max(0, first.offsetLeft - hs.offsetLeft - 8);
+    drawCurve(det);
   }
 }
 
@@ -754,8 +787,8 @@ function detailHtml(date) {
     const fz = fogH[b.h] && fogH[b.h].n && fogH[b.h].frac >= FOG_FRAC;
     const hh = String(b.h).padStart(2, "0");
     const cls = `hc${isToday && nowH === b.h ? " now" : ""}${isToday && b.h < nowH ? " past" : ""}${b.n ? "" : " na"}`;
-    if (!b.n) return `<div class="${cls}"><span class="h">${hh}</span><span class="bar"></span><span class="t">–</span><span class="g">–</span></div>`;
-    return `<div class="${cls}" title="${esc(t("hourTip", { wet: b.wet, drz: b.drz, n: b.n }))}"><span class="h">${hh}</span>
+    if (!b.n) return `<div class="${cls}" data-p=""><span class="h">${hh}</span><span class="bar"></span><span class="t">–</span><span class="g">–</span></div>`;
+    return `<div class="${cls}" data-p="${b.chance.toFixed(3)}" title="${hh}:00–${String((b.h + 1) % 24).padStart(2, "0")}:00 · ${esc(t("hourTip", { wet: b.wet, drz: b.drz, n: b.n }))}"><span class="h">${hh}</span>
       <span class="bar"><span class="dz" style="height:${Math.round((b.frac + b.dfrac) * 100)}%"></span><span class="${b.snow * 2 >= b.wet && b.snow ? "s" : ""}" style="height:${Math.round(b.frac * 100)}%"></span></span>
       <span class="t">${fmtT(b.t)}</span><span class="g">${isNum(b.g) ? fmt(toUser.wind(b.g)) : "–"}</span><span class="fz${fz ? " on" : ""}" title="${fz ? esc(t("fogTip", { f: fogH[b.h].f, n: fogH[b.h].n })) : ""}">${fz ? "≋" : ""}</span></div>`;
   }).join("");
@@ -773,8 +806,8 @@ function detailHtml(date) {
   return `${works ? `<div class="section-h">${esc(t("worksTitle"))}</div><ul class="works">${works}</ul>` : ""}
     ${soil}
     <div class="section-h">${esc(t("hourlyTitle"))}</div>
-    <div class="hours"><div class="hgrid">${hrs}</div></div>
-    <div class="legend">${esc(t("hourlyLegend", { u: unitLabel.wind() }))} ${esc(t("drizzleLegend", { a: fmtPn(DRIZZLE), b: fmtPn(WET_HOUR), u: unitLabel.precip() }))} ${esc(t("fogLegend"))}</div>
+    <div class="hours"><div class="hgrid">${hrs}<svg class="curve" aria-hidden="true"></svg></div></div>
+    <div class="legend">${esc(t("hourlyLegend", { u: unitLabel.wind() }))} ${esc(t("drizzleLegend", { a: fmtPn(DRIZZLE), b: fmtPn(WET_HOUR), u: unitLabel.precip() }))} ${esc(t("fogLegend"))} ${esc(t("curveLegend"))}</div>
     <div class="section-h">${esc(t("modelsTitle"))}</div>
     <div class="tbl-wrap"><table>
       <thead><tr><th>${esc(t("th_model"))}</th><th>${esc(t("th_minmax"))}</th><th>${esc(t("th_rain", { u: unitLabel.precip() }))}</th><th>${esc(t("th_snow", { u: unitLabel.snow() }))}</th><th>${esc(t("th_gust", { u: unitLabel.wind() }))}</th><th>${esc(t("th_sun"))}</th></tr></thead>

@@ -231,7 +231,8 @@ table.pl thead th.today{color:var(--ink);font-weight:700}
 
 /* Oră cu oră */
 .hours{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -4px;padding:0 4px 4px}
-.hgrid{display:grid;grid-template-columns:repeat(24,34px);gap:3px;width:max-content}
+.hgrid{display:grid;grid-template-columns:repeat(24,34px);gap:3px;width:max-content;position:relative}
+.hgrid svg.curve{position:absolute;left:0;top:0;pointer-events:none;color:var(--ink);overflow:visible}
 .hc{display:grid;gap:3px;justify-items:center;text-align:center;padding:6px 0;border-radius:7px}
 .hc.work{background:color-mix(in srgb,var(--accent) 16%,transparent)}
 .hc.now{outline:2px solid var(--ink);outline-offset:-2px}
