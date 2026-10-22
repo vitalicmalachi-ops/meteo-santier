@@ -1,0 +1,95 @@
+10-22 16:31:07.213     0     0 I Command line: 8250.nr_uarts=1 clocksource=pit no_timer_check console=0 ndns=3 loop.max_part=7 ramoops.mem_address=0xff018000 ramoops.mem_size=0x10000 memmap=0x10000$0xff018000 printk.devkmsg=on bootconfig ndns=3 mac80211_hwsim.radios=0
+10-22 16:31:07.225     0     0 I         : Kernel command line: console=ttynull stack_depot_disable=on cgroup_disable=pressure bootconfig 8250.nr_uarts=1 clocksource=pit no_timer_check console=0 ndns=3 loop.max_part=7 ramoops.mem_address=0xff018000 ramoops.mem_size=0x10000 memmap=0x10000$0xff018000 printk.devkmsg=on bootconfig ndns=3 mac80211_hwsim.radios=0
+10-22 16:31:07.421     0     0 I printk  : console [ttyS0] enabled
+10-22 16:31:07.751     0     0 I printk  : console [ramoops-1] enabled
+10-22 16:31:08.533     0     0 I printk  : console [ttynull0] enabled
+10-22 16:31:09.707     0     0 I init    : Loading module /lib/modules/virtio_console.ko with args ''
+10-22 16:31:09.709     0     0 I init    : Loaded kernel module /lib/modules/virtio_console.ko
+10-22 16:31:13.281     0     0 I init    : starting service 'console'...
+10-22 16:31:13.296     0     0 I init    : ... started service 'console' has pid 141
+10-22 16:31:17.875     0     0 I init    : service 'console' requested start, but it is already running (flags: 2196)
+10-22 16:31:19.994   335   335 D nativeloader: InitDefaultPublicLibraries for_preload=0: libandroid.so:libaaudio.so:libamidi.so:libbinder_ndk.so:libc.so:libcamera2ndk.so:libclang_rt.hwasan-aarch64-android.so:libdl.so:libEGL.so:libGLESv1_CM.so:libGLESv2.so:libGLESv3.so:libjnigraphics.so:liblog.so:libmediandk.so:libm.so:libnativewindow.so:libOpenMAXAL.so:libOpenSLES.so:libRS.so:libstdc++.so:libsync.so:libvulkan.so:libwebviewchromium_plat_support.so:libz.so
+10-22 16:31:39.460   966   966 I AndroidRuntime: VM exiting with result code 0, cleanup skipped.
+10-22 16:31:49.887   522   549 D AppWidgetServiceImpl: Provider info from ComponentInfo{com.android.chrome/org.chromium.chrome.browser.quickactionsearchwidget.QuickActionSearchWidgetProvider$QuickActionSearchWidgetProviderSearch} won't be persisted.
+10-22 16:31:49.889   522   549 D AppWidgetServiceImpl: Provider info from ComponentInfo{com.android.chrome/org.chromium.chrome.browser.quickactionsearchwidget.QuickActionSearchWidgetProvider$QuickActionSearchWidgetProviderDino} won't be persisted.
+10-22 16:31:49.890   522   549 D AppWidgetServiceImpl: Provider info from ComponentInfo{com.android.chrome/org.chromium.chrome.browser.searchwidget.SearchWidgetProvider} won't be persisted.
+10-22 16:31:51.408   522   551 I ActivityManager: Start proc 2634:com.android.chrome/u0a150 for service {com.android.chrome/org.chromium.chrome.browser.customtabs.CustomTabsConnectionService}
+10-22 16:31:51.758   522   549 D AppWidgetServiceImpl: Provider info from ComponentInfo{com.android.chrome/org.chromium.chrome.browser.quickactionsearchwidget.QuickActionSearchWidgetProvider$QuickActionSearchWidgetProviderSearch} won't be persisted.
+10-22 16:31:51.758   522   549 D AppWidgetServiceImpl: Provider info from ComponentInfo{com.android.chrome/org.chromium.chrome.browser.quickactionsearchwidget.QuickActionSearchWidgetProvider$QuickActionSearchWidgetProviderDino} won't be persisted.
+10-22 16:31:51.758   522   549 D AppWidgetServiceImpl: Provider info from ComponentInfo{com.android.chrome/org.chromium.chrome.browser.searchwidget.SearchWidgetProvider} won't be persisted.
+10-22 16:31:51.868   522   549 D AppWidgetServiceImpl: Provider info from ComponentInfo{com.android.chrome/org.chromium.chrome.browser.quickactionsearchwidget.QuickActionSearchWidgetProvider$QuickActionSearchWidgetProviderSearch} won't be persisted.
+10-22 16:31:51.868   522   549 D AppWidgetServiceImpl: Provider info from ComponentInfo{com.android.chrome/org.chromium.chrome.browser.quickactionsearchwidget.QuickActionSearchWidgetProvider$QuickActionSearchWidgetProviderDino} won't be persisted.
+10-22 16:31:51.868   522   549 D AppWidgetServiceImpl: Provider info from ComponentInfo{com.android.chrome/org.chromium.chrome.browser.searchwidget.SearchWidgetProvider} won't be persisted.
+10-22 16:31:53.491   522   551 I ActivityManager: Start proc 2816:com.google.android.webview:webview_service/u0a134 for service {com.google.android.webview/org.chromium.android_webview.services.VariationsSeedServer}
+10-22 16:31:53.515   522   549 D AppWidgetServiceImpl: Provider info from ComponentInfo{com.android.chrome/org.chromium.chrome.browser.quickactionsearchwidget.QuickActionSearchWidgetProvider$QuickActionSearchWidgetProviderSearch} won't be persisted.
+10-22 16:31:53.515   522   549 D AppWidgetServiceImpl: Provider info from ComponentInfo{com.android.chrome/org.chromium.chrome.browser.quickactionsearchwidget.QuickActionSearchWidgetProvider$QuickActionSearchWidgetProviderDino} won't be persisted.
+10-22 16:31:53.515   522   549 D AppWidgetServiceImpl: Provider info from ComponentInfo{com.android.chrome/org.chromium.chrome.browser.searchwidget.SearchWidgetProvider} won't be persisted.
+10-22 16:31:54.389   522   549 D AppWidgetServiceImpl: Provider info from ComponentInfo{com.android.chrome/org.chromium.chrome.browser.quickactionsearchwidget.QuickActionSearchWidgetProvider$QuickActionSearchWidgetProviderSearch} won't be persisted.
+10-22 16:31:54.510   522   549 D AppWidgetServiceImpl: Provider info from ComponentInfo{com.android.chrome/org.chromium.chrome.browser.quickactionsearchwidget.QuickActionSearchWidgetProvider$QuickActionSearchWidgetProviderDino} won't be persisted.
+10-22 16:31:54.512   522   549 D AppWidgetServiceImpl: Provider info from ComponentInfo{com.android.chrome/org.chromium.chrome.browser.searchwidget.SearchWidgetProvider} won't be persisted.
+10-22 16:32:06.585  3427  3468 W id.gms.unstable: Verification of org.chromium.net.ExperimentalUrlRequest$Builder hn.newUrlRequestBuilder(java.lang.String, org.chromium.net.UrlRequest$Callback, java.util.concurrent.Executor) took 116.932ms (51.31 bytecodes/s) (1536B approximate peak alloc)
+10-22 16:32:16.049   522   551 I ActivityManager: Start proc 4296:com.google.android.webview:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:0/u0ai9000 for  {io.github.vitalicmalachiops.meteosantier/org.chromium.content.app.SandboxedProcessService0:0}
+10-22 16:32:16.257   522   551 I ActivityManager: Start proc 4318:com.google.android.webview:webview_apk/u0a134 for service {com.google.android.webview/org.chromium.android_webview.nonembedded.AwComponentUpdateService}
+10-22 16:32:16.426  4193  4193 D Capacitor: Starting BridgeActivity
+10-22 16:32:16.455  4193  4193 D Capacitor: Registering plugin instance: CapacitorCookies
+10-22 16:32:16.460  4193  4193 D Capacitor: Registering plugin instance: WebView
+10-22 16:32:16.465  4193  4193 D Capacitor: Registering plugin instance: CapacitorHttp
+10-22 16:32:16.474  4193  4193 D Capacitor: Registering plugin instance: SystemBars
+10-22 16:32:16.477  4193  4193 D Capacitor: Registering plugin instance: Geolocation
+10-22 16:32:16.536  4296  4296 I cr_WebViewApkApp: Launched version=113.0.5672.136 minSdkVersion=29 isBundle=false processName=com.google.android.webview:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:0
+10-22 16:32:16.548  4193  4193 D Capacitor: Registering plugin instance: Share
+10-22 16:32:16.594  4193  4193 W Capacitor: Unable to read file at path public/plugins
+10-22 16:32:16.601  4193  4193 D Capacitor: Loading app at https://localhost
+10-22 16:32:16.792  4193  4193 D Capacitor: App started
+10-22 16:32:16.812  4193  4193 D Capacitor: App resumed
+10-22 16:32:16.831  4318  4369 W cr_AWNetworkFetcherTask: 	at org.chromium.android_webview.nonembedded.NetworkFetcherTask.download(chromium-TrichromeWebViewGoogle6432.apk-stable-567263637:48)
+10-22 16:32:16.869  4193  4294 D Capacitor: Handling local request: https://localhost/
+10-22 16:32:18.109  4193  4297 D Capacitor: Handling local request: https://localhost/i18n.js?v=20261022-162515
+10-22 16:32:18.139  4193  4304 D Capacitor: Handling local request: https://localhost/app.js?v=20261022-162515
+10-22 16:32:18.456  4193  4193 E Capacitor/Console: File:  - Line 6 - Msg: Error injecting safe area CSS: TypeError: Cannot read properties of null (reading 'style')
+10-22 16:32:18.485  4193  4193 E Capacitor/Console: File:  - Line 6 - Msg: Error injecting safe area CSS: TypeError: Cannot read properties of null (reading 'style')
+10-22 16:32:18.507  4193  4193 E Capacitor/Console: File:  - Line 6 - Msg: Error injecting safe area CSS: TypeError: Cannot read properties of null (reading 'style')
+10-22 16:32:19.976  4193  4193 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+10-22 16:32:19.994  4193  4193 V Capacitor/Plugin: To native (Capacitor plugin): callbackId: 123638855, pluginId: Geolocation, methodName: checkPermissions
+10-22 16:32:19.995  4193  4193 V Capacitor: callback: 123638855, pluginId: Geolocation, methodName: checkPermissions, methodData: {}
+10-22 16:32:21.592  4193  4193 I Capacitor/Console: File:  - Line 333 - Msg: {"coarseLocation":"granted","location":"granted"}
+10-22 16:32:21.593  4193  4193 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+10-22 16:32:21.595  4193  4193 V Capacitor/Plugin: To native (Capacitor plugin): callbackId: 123638856, pluginId: Geolocation, methodName: getCurrentPosition
+10-22 16:32:21.596  4193  4193 V Capacitor: callback: 123638856, pluginId: Geolocation, methodName: getCurrentPosition, methodData: {"enableHighAccuracy":false,"timeout":25000,"maximumAge":300000}
+10-22 16:32:21.881  4193  4295 D Capacitor: Handling local request: https://localhost/favicon.png
+10-22 16:32:38.966  4524  4925 I cr_CronetUrlRequestContext: destroyNativeStreamLocked org.chromium.net.impl.CronetBidirectionalStream@c86e02c
+10-22 16:32:47.749  4193  4193 D IONGeolocationController: Error fetching location: Location request timed out
+10-22 16:32:47.755  4193  4193 D Capacitor: Sending plugin error: {"save":false,"callbackId":"123638856","pluginId":"Geolocation","methodName":"getCurrentPosition","success":false,"error":{"message":"Could not obtain location in time. Try with a higher timeout.","code":"OS-PLUG-GLOC-0010"}}
+10-22 16:32:47.764  4193  4193 E Capacitor/Console: File:  - Line 330 - Msg: [object Object]
+10-22 16:32:47.771  4193  4193 D Capacitor: onGeolocationPermissionsShowPrompt: DOING IT HERE FOR ORIGIN: https://localhost/
+10-22 16:32:47.789  4193  4193 D Capacitor: onGeolocationPermissionsShowPrompt: has required permission
+10-22 16:33:21.234   522   595 I ActivityManager: Killing 4296:com.google.android.webview:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:0/u0a192i0 (adj 0): isolated not needed
+10-22 16:33:24.584   522   551 I ActivityManager: Start proc 5971:com.google.android.webview:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:0/u0i1 for  {io.github.vitalicmalachiops.meteosantier/org.chromium.content.app.SandboxedProcessService0:0}
+10-22 16:33:24.620  5971  5971 I cr_WebViewApkApp: Launched version=113.0.5672.136 minSdkVersion=29 isBundle=false processName=com.google.android.webview:sandboxed_process0:org.chromium.content.app.SandboxedProcessService0:0
+10-22 16:33:24.798  5914  5914 D Capacitor: Starting BridgeActivity
+10-22 16:33:24.820  5914  5914 D Capacitor: Registering plugin instance: CapacitorCookies
+10-22 16:33:24.824  5914  5914 D Capacitor: Registering plugin instance: WebView
+10-22 16:33:24.825  5914  5914 D Capacitor: Registering plugin instance: CapacitorHttp
+10-22 16:33:24.832  5914  5914 D Capacitor: Registering plugin instance: SystemBars
+10-22 16:33:24.834  5914  5914 D Capacitor: Registering plugin instance: Geolocation
+10-22 16:33:24.855  5914  5914 D Capacitor: Registering plugin instance: Share
+10-22 16:33:24.883  5914  5914 W Capacitor: Unable to read file at path public/plugins
+10-22 16:33:24.887  5914  5914 D Capacitor: Loading app at https://localhost
+10-22 16:33:24.909  5914  5914 D Capacitor: App started
+10-22 16:33:24.916  5914  5914 D Capacitor: App resumed
+10-22 16:33:24.987  5914  5988 D Capacitor: Handling local request: https://localhost/
+10-22 16:33:25.322  5914  5988 D Capacitor: Handling local request: https://localhost/app.js?v=20261022-162515
+10-22 16:33:25.328  5914  5987 D Capacitor: Handling local request: https://localhost/i18n.js?v=20261022-162515
+10-22 16:33:26.604  5914  5987 W ps.meteosantier: Long monitor contention with owner ThreadPoolForeg (6029) at org.chromium.net.AndroidCertVerifyResult OB0.h(byte[][], java.lang.String, java.lang.String)(chromium-TrichromeWebViewGoogle6432.apk-stable-567263637:242) waiters=0 in java.security.cert.X509Certificate OB0.b(byte[]) for 614ms
+10-22 16:33:26.605  5914  5994 W ps.meteosantier: Long monitor contention with owner ThreadPoolForeg (6029) at org.chromium.net.AndroidCertVerifyResult OB0.h(byte[][], java.lang.String, java.lang.String)(chromium-TrichromeWebViewGoogle6432.apk-stable-567263637:242) waiters=1 in java.security.cert.X509Certificate OB0.b(byte[]) for 613ms
+10-22 16:33:28.019  5914  5914 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+10-22 16:33:28.022  5914  5914 V Capacitor/Plugin: To native (Capacitor plugin): callbackId: 101068695, pluginId: Geolocation, methodName: checkPermissions
+10-22 16:33:28.022  5914  5914 V Capacitor: callback: 101068695, pluginId: Geolocation, methodName: checkPermissions, methodData: {}
+10-22 16:33:31.298  5914  5914 I Capacitor/Console: File:  - Line 333 - Msg: {"coarseLocation":"granted","location":"granted"}
+10-22 16:33:31.298  5914  5914 I Capacitor/Console: File:  - Line 349 - Msg: [object Object]
+10-22 16:33:31.299  5914  5914 V Capacitor/Plugin: To native (Capacitor plugin): callbackId: 101068696, pluginId: Geolocation, methodName: getCurrentPosition
+10-22 16:33:31.299  5914  5914 V Capacitor: callback: 101068696, pluginId: Geolocation, methodName: getCurrentPosition, methodData: {"enableHighAccuracy":false,"timeout":25000,"maximumAge":300000}
+10-22 16:33:31.323  5914  5988 D Capacitor: Handling local request: https://localhost/favicon.png
+10-22 16:33:49.975  5914  5914 D Capacitor: App paused
+10-22 16:33:51.997  5914  5914 D Capacitor: App stopped
+10-22 16:33:52.001  5914  5914 D Capacitor: Saving instance state!
