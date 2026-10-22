@@ -45,7 +45,7 @@ def station_obs(st):
             if len(x) == 5 and x[0] == "6" and x[1:4].isdigit() and x[4] in TR:
                 rr = (rrr(x[1:4]), TR[x[4]])
         if rr is None and g[0][0] == "3" and hh in (0, 6, 12, 18):
-            rr = (0.0, 6)                       # stația declară explicit „fără precipitații”
+            rr = (0.0, 12 if hh in (6, 18) else 6)   # stația declară explicit „fără precipitații” (la 06/18 UTC raportul acoperă 12 ore)
         if rr: obs[(dt.date(y, mo, da), hh)] = rr
     return obs
 
