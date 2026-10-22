@@ -1070,7 +1070,25 @@ function toast(msg) {
 }
 
 /* ---------- pornire ---------- */
+/* ---------- actualizare automată ----------
+   Telefonul poate păstra fișierele vechi în cache. La pornire și la revenirea în aplicație citim version.json
+   fără cache; dacă versiunea publicată e alta decât cea rulată, reîncărcăm pagina cu o adresă nouă (ocolește cache-ul). */
+const APP_VERSION = "20261022-130855";
+async function checkVersion() {
+  if (NATIVE || location.protocol === "file:") return;   // aplicația Android are fișierele în pachet; se actualizează prin magazin
+  try {
+    const r = await fetch(`version.json?t=${Date.now()}`, { cache: "no-store" });
+    const j = await r.json();
+    if (!j.v || j.v === APP_VERSION) return;
+    let tried = null; try { tried = sessionStorage.getItem("ms.reloadFor"); } catch (e) {}
+    if (tried === j.v) return;                            // o singură încercare pe versiune, fără bucle
+    try { sessionStorage.setItem("ms.reloadFor", j.v); } catch (e) {}
+    location.replace(`${location.pathname}?v=${encodeURIComponent(j.v)}`);
+  } catch (e) {}
+}
+
 function init() {
+  checkVersion();
   store.del("ms.cache"); store.del("ms.cache2"); store.del("ms.cache3"); store.del("ms.work"); store.del("ms.limitsOpen");   // date vechi, nu se mai folosesc
   applyStatic();
   renderSettings();
@@ -1111,6 +1129,7 @@ function init() {
   let hiddenAt = 0;
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "hidden") { hiddenAt = Date.now(); return; }
+    checkVersion();
     if (hiddenAt && Date.now() - hiddenAt > 15 * 60 * 1000) {
       if (state.mode === "gps") locateMe(false); else if (state.loc) load(true);
     }
