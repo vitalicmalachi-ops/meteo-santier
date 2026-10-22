@@ -773,11 +773,7 @@ function toggle(el, forceOpen) {
 }
 
 function detailHtml(date) {
-  const c = consensus(date), J = judgeWorks(c);
-  const works = activeWorks().map(w => {
-    const j = J[w] || { level: "na", reason: "" };
-    return `<li><span class="cell ${j.level}" aria-hidden="true">${LEVEL_SYM[j.level]}</span><span><b>${esc(t("w_" + w))}</b> · ${esc(lvl(j.level))}<br><small>${esc(j.reason)}</small></span></li>`;
-  }).join("");
+  const c = consensus(date);
   const soil = (isNum(c.soil0) || isNum(c.soil6))
     ? `<div class="soil-line">${svg("flake")}<span>${esc(t("soilLine", { a: fmtT(c.soil0), b: fmtT(c.soil6) }))}${isNum(c.soil0) && c.soil0 < 0 ? esc(t("soilFrost")) : ""}</span></div>` : "";
   const isToday = date === todayStr();
@@ -803,8 +799,7 @@ function detailHtml(date) {
       <td>${isNum(d.gust) ? fmt(toUser.wind(d.gust)) : "–"}</td>
       <td>${isNum(d.sun) ? fmt(d.sun, 1) : "–"}</td></tr>`;
   }).join("");
-  return `${works ? `<div class="section-h">${esc(t("worksTitle"))}</div><ul class="works">${works}</ul>` : ""}
-    ${soil}
+  return `${soil}
     <div class="section-h">${esc(t("hourlyTitle"))}</div>
     <div class="hours"><div class="hgrid">${hrs}<svg class="curve" aria-hidden="true"></svg></div></div>
     <div class="legend">${esc(t("hourlyLegend", { u: unitLabel.wind() }))} ${esc(t("drizzleLegend", { a: fmtPn(DRIZZLE), b: fmtPn(WET_HOUR), u: unitLabel.precip() }))} ${esc(t("fogLegend"))} ${esc(t("curveLegend"))}</div>
@@ -1073,7 +1068,7 @@ function toast(msg) {
 /* ---------- actualizare automată ----------
    Telefonul poate păstra fișierele vechi în cache. La pornire și la revenirea în aplicație citim version.json
    fără cache; dacă versiunea publicată e alta decât cea rulată, reîncărcăm pagina cu o adresă nouă (ocolește cache-ul). */
-const APP_VERSION = "20261022-130855";
+const APP_VERSION = "20261022-132918";
 async function checkVersion() {
   if (NATIVE || location.protocol === "file:") return;   // aplicația Android are fișierele în pachet; se actualizează prin magazin
   try {
