@@ -658,7 +658,7 @@ function render() {
    Fișierele stau pe un server fără CORS, așa că le citim printr-un mic proxy (Cloudflare Worker, vezi worker/).
    Din fiecare cadru citim doar dalele de 512×512 din jurul locului (cereri HTTP Range), estimăm deplasarea ploii
    între ultimele două cadre (potrivire de blocuri; dacă e prea puțină ploaie, vântul de la 700 hPa) și o extrapolăm. */
-const RADAR_PROXY = "";   // ex. "https://meteo-santier-radar.<cont>.workers.dev/"; gol = funcția e oprită
+const RADAR_PROXY = "https://meteo-santier-radar.vitalicmalachi.workers.dev/";
 const RADAR_API = "https://api.meteogate.eu/eu-eumetnet-weather-radar/collections/observations/locations/0-20010-0-OPERA";
 const RADAR_S3 = "https://s3.waw3-1.cloudferro.com/openradar-24h/";
 const RADAR_WET_DBZ = 18;          // ≈ 0,4 mm/h după Marshall–Palmer (ploaie slabă); sub asta e burniță sau ecou parazit
@@ -1342,7 +1342,7 @@ function toast(msg) {
 /* ---------- actualizare automată ----------
    Telefonul poate păstra fișierele vechi în cache. La pornire și la revenirea în aplicație citim version.json
    fără cache; dacă versiunea publicată e alta decât cea rulată, reîncărcăm pagina cu o adresă nouă (ocolește cache-ul). */
-const APP_VERSION = "20261022-135817";
+const APP_VERSION = "20261022-162515";
 async function checkVersion() {
   if (NATIVE || location.protocol === "file:") return;   // aplicația Android are fișierele în pachet; se actualizează prin magazin
   try {
