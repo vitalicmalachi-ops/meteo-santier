@@ -803,10 +803,10 @@ function detailHtml(date) {
     <div class="section-h">${esc(t("hourlyTitle"))}</div>
     <div class="hours"><div class="hgrid">${hrs}<svg class="curve" aria-hidden="true"></svg></div></div>
     <div class="legend">${esc(t("hourlyLegend", { u: unitLabel.wind() }))} ${esc(t("drizzleLegend", { a: fmtPn(DRIZZLE), b: fmtPn(WET_HOUR), u: unitLabel.precip() }))} ${esc(t("fogLegend"))} ${esc(t("curveLegend"))}</div>
-    <div class="section-h">${esc(t("modelsTitle"))}</div>
+    <details class="models-box"><summary class="section-h">${esc(t("modelsTitle"))}<span class="chev" aria-hidden="true"></span></summary>
     <div class="tbl-wrap"><table>
       <thead><tr><th>${esc(t("th_model"))}</th><th>${esc(t("th_minmax"))}</th><th>${esc(t("th_rain", { u: unitLabel.precip() }))}</th><th>${esc(t("th_snow", { u: unitLabel.snow() }))}</th><th>${esc(t("th_gust", { u: unitLabel.wind() }))}</th><th>${esc(t("th_sun"))}</th></tr></thead>
-      <tbody>${rows}</tbody></table></div>`;
+      <tbody>${rows}</tbody></table></div></details>`;
 }
 
 function renderModels() {
@@ -1068,7 +1068,7 @@ function toast(msg) {
 /* ---------- actualizare automată ----------
    Telefonul poate păstra fișierele vechi în cache. La pornire și la revenirea în aplicație citim version.json
    fără cache; dacă versiunea publicată e alta decât cea rulată, reîncărcăm pagina cu o adresă nouă (ocolește cache-ul). */
-const APP_VERSION = "20261022-132918";
+const APP_VERSION = "20261022-133545";
 async function checkVersion() {
   if (NATIVE || location.protocol === "file:") return;   // aplicația Android are fișierele în pachet; se actualizează prin magazin
   try {
