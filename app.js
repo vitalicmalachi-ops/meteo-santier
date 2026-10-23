@@ -7,7 +7,7 @@ const API = "https://api.open-meteo.com/v1/forecast";
 const ENS_API = "https://ensemble-api.open-meteo.com/v1/ensemble";
 const GEO_API = "https://geocoding-api.open-meteo.com/v1/search";
 const HOURLY = "temperature_2m,precipitation,snowfall,wind_speed_10m,wind_gusts_10m,wind_direction_10m,sunshine_duration,relative_humidity_2m,visibility,weather_code";
-const CURRENT = "temperature_2m,relative_humidity_2m,apparent_temperature";
+const CURRENT = "temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,cloud_cover,wind_speed_10m,wind_direction_10m,is_day";
 const CACHE_MIN = 30;
 
 // Temperatura solului: ICON și GFS dau suprafața și 6 cm, ECMWF stratul 0–7 cm.
@@ -599,6 +599,7 @@ function finishLoad() {
 function $(s) { return document.querySelector(s); }
 function setStatus(kind, text) {
   const el = $("#status"); el.hidden = false; el.className = "status " + kind; $("#statusText").textContent = text;
+  document.body.classList.toggle("is-loading", kind === "loading");
 }
 function renderUpdated() {
   $("#updated").textContent = state.fetchedAt
@@ -615,6 +616,7 @@ function renderNow() {
     lines.push(t("nowFeels", { t: fmtT(n.apparent_temperature) }));
   $("#nowH").innerHTML = lines.map(esc).join("<br>");
   el.setAttribute("aria-label", `${t("nowTitle")}: ${fmtT(n.temperature_2m)}. ${lines.join(". ")}`);
+  updateSky();
 }
 function allDates() {
   const s = new Set(); state.results.forEach(r => Object.keys(r.days).forEach(d => s.add(d)));
@@ -624,6 +626,7 @@ function allDates() {
 
 function render() {
   if (!state.results.length) return;
+  if (!$("#status").classList.contains("loading")) document.body.classList.remove("is-loading");
   const cs = allDates().map(consensus);
   const w1 = cs.slice(0, 7), w2 = cs.slice(7, 14);
   const sum1 = summaryHtml(w1), pl1 = plannerHtml(w1);
@@ -651,6 +654,142 @@ function render() {
   document.querySelectorAll(".day-head").forEach(b => b.addEventListener("click", () => toggle(b.closest(".day"))));
   document.querySelectorAll(".planner button.cell, .d-meta button.chip").forEach(b => b.onclick = () => openWorkSheet(b.dataset.date, b.dataset.w));
   if (state.open) { const el = document.querySelector(`.day[data-date="${state.open}"]`); if (el) toggle(el, true); }
+}
+
+/* ---------- cerul viu din antet ----------
+   Un singur element animat: fundalul antetului arată vremea de acum, din observația curentă (Open-Meteo „current”)
+   și, când există, din radar — ploaia cade cu intensitatea și înclinarea date de vânt, ninsoarea plutește,
+   ceața trece în benzi, norii se mișcă, cerul senin are soarele (ziua) sau stele (noaptea).
+   Se oprește când antetul nu se vede sau aplicația e în fundal; cu „reduce motion” rămâne o imagine fixă. */
+const sky = { cv: null, ctx: null, w: 0, h: 0, dpr: 1, parts: [], clouds: [], fog: [], stars: [], scene: null, raf: 0, last: 0, visible: true, flash: 0, nextFlash: 0 };
+function skyScene() {
+  const n = state.now || {}, R = state.radar;
+  const wc = isNum(n.weather_code) ? n.weather_code : null;
+  let kind = "clear", inten = 0;
+  if (wc != null) {
+    if (wc >= 95) { kind = "storm"; inten = 3; }
+    else if ((wc >= 71 && wc <= 77) || wc === 85 || wc === 86) { kind = "snow"; inten = wc === 75 || wc === 86 ? 3 : wc === 73 ? 2 : 1; }
+    else if ((wc >= 61 && wc <= 67) || (wc >= 80 && wc <= 82)) { kind = "rain"; inten = wc === 65 || wc === 82 ? 3 : wc === 63 || wc === 81 ? 2 : 1; }
+    else if (wc >= 51 && wc <= 57) { kind = "drizzle"; inten = 1; }
+    else if (wc === 45 || wc === 48) kind = "fog";
+    else if (wc === 3) kind = "overcast";
+    else if (wc === 2) kind = "cloudy";
+  }
+  if (isNum(n.precipitation) && n.precipitation > 0 && kind !== "snow" && kind !== "storm") { kind = n.precipitation >= 0.5 ? "rain" : "drizzle"; inten = Math.max(inten, n.precipitation >= 4 ? 3 : n.precipitation >= 1.5 ? 2 : 1); }
+  // radarul are întâietate pentru „plouă acum”
+  if (R && R.nc && R.nc[0] && R.nc[0].p != null && Date.now() - R.frame < 40 * 60 * 1000) {
+    const s0 = R.nc[0];
+    if (s0.p >= 0.3 && !["rain", "storm", "snow"].includes(kind)) { kind = "rain"; inten = s0.dbz >= 35 ? 3 : s0.dbz >= RADAR_LIGHT_DBZ ? 2 : 1; }
+  }
+  const cloud = isNum(n.cloud_cover) ? n.cloud_cover / 100 : kind === "clear" ? 0.1 : 0.8;
+  const ws = isNum(n.wind_speed_10m) ? n.wind_speed_10m : 8, wd = isNum(n.wind_direction_10m) ? n.wind_direction_10m : 270;
+  const day = n.is_day == null ? true : !!n.is_day;
+  return { kind, inten, cloud, wind: -Math.sin(wd * Math.PI / 180) * ws, day };
+}
+function skySetup() {
+  if (sky.cv) return;
+  const hd = document.querySelector("header");
+  const cv = document.createElement("canvas"); cv.className = "sky"; cv.setAttribute("aria-hidden", "true");
+  hd.prepend(cv); sky.cv = cv; sky.ctx = cv.getContext("2d");
+  const size = () => { const r = hd.getBoundingClientRect(); sky.dpr = Math.min(2, devicePixelRatio || 1); sky.w = r.width; sky.h = r.height;
+    cv.width = Math.round(r.width * sky.dpr); cv.height = Math.round(r.height * sky.dpr); skySeed(); skyFrame(performance.now(), true); };
+  new ResizeObserver(size).observe(hd);
+  new IntersectionObserver(es => { sky.visible = es[0].isIntersecting; skyLoop(); }).observe(hd);
+  document.addEventListener("visibilitychange", skyLoop);
+  matchMedia("(prefers-reduced-motion: reduce)").addEventListener?.("change", skyLoop);
+  size();
+}
+function skySeed() {
+  const S = sky.scene || skyScene(), W = sky.w, H = sky.h, rnd = (a, b) => a + Math.random() * (b - a);
+  const n = { rain: [0, 70, 140, 230], storm: [0, 0, 0, 260], drizzle: [0, 90, 90, 90], snow: [0, 45, 90, 150] }[S.kind]?.[S.inten] || 0;
+  sky.parts = Array.from({ length: Math.round(n * Math.max(0.6, W / 420)) }, () => ({ x: rnd(-40, W + 40), y: rnd(-H, H), z: rnd(0.45, 1), s: rnd(0, 6.28) }));
+  const nc = Math.round(1 + S.cloud * 4);
+  sky.clouds = Array.from({ length: nc }, (_, i) => ({ x: rnd(-0.2, 1.1) * W, y: rnd(0.05, 0.75) * H, r: rnd(0.35, 0.7) * Math.max(W, 320) * 0.5, v: rnd(4, 10) }));
+  sky.fog = S.kind === "fog" ? Array.from({ length: 4 }, (_, i) => ({ y: H * (0.35 + i * 0.17), x: rnd(0, W), v: rnd(6, 14) * (i % 2 ? -1 : 1), a: rnd(0.09, 0.16) })) : [];
+  sky.stars = !S.day && S.cloud < 0.6 ? Array.from({ length: Math.round(W / 9) }, () => ({ x: rnd(0, W), y: rnd(0, H * 0.8), r: rnd(0.4, 1.2), s: rnd(0, 6.28) })) : [];
+}
+function updateSky() {
+  skySetup();
+  const S = skyScene(), old = sky.scene;
+  sky.scene = S;
+  document.querySelector("header").dataset.sky = S.kind;
+  if (!old || old.kind !== S.kind || old.inten !== S.inten || old.day !== S.day || Math.abs(old.cloud - S.cloud) > 0.25) skySeed();
+  skyFrame(performance.now(), true); skyLoop();
+}
+function skyLoop() {
+  const run = sky.scene && sky.visible && document.visibilityState === "visible" && !matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (run && !sky.raf) { sky.last = performance.now(); sky.raf = requestAnimationFrame(skyTick); }
+  if (!run && sky.raf) { cancelAnimationFrame(sky.raf); sky.raf = 0; }
+}
+function skyTick(now) {
+  sky.raf = requestAnimationFrame(skyTick);
+  if (now - sky.last < 1000 / 40) return;          // ~40 de cadre pe secundă ajung, economisim bateria
+  skyFrame(now, false);
+}
+function skyFrame(now, still) {
+  const c = sky.ctx, S = sky.scene, W = sky.w, H = sky.h;
+  if (!c || !S || !W) return;
+  const dt = still ? 0 : Math.min(0.05, (now - sky.last) / 1000); sky.last = now;
+  c.setTransform(sky.dpr, 0, 0, sky.dpr, 0, 0);
+  c.clearRect(0, 0, W, H);
+  const wet = ["rain", "storm", "drizzle"].includes(S.kind);
+  // cerul: o nuanță discretă peste banda închisă
+  const g = c.createLinearGradient(0, 0, 0, H);
+  const top = S.kind === "storm" ? "rgba(70,80,110,.55)" : wet ? "rgba(52,78,112,.5)" : S.kind === "snow" ? "rgba(120,140,165,.35)" : S.kind === "fog" ? "rgba(140,148,150,.28)"
+    : !S.day ? "rgba(24,34,66,.55)" : S.kind === "clear" ? "rgba(70,62,34,.35)" : "rgba(80,90,96,.3)";
+  g.addColorStop(0, top); g.addColorStop(1, "rgba(0,0,0,0)");
+  c.fillStyle = g; c.fillRect(0, 0, W, H);
+  // soarele, ziua cu cer mai mult senin: o lumină caldă în spatele temperaturii, care „respiră” încet
+  if (S.day && S.cloud < 0.7 && !wet && S.kind !== "snow" && S.kind !== "fog") {
+    const b = 0.5 + 0.5 * Math.sin(now / 2600), R = Math.min(W, 420) * (0.42 + b * 0.04);
+    const sg = c.createRadialGradient(W * 0.86, H * 0.18, 0, W * 0.86, H * 0.18, R);
+    const a = (1 - S.cloud) * 0.34;
+    sg.addColorStop(0, `rgba(242,179,0,${a})`); sg.addColorStop(0.45, `rgba(242,179,0,${a * 0.3})`); sg.addColorStop(1, "rgba(242,179,0,0)");
+    c.fillStyle = sg; c.fillRect(0, 0, W, H);
+  }
+  for (const s of sky.stars) { s.s += dt * 1.6; c.fillStyle = `rgba(235,240,255,${0.25 + 0.35 * (0.5 + 0.5 * Math.sin(s.s))})`; c.beginPath(); c.arc(s.x, s.y, s.r, 0, 6.28); c.fill(); }
+  // nori: pete moi care alunecă în direcția vântului
+  const ca = (wet || S.kind === "overcast" ? 0.10 : 0.07) * (0.4 + S.cloud);
+  for (const k of sky.clouds) {
+    k.x += dt * k.v * (S.wind >= 0 ? 1 : -1) * (0.4 + Math.min(1.5, Math.abs(S.wind) / 15));
+    if (k.x - k.r > W) k.x = -k.r; if (k.x + k.r < 0) k.x = W + k.r;
+    const cg = c.createRadialGradient(k.x, k.y, 0, k.x, k.y, k.r);
+    cg.addColorStop(0, `rgba(220,226,230,${ca})`); cg.addColorStop(1, "rgba(220,226,230,0)");
+    c.fillStyle = cg; c.fillRect(k.x - k.r, k.y - k.r, k.r * 2, k.r * 2);
+  }
+  for (const f of sky.fog) {
+    f.x += dt * f.v; if (f.x > W * 1.3) f.x -= W * 1.6; if (f.x < -W * 0.3) f.x += W * 1.6;
+    for (const dx of [0, W * 0.8]) {                       // pete eliptice moi, fără margini drepte
+      const cx = f.x - dx, rx = W * 0.55;
+      c.save(); c.translate(cx, f.y); c.scale(rx / 30, 1);
+      const fg = c.createRadialGradient(0, 0, 0, 0, 0, 30);
+      fg.addColorStop(0, `rgba(225,230,230,${f.a})`); fg.addColorStop(1, "rgba(225,230,230,0)");
+      c.fillStyle = fg; c.fillRect(-30, -30, 60, 60); c.restore();
+    }
+  }
+  // precipitații
+  const slant = Math.max(-0.6, Math.min(0.6, S.wind / 40));
+  if (wet) {
+    const drz = S.kind === "drizzle", len = drz ? 7 : 13, sp = drz ? 260 : 620;
+    c.lineCap = "round";
+    for (const p of sky.parts) {
+      const v = sp * p.z; p.y += v * dt; p.x += v * slant * dt;
+      if (p.y > H + 20) { p.y = -20 - Math.random() * 40; p.x = Math.random() * (W + 80) - 40 - slant * H; }
+      c.strokeStyle = `rgba(170,200,240,${(drz ? 0.28 : 0.38) * p.z})`; c.lineWidth = (drz ? 1 : 1.3) * p.z;
+      c.beginPath(); c.moveTo(p.x, p.y); c.lineTo(p.x - slant * len * p.z, p.y - len * p.z); c.stroke();
+    }
+  } else if (S.kind === "snow") {
+    for (const p of sky.parts) {
+      p.s += dt * 1.3; p.y += 34 * p.z * dt; p.x += (Math.sin(p.s) * 14 + slant * 40) * p.z * dt;
+      if (p.y > H + 6) { p.y = -6; p.x = Math.random() * W; }
+      c.fillStyle = `rgba(240,244,250,${0.5 * p.z})`; c.beginPath(); c.arc(p.x, p.y, 1.1 + 1.4 * p.z, 0, 6.28); c.fill();
+    }
+  }
+  if (S.kind === "storm" && !still) {
+    if (!sky.nextFlash) sky.nextFlash = now + 6000 + Math.random() * 12000;
+    if (now > sky.nextFlash) { sky.flash = 1; sky.nextFlash = now + 7000 + Math.random() * 14000; }
+    if (sky.flash > 0) { c.fillStyle = `rgba(230,235,255,${0.16 * sky.flash})`; c.fillRect(0, 0, W, H); sky.flash = Math.max(0, sky.flash - dt * 4); }
+  }
 }
 
 /* ---------- radar: ploaia din următoarele 2 ore ----------
@@ -806,6 +945,7 @@ async function updateRadar(force) {
 }
 function renderRadar() {
   const el = $("#radar"), R = state.radar;
+  if (sky.scene) updateSky();
   if (!el || !R || !R.nc) { if (el) el.hidden = true; return; }
   // pașii sunt relativi la momentul cadrului; îi aducem la „de acum”
   const age = (Date.now() - R.frame) / 60000;
@@ -1351,7 +1491,7 @@ function toast(msg) {
 /* ---------- actualizare automată ----------
    Telefonul poate păstra fișierele vechi în cache. La pornire și la revenirea în aplicație citim version.json
    fără cache; dacă versiunea publicată e alta decât cea rulată, reîncărcăm pagina cu o adresă nouă (ocolește cache-ul). */
-const APP_VERSION = "20261023-135635";
+const APP_VERSION = "20261023-145039";
 async function checkVersion() {
   if (NATIVE || location.protocol === "file:") return;   // aplicația Android are fișierele în pachet; se actualizează prin magazin
   try {
