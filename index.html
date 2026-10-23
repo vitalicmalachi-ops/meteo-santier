@@ -307,6 +307,12 @@ button.chip{border:0;font-family:inherit;cursor:pointer}
 .rd-bars i.wet{background:var(--rain)}
 .rd-bars i.on{outline-color:var(--accent)}
 .rd-axis{display:flex;justify-content:space-between;font:11px var(--f-mono);color:var(--muted);margin-top:-2px}
+details.pl-box>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:10px;-webkit-tap-highlight-color:transparent}
+details.pl-box>summary::-webkit-details-marker{display:none}
+details.pl-box>summary h2{margin:0}
+details.pl-box[open]{display:grid;gap:8px}
+.chev2{width:9px;height:9px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg) translate(-2px,-2px);transition:transform .2s}
+details.pl-box[open] .chev2{transform:rotate(-135deg) translate(-2px,-2px)}
 details.week2{border:1px solid var(--line);border-radius:12px;background:var(--surface)}
 details.week2>summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;padding:14px}
 details.week2>summary::-webkit-details-marker{display:none}
@@ -396,7 +402,7 @@ details.week2[open]>summary::before{transform:rotate(90deg)}
 <script data-goatcounter="https://meteosantier.goatcounter.com/count"
         data-goatcounter-settings='{"no_onload": true, "allow_local": true}'
         async src="https://gc.zgo.at/count.js"></script>
-<script src="i18n.js?v=20261023-145441"></script>
-<script src="app.js?v=20261023-145441"></script>
+<script src="i18n.js?v=20261023-145721"></script>
+<script src="app.js?v=20261023-145721"></script>
 </body>
 </html>

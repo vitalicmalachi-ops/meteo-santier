@@ -1182,9 +1182,9 @@ function plannerHtml(cs) {
     const j = (c.n ? J[i][w] : null) || { level: "na", reason: t("rt_nodata") };
     return `<td><button type="button" class="cell ${j.level}" data-date="${c.date}" data-w="${w}" aria-label="${esc(t("w_" + w))}, ${esc(Ls[i].big)}: ${esc(lvl(j.level))}. ${esc(j.reason)}" title="${esc(j.reason)}">${LEVEL_SYM[j.level]}</button></td>`;
   }).join("")}</tr>`).join("");
-  return `<h2>${esc(t("plannerTitle"))}</h2>
+  return `<details class="pl-box"><summary><h2>${esc(t("plannerTitle"))}</h2><span class="chev2" aria-hidden="true"></span></summary>
     <div class="pl-wrap"><table class="pl"><thead><tr><th></th>${head}</tr></thead><tbody>${body}</tbody></table></div>
-    <div class="pl-legend"><span><b class="cell ok">✓</b>${esc(lvl("ok"))}</span><span><b class="cell warn">!</b>${esc(lvl("warn"))}</span><span><b class="cell stop">✕</b>${esc(lvl("stop"))}</span><span>${esc(t("legendTap"))}</span></div>`;
+    <div class="pl-legend"><span><b class="cell ok">✓</b>${esc(lvl("ok"))}</span><span><b class="cell warn">!</b>${esc(lvl("warn"))}</span><span><b class="cell stop">✕</b>${esc(lvl("stop"))}</span><span>${esc(t("legendTap"))}</span></div></details>`;
 }
 
 function drawCurve(root) {
@@ -1551,7 +1551,7 @@ function toast(msg) {
 /* ---------- actualizare automată ----------
    Telefonul poate păstra fișierele vechi în cache. La pornire și la revenirea în aplicație citim version.json
    fără cache; dacă versiunea publicată e alta decât cea rulată, reîncărcăm pagina cu o adresă nouă (ocolește cache-ul). */
-const APP_VERSION = "20261023-145441";
+const APP_VERSION = "20261023-145721";
 async function checkVersion() {
   if (NATIVE || location.protocol === "file:") return;   // aplicația Android are fișierele în pachet; se actualizează prin magazin
   try {
