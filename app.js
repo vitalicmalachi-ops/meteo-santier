@@ -661,7 +661,8 @@ function render() {
 const RADAR_PROXY = "https://meteo-santier-radar.vitalicmalachi.workers.dev/";
 const RADAR_API = "https://api.meteogate.eu/eu-eumetnet-weather-radar/collections/observations/locations/0-20010-0-OPERA";
 const RADAR_S3 = "https://s3.waw3-1.cloudferro.com/openradar-24h/";
-const RADAR_WET_DBZ = 18;          // ≈ 0,4 mm/h după Marshall–Palmer (ploaie slabă); sub asta e burniță sau ecou parazit
+const RADAR_WET_DBZ = 12;          // calibrat cu stația Chișinău: ploaia slabă de aici apare la 12–18 dBZ (radarele sunt departe, în România)
+const RADAR_LIGHT_DBZ = 22;        // sub asta, „ploaie slabă”
 const RADAR_STEP = 10, RADAR_LEAD = 120, RADAR_W = 80;   // minute, minute, raza ferestrei în pixeli (160 km)
 
 // Proiecția Lambert azimutală echivalentă (elipsoid WGS84), ca în fișierele OPERA: lat0 55°, lon0 10°, FE 1 950 000, FN −2 100 000
@@ -811,11 +812,16 @@ function renderRadar() {
   const steps = R.nc.map(s => ({ ...s, m: Math.round((s.L - age) / 5) * 5 })).filter(s => s.m >= -5 && s.m <= RADAR_LEAD);
   if (!steps.length) { el.hidden = true; return; }
   const wet = s => s.p != null && s.p >= 0.3;
-  const nowS = steps[0], raining = wet(nowS);
+  const nowS = steps[0], raining = wet(nowS), light = nowS.dbz < RADAR_LIGHT_DBZ;
+  // ce spun modelele pentru ora curentă — radarul poate rata ploaia slabă de joasă altitudine
+  const hNow = (hourly(todayStr()) || []).find(x => x.h === nowHour());
+  const modelsWet = hNow && hNow.n && hNow.chance >= 0.5;
   let text;
   if (raining) {
     const stop = steps.find(s => s.m > 0 && !wet(s));
-    text = stop ? t("rdr_rainStops", { m: stop.m }) : t("rdr_rainNow");
+    text = stop ? t(light ? "rdr_lightStops" : "rdr_rainStops", { m: stop.m }) : t(light ? "rdr_lightNow" : "rdr_rainNow");
+  } else if (modelsWet) {
+    text = t("rdr_missed");
   } else {
     const start = steps.find(s => wet(s));
     const horizon = Math.floor(steps[steps.length - 1].m / 10) * 10;
