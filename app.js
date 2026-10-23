@@ -818,8 +818,11 @@ function renderRadar() {
   const modelsWet = hNow && hNow.n && hNow.chance >= 0.5;
   let text;
   if (raining) {
-    const stop = steps.find(s => s.m > 0 && !wet(s));
-    text = stop ? t(light ? "rdr_lightStops" : "rdr_rainStops", { m: stop.m }) : t(light ? "rdr_lightNow" : "rdr_rainNow");
+    // „se oprește” doar dacă rămâne uscat cel puțin ~30 de minute după aceea (altfel sunt doar pauze între averse)
+    const stop = steps.find((s, i) => s.m > 0 && steps.slice(i, i + 3).length === 3 && steps.slice(i, i + 3).every(x => !wet(x)));
+    const again = stop && steps.find(s => s.m > stop.m && wet(s));
+    text = again ? t(light ? "rdr_lightPause" : "rdr_rainPause", { m: stop.m, r: again.m })
+      : stop ? t(light ? "rdr_lightStops" : "rdr_rainStops", { m: stop.m }) : t(light ? "rdr_lightNow" : "rdr_rainNow");
   } else if (modelsWet) {
     text = t("rdr_missed");
   } else {
@@ -1348,7 +1351,7 @@ function toast(msg) {
 /* ---------- actualizare automată ----------
    Telefonul poate păstra fișierele vechi în cache. La pornire și la revenirea în aplicație citim version.json
    fără cache; dacă versiunea publicată e alta decât cea rulată, reîncărcăm pagina cu o adresă nouă (ocolește cache-ul). */
-const APP_VERSION = "20261022-162515";
+const APP_VERSION = "20261023-135635";
 async function checkVersion() {
   if (NATIVE || location.protocol === "file:") return;   // aplicația Android are fișierele în pachet; se actualizează prin magazin
   try {
