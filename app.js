@@ -937,7 +937,7 @@ async function updateRadar(force) {
     if (v) v = [v[0] / dtMin, v[1] / dtMin]; else { v = await radarSteering(loc.lat, loc.lon); src = "wind"; }
     const nc = radarNowcast(g1, v);
     const age = (Date.now() - tOf(last)) / 60000;
-    state.radar = { key, at: Date.now(), frame: tOf(last), nc, src, v, lead: Math.max(0, Math.round(age)) };
+    state.radar = { key, at: Date.now(), frame: tOf(last), nc, src, v, g: g1, lead: Math.max(0, Math.round(age)) };
   } catch (e) {
     state.radar = { key, at: Date.now() - 5 * 60 * 1000, nc: null, err: String(e) };
   } finally { state.radarBusy = false; }
@@ -971,10 +971,70 @@ function renderRadar() {
     text = start ? (start.m <= 10 ? t("rdr_rainSoon") : t("rdr_rainIn", { m: start.m })) : t("rdr_dry", { m: horizon });
   }
   const tm = new Intl.DateTimeFormat(locale(), { hour: "2-digit", minute: "2-digit", timeZone: "UTC" }).format(new Date(R.frame + state.offset * 1000));
-  const bars = steps.filter(s => s.m >= 0).map(s => `<i style="--p:${s.p == null ? 0 : Math.min(1, s.p)}" class="${wet(s) ? "wet" : ""}" title="+${s.m} min"></i>`).join("");
+  const fut = steps.filter(s => s.m >= 0);
+  const bars = fut.map(s => `<i style="--p:${s.p == null ? 0 : Math.min(1, s.p)}" class="${wet(s) ? "wet" : ""}" data-m="${s.m}" title="+${s.m} min"></i>`).join("");
   el.hidden = false;
   el.className = "radar" + (raining ? " now" : steps.some(wet) ? " soon" : "");
-  el.innerHTML = `${svg("drops")}<div class="rd-txt"><b>${esc(text)}</b><small>${esc(t("rdr_src", { t: tm }))}</small></div><div class="rd-bars" aria-hidden="true">${bars}</div>`;
+  el.innerHTML = `<canvas class="rd-map" width="240" height="240" role="img" aria-label="${esc(t("rdr_mapLabel"))}"></canvas>
+    <div class="rd-body"><b class="rd-head">${esc(text)}</b>
+      <div class="rd-bars" aria-hidden="true">${bars}</div>
+      <div class="rd-axis" aria-hidden="true"><span>${esc(t("rdr_now"))}</span><span>+1 h</span><span>+${fut.length ? fut[fut.length - 1].m : 0} min</span></div>
+      <small>${esc(t("rdr_src", { t: tm }))}</small></div>`;
+  radarAnimStart(el, fut);
+}
+
+/* Harta radar mică: ecourile din jurul locului (±80 km), apoi deplasarea lor estimată în următoarele ~2 ore,
+   redată ca o buclă scurtă. Bara de timp de alături arată unde e bucla. */
+const RADAR_RAMP = [[12, [120, 170, 235, 0.5]], [20, [70, 140, 230, 0.85]], [28, [40, 175, 110, 0.9]], [36, [240, 200, 0, 0.95]], [44, [245, 135, 0, 1]], [52, [225, 50, 40, 1]]];
+function radarColor(z) {
+  if (!(z >= RADAR_RAMP[0][0])) return null;
+  for (let i = RADAR_RAMP.length - 1; i >= 0; i--) if (z >= RADAR_RAMP[i][0]) {
+    const a = RADAR_RAMP[i], b = RADAR_RAMP[i + 1]; if (!b) return a[1];
+    const f = (z - a[0]) / (b[0] - a[0]); return a[1].map((v, k) => v + (b[1][k] - v) * f);
+  }
+  return null;
+}
+const radarAnim = { raf: 0 };
+function radarAnimStart(el, fut) {
+  cancelAnimationFrame(radarAnim.raf); radarAnim.raf = 0;
+  const R = state.radar, cv = el.querySelector(".rd-map");
+  if (!R || !R.g || !cv) return;
+  const N = 2 * RADAR_W + 1, img = document.createElement("canvas"); img.width = N; img.height = N;
+  const ix = img.getContext("2d"), id = ix.createImageData(N, N);
+  for (let k = 0; k < N * N; k++) {
+    const z = R.g[k], o = k * 4;
+    if (!isFinite(z)) { id.data[o] = 120; id.data[o + 1] = 120; id.data[o + 2] = 120; id.data[o + 3] = 40; continue; }
+    const c = radarColor(z); if (!c) continue;
+    id.data[o] = c[0]; id.data[o + 1] = c[1]; id.data[o + 2] = c[2]; id.data[o + 3] = Math.round(c[3] * 255);
+  }
+  ix.putImageData(id, 0, 0);
+  const cx = cv.getContext("2d"), S = cv.width, sc = S / N, age = (Date.now() - R.frame) / 60000;
+  const maxM = fut.length ? fut[fut.length - 1].m : 0, bars = [...el.querySelectorAll(".rd-bars i")];
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const PLAY = 6000, HOLD = 1400;
+  let t0 = performance.now(), lastBar = -1;
+  const draw = now => {
+    const ph = reduce ? 0 : ((now - t0) % (PLAY + HOLD)) / PLAY, m = Math.min(1, ph) * maxM, L = m + age;   // minute de la cadru
+    cx.setTransform(1, 0, 0, 1, 0, 0); cx.clearRect(0, 0, S, S);
+    cx.fillStyle = "#121816"; cx.fillRect(0, 0, S, S);
+    cx.strokeStyle = "rgba(200,215,210,.16)"; cx.lineWidth = 1;
+    for (const km of [25, 50, 75]) { cx.beginPath(); cx.arc(S / 2, S / 2, km / 2 * sc, 0, 6.283); cx.stroke(); }
+    cx.beginPath(); cx.moveTo(S / 2, 4); cx.lineTo(S / 2, 14); cx.stroke();
+    cx.imageSmoothingEnabled = true;
+    cx.drawImage(img, R.v[1] * L * sc, R.v[0] * L * sc, S, S);
+    // locul tău
+    cx.fillStyle = "#F2B300"; cx.strokeStyle = "#121816"; cx.lineWidth = 2.5;
+    cx.beginPath(); cx.arc(S / 2, S / 2, 6, 0, 6.283); cx.fill(); cx.stroke();
+    cx.font = "600 22px " + getComputedStyle(document.body).getPropertyValue("--f-mono");
+    cx.fillStyle = "rgba(240,244,240,.92)"; cx.textAlign = "right";
+    cx.fillText(m < 2.5 ? t("rdr_now") : `+${Math.round(m / 5) * 5} min`, S - 10, S - 12);
+    const bi = fut.findIndex(s => s.m >= m - 2.5);
+    if (bi !== lastBar) { bars.forEach((b, i) => b.classList.toggle("on", i === bi && !reduce)); lastBar = bi; }
+    if (!reduce && el.isConnected && document.visibilityState === "visible") radarAnim.raf = requestAnimationFrame(draw);
+    else radarAnim.raf = 0;
+  };
+  draw(performance.now());
+  if (!reduce && !radarAnim.vis) { radarAnim.vis = true; document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && !radarAnim.raf && state.radar) renderRadar(); }); }
 }
 
 /* ---------- fișa unei lucrări: motivul verdictului + „Verdict greșit?” ----------
@@ -1491,7 +1551,7 @@ function toast(msg) {
 /* ---------- actualizare automată ----------
    Telefonul poate păstra fișierele vechi în cache. La pornire și la revenirea în aplicație citim version.json
    fără cache; dacă versiunea publicată e alta decât cea rulată, reîncărcăm pagina cu o adresă nouă (ocolește cache-ul). */
-const APP_VERSION = "20261023-145039";
+const APP_VERSION = "20261023-145441";
 async function checkVersion() {
   if (NATIVE || location.protocol === "file:") return;   // aplicația Android are fișierele în pachet; se actualizează prin magazin
   try {
