@@ -843,13 +843,14 @@ async function inflate(bytes) {
   return new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(ds)).arrayBuffer());
 }
 // Fereastra (2W+1)² în jurul locului, pe grilă de 2 km (dacă fișierul are 1 km, luăm maximul din fiecare 2×2); NaN = fără acoperire.
-async function radarWindow(url, lat, lon) {
+async function radarWindow(url, lat, lon, Wpx) {
   const H = parseTiffHeader(await rangeGet(url, 0, 65535));
   const [x, y] = laea(lat, lon);
   const f = Math.max(1, Math.round(2000 / H.scale[0]));
   const c = Math.floor((x - H.tie[3]) / H.scale[0]), r = Math.floor((H.tie[4] - y) / H.scale[1]);
-  const W = RADAR_W, N = 2 * W + 1, out = new Float32Array(N * N).fill(NaN);
-  const r0 = r - W * f, c0 = c - W * f, span = N * f;         // colțul și latura ferestrei, în pixeli ai fișierului
+  const W = Wpx || RADAR_W, N = 2 * W + 1, out = new Float32Array(N * N).fill(NaN);
+  const r0 = r - W * f, c0 = c - W * f, span = N * f;
+  out.N = N; out.x0 = H.tie[3] + c0 * H.scale[0]; out.y0 = H.tie[4] - r0 * H.scale[1]; out.px = H.scale[0] * f;         // colțul și latura ferestrei, în pixeli ai fișierului
   const tilesX = Math.ceil(H.w / H.tw), need = new Set();
   for (let rr = Math.floor(Math.max(0, r0) / H.th); rr <= Math.floor(Math.min(H.h - 1, r0 + span - 1) / H.th); rr++)
     for (let cc = Math.floor(Math.max(0, c0) / H.tw); cc <= Math.floor(Math.min(H.w - 1, c0 + span - 1) / H.tw); cc++) need.add(rr * tilesX + cc);
@@ -937,7 +938,7 @@ async function updateRadar(force) {
     if (v) v = [v[0] / dtMin, v[1] / dtMin]; else { v = await radarSteering(loc.lat, loc.lon); src = "wind"; }
     const nc = radarNowcast(g1, v);
     const age = (Date.now() - tOf(last)) / 60000;
-    state.radar = { key, at: Date.now(), frame: tOf(last), nc, src, v, g: g1, lead: Math.max(0, Math.round(age)) };
+    state.radar = { key, at: Date.now(), frame: tOf(last), url: last, nc, src, v, g: g1, lead: Math.max(0, Math.round(age)) };
   } catch (e) {
     state.radar = { key, at: Date.now() - 5 * 60 * 1000, nc: null, err: String(e) };
   } finally { state.radarBusy = false; }
@@ -955,7 +956,9 @@ function renderRadar() {
   const nowS = steps[0], raining = wet(nowS), light = nowS.dbz < RADAR_LIGHT_DBZ;
   // ce spun modelele pentru ora curentă — radarul poate rata ploaia slabă de joasă altitudine
   const hNow = (hourly(todayStr()) || []).find(x => x.h === nowHour());
-  const modelsWet = hNow && hNow.n && hNow.chance >= 0.5;
+  const n0 = state.now || {}, wc0 = n0.weather_code;
+  const nowObsWet = (isNum(n0.precipitation) && n0.precipitation > 0) || (isNum(wc0) && ((wc0 >= 51 && wc0 <= 67) || (wc0 >= 80 && wc0 <= 82) || wc0 >= 95));
+  const modelsWet = (hNow && hNow.n && hNow.chance >= 0.5) || nowObsWet;
   let text;
   if (raining) {
     // „se oprește” doar dacă rămâne uscat cel puțin ~30 de minute după aceea (altfel sunt doar pauze între averse)
@@ -981,6 +984,9 @@ function renderRadar() {
       <div class="rd-axis" aria-hidden="true"><span>${esc(t("rdr_now"))}</span><span>+1 h</span><span>+${fut.length ? fut[fut.length - 1].m : 0} min</span></div>
       <small>${esc(t("rdr_src", { t: tm }))}</small></div>`;
   radarAnimStart(el, fut);
+  el.onclick = () => openRadarFull();
+  el.tabIndex = 0; el.setAttribute("role", "button");
+  el.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openRadarFull(); } };
 }
 
 /* Harta radar mică: ecourile din jurul locului (±80 km), apoi deplasarea lor estimată în următoarele ~2 ore,
@@ -1035,6 +1041,138 @@ function radarAnimStart(el, fut) {
   };
   draw(performance.now());
   if (!reduce && !radarAnim.vis) { radarAnim.vis = true; document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && !radarAnim.raf && state.radar) renderRadar(); }); }
+}
+
+
+/* ---------- radarul pe tot ecranul ----------
+   Hartă de bază OpenFreeMap (OpenStreetMap, fără cheie) prin MapLibre, încărcată doar la prima deschidere.
+   Peste ea: ultima imagine radar pe ±300 km și deplasarea estimată a ploii, cu glisor de timp și redare. */
+const MAPLIBRE = "https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/";
+let mlLoad = null;
+function loadMapLibre() {
+  if (window.maplibregl) return Promise.resolve();
+  if (mlLoad) return mlLoad;
+  mlLoad = new Promise((ok, bad) => {
+    const css = document.createElement("link"); css.rel = "stylesheet"; css.href = MAPLIBRE + "maplibre-gl.css"; document.head.appendChild(css);
+    const js = document.createElement("script"); js.src = MAPLIBRE + "maplibre-gl.js"; js.onload = ok; js.onerror = () => { mlLoad = null; bad(new Error("maplibre")); };
+    document.head.appendChild(js);
+  });
+  return mlLoad;
+}
+// inversul proiecției LAEA, prin câțiva pași Newton pe funcția directă
+function laeaInv(x, y, lat = 47, lon = 28) {
+  for (let i = 0; i < 8; i++) {
+    const [fx, fy] = laea(lat, lon), d = 1e-4;
+    const [ax, ay] = laea(lat + d, lon), [bx, by] = laea(lat, lon + d);
+    const j11 = (ax - fx) / d, j21 = (ay - fy) / d, j12 = (bx - fx) / d, j22 = (by - fy) / d, det = j11 * j22 - j12 * j21;
+    const ex = x - fx, ey = y - fy;
+    lat += (j22 * ex - j12 * ey) / det; lon += (-j21 * ex + j11 * ey) / det;
+    if (Math.abs(ex) + Math.abs(ey) < 1) break;
+  }
+  return [lon, lat];
+}
+function radarCanvas(g) {
+  const N = g.N, cv = document.createElement("canvas"); cv.width = N; cv.height = N;
+  const ix = cv.getContext("2d"), id = ix.createImageData(N, N);
+  for (let k = 0; k < N * N; k++) {
+    const c = radarColor(g[k]), o = k * 4;
+    if (!c) continue;
+    id.data[o] = c[0]; id.data[o + 1] = c[1]; id.data[o + 2] = c[2]; id.data[o + 3] = Math.round(c[3] * 235);
+  }
+  ix.putImageData(id, 0, 0);
+  return cv;
+}
+const rf = { map: null, raf: 0, playing: false, m: 0, t0: 0 };
+async function openRadarFull() {
+  const R = state.radar, loc = state.loc;
+  if (!R || !R.url || !loc) return;
+  let el = $("#radarFull");
+  if (!el) {
+    document.body.insertAdjacentHTML("beforeend", `<div class="rf" id="radarFull" role="dialog" aria-modal="true" aria-labelledby="rfTitle">
+      <div class="rf-top"><b id="rfTitle"></b><span id="rfTime" class="rf-time"></span><button type="button" class="rf-x" id="rfClose" aria-label="">×</button></div>
+      <div class="rf-map" id="rfMap"></div>
+      <div class="rf-msg" id="rfMsg" hidden></div>
+      <div class="rf-bottom">
+        <button type="button" class="rf-play" id="rfPlay" aria-label=""></button>
+        <input type="range" id="rfRange" min="0" max="120" step="5" value="0" aria-label="">
+        <div class="rf-legend" aria-hidden="true"><i></i><span id="rfLegLo"></span><span id="rfLegHi"></span></div>
+        <small id="rfSrc" class="rf-src"></small>
+      </div></div>`);
+    el = $("#radarFull");
+    $("#rfClose").onclick = closeRadarFull;
+    document.addEventListener("keydown", e => { if (e.key === "Escape" && !el.hidden) closeRadarFull(); });
+    $("#rfPlay").onclick = () => rfPlay(!rf.playing);
+    $("#rfRange").oninput = e => { rfPlay(false); rf.m = +e.target.value; rfShow(); };
+  }
+  $("#rfTitle").textContent = t("rdr_fullTitle");
+  $("#rfClose").setAttribute("aria-label", t("close"));
+  $("#rfRange").setAttribute("aria-label", t("rdr_slider"));
+  $("#rfLegLo").textContent = t("rdr_legLight"); $("#rfLegHi").textContent = t("rdr_legHeavy");
+  const tm = new Intl.DateTimeFormat(locale(), { hour: "2-digit", minute: "2-digit", timeZone: "UTC" }).format(new Date(R.frame + state.offset * 1000));
+  $("#rfSrc").textContent = t("rdr_src", { t: tm }) + " · © OpenFreeMap, OpenMapTiles, OpenStreetMap";
+  el.hidden = false; document.body.style.overflow = "hidden";
+  const msg = $("#rfMsg"); msg.hidden = false; msg.textContent = t("rdr_loading");
+  try {
+    await loadMapLibre();
+    if (!rf.map) {
+      rf.map = new maplibregl.Map({ container: "rfMap", style: "https://tiles.openfreemap.org/styles/positron", center: [loc.lon, loc.lat], zoom: 6.6, attributionControl: false, dragRotate: false, pitchWithRotate: false });
+      rf.map.touchZoomRotate.disableRotation();
+      await new Promise(r => rf.map.once("load", r));
+    } else { rf.map.resize(); rf.map.jumpTo({ center: [loc.lon, loc.lat], zoom: 6.6 }); }
+    if (!rf.g || rf.frame !== R.frame || rf.key !== R.key) {
+      rf.g = await radarWindow(radarUrl(R.url), loc.lat, loc.lon, 150);
+      rf.frame = R.frame; rf.key = R.key; rf.img = radarCanvas(rf.g).toDataURL();
+    }
+    const coords = rfCoords(0);
+    if (rf.map.getSource("radar")) rf.map.getSource("radar").updateImage({ url: rf.img, coordinates: coords });
+    else {
+      rf.map.addSource("radar", { type: "image", url: rf.img, coordinates: coords });
+      rf.map.addLayer({ id: "radar", type: "raster", source: "radar", paint: { "raster-opacity": 0.85, "raster-fade-duration": 0, "raster-resampling": "linear" } });
+    }
+    if (rf.marker) rf.marker.remove();
+    const dot = document.createElement("div"); dot.className = "rf-dot";
+    rf.marker = new maplibregl.Marker({ element: dot }).setLngLat([loc.lon, loc.lat]).addTo(rf.map);
+    msg.hidden = true;
+    const age = (Date.now() - R.frame) / 60000;
+    rf.max = Math.max(10, Math.floor((RADAR_LEAD - age) / 5) * 5); $("#rfRange").max = rf.max;
+    rf.m = 0; rfShow(); rfPlay(!matchMedia("(prefers-reduced-motion: reduce)").matches);
+  } catch (e) {
+    msg.hidden = false; msg.textContent = t("rdr_mapErr");
+  }
+}
+function rfCoords(m) {
+  const g = rf.g, R = state.radar, age = (Date.now() - R.frame) / 60000, L = m + age;
+  const dx = R.v[1] * L * 2000, dy = -R.v[0] * L * 2000, S = g.N * g.px;
+  const x0 = g.x0 + dx, y0 = g.y0 + dy;
+  return [laeaInv(x0, y0), laeaInv(x0 + S, y0), laeaInv(x0 + S, y0 - S), laeaInv(x0, y0 - S)];
+}
+function rfShow() {
+  if (!rf.map || !rf.map.getSource("radar")) return;
+  rf.map.getSource("radar").setCoordinates(rfCoords(rf.m));
+  $("#rfRange").value = Math.round(rf.m / 5) * 5;
+  const clock = new Intl.DateTimeFormat(locale(), { hour: "2-digit", minute: "2-digit", timeZone: "UTC" }).format(new Date(Date.now() + rf.m * 60000 + state.offset * 1000));
+  $("#rfTime").textContent = rf.m < 2.5 ? `${t("rdr_now")} · ${clock}` : `+${Math.round(rf.m / 5) * 5} min · ${clock}`;
+}
+function rfPlay(on) {
+  rf.playing = on;
+  $("#rfPlay").textContent = on ? "❚❚" : "▶";
+  $("#rfPlay").setAttribute("aria-label", t(on ? "rdr_pause" : "rdr_play"));
+  cancelAnimationFrame(rf.raf); rf.raf = 0;
+  if (!on) return;
+  let last = performance.now(), hold = 0;
+  const step = now => {
+    const dt = now - last; last = now;
+    if (hold > 0) { hold -= dt; if (hold <= 0) rf.m = 0; }
+    else { rf.m += dt / 1000 * (rf.max / 7); if (rf.m >= rf.max) { rf.m = rf.max; hold = 1500; } }
+    rfShow();
+    if (rf.playing && !$("#radarFull").hidden) rf.raf = requestAnimationFrame(step);
+  };
+  rf.raf = requestAnimationFrame(step);
+}
+function closeRadarFull() {
+  rfPlay(false);
+  const el = $("#radarFull"); if (el) el.hidden = true;
+  document.body.style.overflow = "";
 }
 
 /* ---------- fișa unei lucrări: motivul verdictului + „Verdict greșit?” ----------
@@ -1551,7 +1689,7 @@ function toast(msg) {
 /* ---------- actualizare automată ----------
    Telefonul poate păstra fișierele vechi în cache. La pornire și la revenirea în aplicație citim version.json
    fără cache; dacă versiunea publicată e alta decât cea rulată, reîncărcăm pagina cu o adresă nouă (ocolește cache-ul). */
-const APP_VERSION = "20261023-145721";
+const APP_VERSION = "20261024-073430";
 async function checkVersion() {
   if (NATIVE || location.protocol === "file:") return;   // aplicația Android are fișierele în pachet; se actualizează prin magazin
   try {

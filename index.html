@@ -313,6 +313,23 @@ details.pl-box>summary h2{margin:0}
 details.pl-box[open]{display:grid;gap:8px}
 .chev2{width:9px;height:9px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg) translate(-2px,-2px);transition:transform .2s}
 details.pl-box[open] .chev2{transform:rotate(-135deg) translate(-2px,-2px)}
+.radar{cursor:pointer}
+.rf{position:fixed;inset:0;z-index:60;background:var(--bg);display:grid;grid-template-rows:auto 1fr auto}
+.rf-top{display:flex;align-items:center;gap:12px;padding:calc(10px + env(safe-area-inset-top)) 12px 10px 16px;background:var(--band);color:var(--band-ink)}
+.rf-top b{font:700 17px var(--f-display)}
+.rf-time{font:13px var(--f-mono);color:var(--accent);margin-left:auto}
+.rf-x{border:0;background:none;color:var(--band-ink);font-size:30px;line-height:1;width:44px;height:44px;cursor:pointer}
+.rf-map{position:relative;min-height:0}
+.rf-msg{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:var(--surface);color:var(--ink);padding:10px 14px;border-radius:10px;border:1px solid var(--line);font-size:14px;max-width:80vw;text-align:center}
+.rf-bottom{display:grid;grid-template-columns:auto 1fr;gap:8px 12px;align-items:center;padding:12px 16px calc(12px + env(safe-area-inset-bottom));background:var(--surface);border-top:1px solid var(--line)}
+.rf-play{width:44px;height:44px;border-radius:50%;border:0;background:var(--accent);color:#1D2120;font-size:15px;font-weight:700;cursor:pointer}
+.rf-bottom input[type=range]{width:100%;accent-color:var(--accent)}
+.rf-legend{grid-column:1/-1;display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
+.rf-legend i{grid-column:2;grid-row:1;height:8px;border-radius:4px;background:linear-gradient(90deg,rgb(120 170 235/.6),rgb(70 140 230),rgb(40 175 110),rgb(240 200 0),rgb(245 135 0),rgb(225 50 40))}
+.rf-legend span:first-of-type{grid-column:1;grid-row:1}
+.rf-legend span:last-of-type{grid-column:3;grid-row:1}
+.rf-src{grid-column:1/-1;font-size:11px;color:var(--muted)}
+.rf-dot{width:16px;height:16px;border-radius:50%;background:#F2B300;border:3px solid #1D2120;box-shadow:0 0 0 3px rgb(242 179 0/.35)}
 details.week2{border:1px solid var(--line);border-radius:12px;background:var(--surface)}
 details.week2>summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;padding:14px}
 details.week2>summary::-webkit-details-marker{display:none}
@@ -402,7 +419,7 @@ details.week2[open]>summary::before{transform:rotate(90deg)}
 <script data-goatcounter="https://meteosantier.goatcounter.com/count"
         data-goatcounter-settings='{"no_onload": true, "allow_local": true}'
         async src="https://gc.zgo.at/count.js"></script>
-<script src="i18n.js?v=20261023-145721"></script>
-<script src="app.js?v=20261023-145721"></script>
+<script src="i18n.js?v=20261024-073430"></script>
+<script src="app.js?v=20261024-073430"></script>
 </body>
 </html>
