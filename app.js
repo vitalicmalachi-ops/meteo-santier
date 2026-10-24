@@ -1175,6 +1175,21 @@ function closeRadarFull() {
   document.body.style.overflow = "";
 }
 
+/* ---------- „nu e locul tău” ----------
+   Când e ales alt loc (căutare sau loc salvat) și antetul a ieșit din ecran, o etichetă jos amintește al cui e prognoza. */
+function updateAwayPill() {
+  let el = $("#awayPill");
+  const show = state.chosen && state.headerOut && state.loc;
+  if (!show) { if (el) el.hidden = true; return; }
+  if (!el) {
+    document.body.insertAdjacentHTML("beforeend", `<button type="button" class="away" id="awayPill"></button>`);
+    el = $("#awayPill");
+    el.onclick = () => { state.chosen = false; updateAwayPill(); window.scrollTo({ top: 0, behavior: "smooth" }); locateMe(false); };
+  }
+  el.innerHTML = `<span>${esc(t("awayShowing", { p: state.loc.name || t("myLocation") }))}</span><b>${esc(t("awayBack"))}</b>`;
+  el.hidden = false;
+}
+
 /* ---------- fișa unei lucrări: motivul verdictului + „Verdict greșit?” ----------
    Raportul e anonim: pleacă doar locul (numele localității), data, lucrarea, verdictul afișat și răspunsul omului,
    ca eveniment în statistica GoatCounter (filtrul „report/”), unde administratorul le vede. */
@@ -1574,7 +1589,7 @@ function locateMe(atStartup) {
   getPosition().then(async pos => {
     if (state.loc !== startLoc) return;
     const lat = pos.coords.latitude, lon = pos.coords.longitude;
-    state.mode = "gps";
+    state.mode = "gps"; state.chosen = false; updateAwayPill();
     track("loc/gps", "Location: GPS", true);
     if (hasLast && near(state.loc, { lat, lon })) {
       // același loc ca data trecută: păstrăm prognoza afișată, actualizăm doar coordonatele
@@ -1656,7 +1671,7 @@ async function doSearch(q) {
       : `<div class="note">${esc(t("noResults"))}</div>`;
     box.querySelectorAll("button").forEach(b => b.onclick = () => {
       const r = list[+b.dataset.i];
-      state.mode = "manual";
+      state.mode = "manual"; state.chosen = true;
       setLoc({ lat: r.latitude, lon: r.longitude, name: r.name, cc: r.country_code || null });
       $("#searchBox").hidden = true; $("#btnSearch").setAttribute("aria-expanded", "false"); $("#q").value = ""; box.innerHTML = "";
     });
@@ -1674,7 +1689,7 @@ function renderSaved() {
     const cur = state.loc && Math.abs(s.lat - state.loc.lat) < 1e-3 && Math.abs(s.lon - state.loc.lon) < 1e-3;
     return `<button type="button" data-i="${i}" aria-current="${cur}">${esc(s.name)}</button>`;
   }).join("");
-  $("#saved").querySelectorAll("button").forEach(b => b.onclick = () => { state.mode = "manual"; setLoc(list[+b.dataset.i]); });
+  $("#saved").querySelectorAll("button").forEach(b => b.onclick = () => { state.mode = "manual"; state.chosen = true; setLoc(list[+b.dataset.i]); updateAwayPill(); });
 }
 
 let toastT = null;
@@ -1689,7 +1704,7 @@ function toast(msg) {
 /* ---------- actualizare automată ----------
    Telefonul poate păstra fișierele vechi în cache. La pornire și la revenirea în aplicație citim version.json
    fără cache; dacă versiunea publicată e alta decât cea rulată, reîncărcăm pagina cu o adresă nouă (ocolește cache-ul). */
-const APP_VERSION = "20261024-073430";
+const APP_VERSION = "20261024-074204";
 async function checkVersion() {
   if (NATIVE || location.protocol === "file:") return;   // aplicația Android are fișierele în pachet; se actualizează prin magazin
   try {
@@ -1709,7 +1724,8 @@ function init() {
   applyStatic();
   renderSettings();
   loadAccuracy();
-  $("#btnLocate").onclick = () => locateMe(false);
+  $("#btnLocate").onclick = () => { state.chosen = false; updateAwayPill(); locateMe(false); };
+  new IntersectionObserver(es => { state.headerOut = !es[0].isIntersecting; updateAwayPill(); }).observe(document.querySelector("header"));
   $("#btnSearch").onclick = () => {
     const bx = $("#searchBox");
     if (bx.hidden) openSearch(); else { bx.hidden = true; $("#btnSearch").setAttribute("aria-expanded", "false"); }
