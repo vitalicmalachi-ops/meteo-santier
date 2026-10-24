@@ -966,6 +966,9 @@ function renderRadar() {
     const again = stop && steps.find(s => s.m > stop.m && wet(s));
     text = again ? t(light ? "rdr_lightPause" : "rdr_rainPause", { m: stop.m, r: again.m })
       : stop ? t(light ? "rdr_lightStops" : "rdr_rainStops", { m: stop.m }) : t(light ? "rdr_lightNow" : "rdr_rainNow");
+  } else if (nowObsWet) {
+    // observația meteo de acum spune că plouă/burnițează, chiar dacă radarul (prea departe) nu vede
+    text = t(isNum(wc0) && wc0 >= 51 && wc0 <= 57 ? "rdr_obsDrizzle" : "rdr_obsRain");
   } else if (modelsWet) {
     text = t("rdr_missed");
   } else {
@@ -977,7 +980,7 @@ function renderRadar() {
   const fut = steps.filter(s => s.m >= 0);
   const bars = fut.map(s => `<i style="--p:${s.p == null ? 0 : Math.min(1, s.p)}" class="${wet(s) ? "wet" : ""}" data-m="${s.m}" title="+${s.m} min"></i>`).join("");
   el.hidden = false;
-  el.className = "radar" + (raining ? " now" : steps.some(wet) ? " soon" : "");
+  el.className = "radar" + ((raining || nowObsWet) ? " now" : steps.some(wet) ? " soon" : "");
   el.innerHTML = `<canvas class="rd-map" width="240" height="240" role="img" aria-label="${esc(t("rdr_mapLabel"))}"></canvas>
     <div class="rd-body"><b class="rd-head">${esc(text)}</b>
       <div class="rd-bars" aria-hidden="true">${bars}</div>
@@ -1704,7 +1707,7 @@ function toast(msg) {
 /* ---------- actualizare automată ----------
    Telefonul poate păstra fișierele vechi în cache. La pornire și la revenirea în aplicație citim version.json
    fără cache; dacă versiunea publicată e alta decât cea rulată, reîncărcăm pagina cu o adresă nouă (ocolește cache-ul). */
-const APP_VERSION = "20261024-074204";
+const APP_VERSION = "20261024-074510";
 async function checkVersion() {
   if (NATIVE || location.protocol === "file:") return;   // aplicația Android are fișierele în pachet; se actualizează prin magazin
   try {
