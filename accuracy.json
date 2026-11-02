@@ -1,8 +1,8 @@
 {
- "updated": "2026-10-26T10:08Z",
+ "updated": "2026-11-02T12:26Z",
  "days": 30,
- "from": "2026-09-26",
- "to": "2026-10-26",
+ "from": "2026-10-03",
+ "to": "2026-11-02",
  "rule": {
   "thr_mm": 1.0,
   "drizzle_mm_h": 0.2,
@@ -15,47 +15,47 @@
    "name": "Chișinău",
    "cc": "MD",
    "periods": 60,
-   "correct": 58,
-   "pct": 97,
-   "rain_periods": 11,
-   "rain_caught": 11,
-   "false_alarms": 2,
+   "correct": 56,
+   "pct": 93,
+   "rain_periods": 16,
+   "rain_caught": 16,
+   "false_alarms": 4,
    "models": [
     {
      "name": "ECMWF IFS",
-     "pct": 97
+     "pct": 92
     },
     {
      "name": "UKMO",
-     "pct": 93
-    },
-    {
-     "name": "GEM",
-     "pct": 93
-    },
-    {
-     "name": "JMA",
-     "pct": 93
-    },
-    {
-     "name": "CMA",
-     "pct": 93
+     "pct": 90
     },
     {
      "name": "ECMWF AIFS",
-     "pct": 92
+     "pct": 88
     },
     {
      "name": "ICON",
-     "pct": 92
-    },
-    {
-     "name": "GFS",
-     "pct": 90
+     "pct": 88
     },
     {
      "name": "ARPEGE",
-     "pct": 90
+     "pct": 87
+    },
+    {
+     "name": "JMA",
+     "pct": 87
+    },
+    {
+     "name": "CMA",
+     "pct": 85
+    },
+    {
+     "name": "GFS",
+     "pct": 83
+    },
+    {
+     "name": "GEM",
+     "pct": 83
     }
    ]
   }
