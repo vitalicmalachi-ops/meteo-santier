@@ -303,7 +303,27 @@ function aggregateSoil(h) {
 }
 
 /* ---------- consens pe o zi ---------- */
+// Ce se vede ACUM (radar sau observația meteo curentă). Modelele subestimează des ploaia în curs
+// (03.11: radarul arăta ploaie puternică, modelele dădeau 0,1–0,3 mm/h), așa că pentru azi realitatea are întâietate.
+function rainNow() {
+  const R = state.radar;
+  if (R && R.nc && R.frame && Date.now() - R.frame < 35 * 60 * 1000) {
+    const age = (Date.now() - R.frame) / 60000;
+    const next = R.nc.filter(s => s.L > age - RADAR_STEP && s.L <= age + 60);   // pasul care conține „acum”, plus ora următoare
+    const wetN = next.filter(s => s.p != null && s.p >= 0.3).length;
+    if (next.length && next[0].p >= 0.3 && wetN >= 2) return { src: "radar", heavy: next[0].dbz >= 30 };
+  }
+  const n = state.now || {}, wc = n.weather_code;
+  if ((isNum(n.precipitation) && n.precipitation >= 0.3) || (isNum(wc) && ((wc >= 61 && wc <= 67) || (wc >= 80 && wc <= 82) || wc >= 95))) return { src: "obs", heavy: isNum(n.precipitation) && n.precipitation >= 2 };
+  return null;
+}
 function consensus(date) {
+  const c = consensusModels(date);
+  const now = c.isToday && c.n ? rainNow() : null;
+  if (now) { c.nowRain = now; c.fracModels = c.frac; c.frac = Math.max(c.frac, 0.8); }
+  return c;
+}
+function consensusModels(date) {
   const thr = state.thr, slots = slotsFor(date);
   const isToday = date === todayStr(), nowH = nowHour();
   // ploaia de azi dinainte de ora curentă (după modele), afișată separat
@@ -340,7 +360,8 @@ function consensus(date) {
     })),
     ensProb: ens ? ens.p : null, ensN: ens ? ens.n : 0,
     ...(() => {
-      const fh = fogByHour(date).filter(x => x.h >= (isToday ? nowH : 0) && x.n && x.frac >= FOG_FRAC);
+      const fh0 = fogByHour(date).filter(x => x.h >= (isToday ? nowH : 0) && x.n && x.frac >= FOG_FRAC);
+      const fh = fh0.filter(x => fh0.some(y => Math.abs(y.h - x.h) === 1));   // doar ore din șiruri de ≥ 2 ore
       if (!fh.length) return { fog: null };
       const a = fh[0].h, b = fh[fh.length - 1].h + 1;
       return { fog: { from: a, to: b, hours: fh.length, frac: Math.max(...fh.map(x => x.frac)), label: `${String(a).padStart(2, "0")}–${String(b % 24 === 0 && b === 24 ? 24 : b).padStart(2, "0")}` } };
@@ -350,6 +371,7 @@ function consensus(date) {
 
 function rainText(c) {
   if (!c.n) return t("rt_nodata");
+  if (c.nowRain) return t(c.nowRain.src === "radar" ? "rt_nowRadar" : "rt_nowObs");
   if (c.snowFrac >= 0.5) return t("rt_snow");
   if (c.frac >= 0.75) return t("rt_certain");
   if (c.frac >= 0.5) return t("rt_likely");
@@ -362,7 +384,7 @@ function rainText(c) {
 function judgeWorks(c) {
   const N = isNum, f = c.frac, g = c.gust, L = state.limits;
   const res = {};
-  const pr = t("r_rainModels", { wet: c.wet, n: c.n });
+  const pr = c.nowRain ? t(c.nowRain.src === "radar" ? "r_rainNowRadar" : "r_rainNowObs") : t("r_rainModels", { wet: c.wet, n: c.n });
   const pick = (id, rules, okText) => {
     for (const [cond, level, reason] of rules) if (cond) { res[id] = { level, reason }; return; }
     res[id] = { level: "ok", reason: okText };
@@ -947,6 +969,8 @@ async function updateRadar(force) {
 function renderRadar() {
   const el = $("#radar"), R = state.radar;
   if (sky.scene) updateSky();
+  const rn = JSON.stringify(rainNow());
+  if (rn !== state.rainNowKey) { state.rainNowKey = rn; if (state.results.length) { render(); return; } }
   if (!el || !R || !R.nc) { if (el) el.hidden = true; return; }
   // pașii sunt relativi la momentul cadrului; îi aducem la „de acum”
   const age = (Date.now() - R.frame) / 60000;
@@ -1707,7 +1731,7 @@ function toast(msg) {
 /* ---------- actualizare automată ----------
    Telefonul poate păstra fișierele vechi în cache. La pornire și la revenirea în aplicație citim version.json
    fără cache; dacă versiunea publicată e alta decât cea rulată, reîncărcăm pagina cu o adresă nouă (ocolește cache-ul). */
-const APP_VERSION = "20261024-074510";
+const APP_VERSION = "20261103-061804";
 async function checkVersion() {
   if (NATIVE || location.protocol === "file:") return;   // aplicația Android are fișierele în pachet; se actualizează prin magazin
   try {
