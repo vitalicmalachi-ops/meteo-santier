@@ -1,8 +1,8 @@
 {
- "updated": "2026-11-02T12:26Z",
+ "updated": "2026-11-09T12:53Z",
  "days": 30,
- "from": "2026-10-03",
- "to": "2026-11-02",
+ "from": "2026-10-10",
+ "to": "2026-11-09",
  "rule": {
   "thr_mm": 1.0,
   "drizzle_mm_h": 0.2,
@@ -17,8 +17,8 @@
    "periods": 60,
    "correct": 56,
    "pct": 93,
-   "rain_periods": 16,
-   "rain_caught": 16,
+   "rain_periods": 18,
+   "rain_caught": 18,
    "false_alarms": 4,
    "models": [
     {
@@ -38,24 +38,24 @@
      "pct": 88
     },
     {
-     "name": "ARPEGE",
-     "pct": 87
-    },
-    {
      "name": "JMA",
      "pct": 87
     },
     {
-     "name": "CMA",
-     "pct": 85
-    },
-    {
-     "name": "GFS",
+     "name": "ARPEGE",
      "pct": 83
     },
     {
      "name": "GEM",
-     "pct": 83
+     "pct": 82
+    },
+    {
+     "name": "CMA",
+     "pct": 82
+    },
+    {
+     "name": "GFS",
+     "pct": 80
     }
    ]
   }
