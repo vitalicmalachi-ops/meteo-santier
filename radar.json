@@ -1,0 +1,275 @@
+{
+ "kma_seamless [app vars]": {
+  "n": 216,
+  "nonnull_precip": 0,
+  "null_vars": [
+   "temperature_2m",
+   "precipitation",
+   "snowfall",
+   "wind_speed_10m",
+   "wind_gusts_10m",
+   "wind_direction_10m",
+   "sunshine_duration",
+   "relative_humidity_2m",
+   "visibility",
+   "weather_code"
+  ]
+ },
+ "kma_seamless [basic]": {
+  "n": 216,
+  "nonnull_precip": 0,
+  "null_vars": [
+   "precipitation",
+   "temperature_2m",
+   "wind_gusts_10m"
+  ]
+ },
+ "kma_gdps [app vars]": {
+  "n": 216,
+  "nonnull_precip": 0,
+  "null_vars": [
+   "temperature_2m",
+   "precipitation",
+   "snowfall",
+   "wind_speed_10m",
+   "wind_gusts_10m",
+   "wind_direction_10m",
+   "sunshine_duration",
+   "relative_humidity_2m",
+   "visibility",
+   "weather_code"
+  ]
+ },
+ "kma_gdps [basic]": {
+  "n": 216,
+  "nonnull_precip": 0,
+  "null_vars": [
+   "precipitation",
+   "temperature_2m",
+   "wind_gusts_10m"
+  ]
+ },
+ "bom_access_global [app vars]": {
+  "n": 216,
+  "nonnull_precip": 0,
+  "null_vars": [
+   "temperature_2m",
+   "precipitation",
+   "snowfall",
+   "wind_speed_10m",
+   "wind_gusts_10m",
+   "wind_direction_10m",
+   "sunshine_duration",
+   "relative_humidity_2m",
+   "visibility",
+   "weather_code"
+  ]
+ },
+ "bom_access_global [basic]": {
+  "n": 216,
+  "nonnull_precip": 0,
+  "null_vars": [
+   "precipitation",
+   "temperature_2m",
+   "wind_gusts_10m"
+  ]
+ },
+ "gfs_graphcast025 [app vars]": {
+  "n": 216,
+  "nonnull_precip": 0,
+  "null_vars": [
+   "temperature_2m",
+   "precipitation",
+   "snowfall",
+   "wind_speed_10m",
+   "wind_gusts_10m",
+   "wind_direction_10m",
+   "sunshine_duration",
+   "relative_humidity_2m",
+   "visibility",
+   "weather_code"
+  ]
+ },
+ "gfs_graphcast025 [basic]": {
+  "n": 216,
+  "nonnull_precip": 0,
+  "null_vars": [
+   "precipitation",
+   "temperature_2m",
+   "wind_gusts_10m"
+  ]
+ },
+ "ecmwf_ifs [app vars]": {
+  "n": 216,
+  "nonnull_precip": 216,
+  "null_vars": []
+ },
+ "ecmwf_ifs [basic]": {
+  "n": 216,
+  "nonnull_precip": 216,
+  "null_vars": []
+ },
+ "icon_eu [app vars]": {
+  "n": 216,
+  "nonnull_precip": 183,
+  "null_vars": []
+ },
+ "icon_eu": "URLError(TimeoutError('_ssl.c:1063: The handshake operation timed out'))",
+ "icon_global [app vars]": {
+  "n": 216,
+  "nonnull_precip": 216,
+  "null_vars": [
+   "visibility"
+  ]
+ },
+ "icon_global [basic]": {
+  "n": 216,
+  "nonnull_precip": 216,
+  "null_vars": []
+ },
+ "meteofrance_arpege_europe [app vars]": {
+  "n": 216,
+  "nonnull_precip": 165,
+  "null_vars": [
+   "visibility"
+  ]
+ },
+ "meteofrance_arpege_europe [basic]": {
+  "n": 216,
+  "nonnull_precip": 165,
+  "null_vars": []
+ },
+ "meteofrance_arpege_world [app vars]": {
+  "n": 216,
+  "nonnull_precip": 165,
+  "null_vars": [
+   "visibility"
+  ]
+ },
+ "meteofrance_arpege_world [basic]": {
+  "n": 216,
+  "nonnull_precip": 165,
+  "null_vars": []
+ },
+ "ukmo_global_deterministic_10km [app vars]": {
+  "n": 216,
+  "nonnull_precip": 216,
+  "null_vars": []
+ },
+ "ukmo_global_deterministic_10km [basic]": {
+  "n": 216,
+  "nonnull_precip": 216,
+  "null_vars": []
+ },
+ "ncep_aigfs025 [app vars]": {
+  "n": 216,
+  "nonnull_precip": 216,
+  "null_vars": [
+   "wind_gusts_10m",
+   "sunshine_duration",
+   "relative_humidity_2m",
+   "visibility"
+  ]
+ },
+ "ncep_aigfs025 [basic]": {
+  "n": 216,
+  "nonnull_precip": 216,
+  "null_vars": [
+   "wind_gusts_10m"
+  ]
+ },
+ "ncep_hgefs025_ensemble_mean [app vars]": {
+  "n": 216,
+  "nonnull_precip": 216,
+  "null_vars": [
+   "wind_gusts_10m",
+   "sunshine_duration",
+   "relative_humidity_2m",
+   "visibility"
+  ]
+ },
+ "ncep_hgefs025_ensemble_mean [basic]": {
+  "n": 216,
+  "nonnull_precip": 216,
+  "null_vars": [
+   "wind_gusts_10m"
+  ]
+ },
+ "knmi_harmonie_arome_europe [app vars]": "HTTP 400 {\"reason\":\"No data is available for this location\",\"error\":true}",
+ "knmi_harmonie_arome_europe": "URLError(TimeoutError('_ssl.c:1063: The handshake operation timed out'))",
+ "dmi_harmonie_arome_europe [app vars]": "HTTP 400 {\"reason\":\"No data is available for this location\",\"error\":true}",
+ "dmi_harmonie_arome_europe [basic]": "HTTP 400 {\"reason\":\"No data is available for this location\",\"error\":true}",
+ "italia_meteo_arpae_icon_2i [app vars]": "HTTP 400 {\"reason\":\"No data is available for this location\",\"error\":true}",
+ "italia_meteo_arpae_icon_2i [basic]": "HTTP 400 {\"reason\":\"No data is available for this location\",\"error\":true}",
+ "gem_global [app vars]": {
+  "n": 216,
+  "nonnull_precip": 216,
+  "null_vars": [
+   "visibility"
+  ]
+ },
+ "gem_global [basic]": {
+  "n": 216,
+  "nonnull_precip": 216,
+  "null_vars": []
+ },
+ "jma_gsm [app vars]": {
+  "n": 216,
+  "nonnull_precip": 216,
+  "null_vars": [
+   "wind_gusts_10m",
+   "sunshine_duration",
+   "visibility"
+  ]
+ },
+ "jma_gsm [basic]": {
+  "n": 216,
+  "nonnull_precip": 216,
+  "null_vars": [
+   "wind_gusts_10m"
+  ]
+ },
+ "cma_grapes_global [app vars]": {
+  "n": 216,
+  "nonnull_precip": 177,
+  "null_vars": []
+ },
+ "cma_grapes_global [basic]": {
+  "n": 216,
+  "nonnull_precip": 177,
+  "null_vars": []
+ },
+ "ecmwf_aifs025_single [app vars]": {
+  "n": 216,
+  "nonnull_precip": 216,
+  "null_vars": [
+   "wind_gusts_10m",
+   "visibility"
+  ]
+ },
+ "ecmwf_aifs025_single [basic]": {
+  "n": 216,
+  "nonnull_precip": 216,
+  "null_vars": [
+   "wind_gusts_10m"
+  ]
+ },
+ "meteoswiss_icon_ch2 [app vars]": "HTTP 400 {\"reason\":\"No data is available for this location\",\"error\":true}",
+ "meteoswiss_icon_ch2 [basic]": "HTTP 400 {\"reason\":\"No data is available for this location\",\"error\":true}",
+ "metno_seamless [app vars]": {
+  "n": 216,
+  "nonnull_precip": 216,
+  "null_vars": []
+ },
+ "metno_seamless [basic]": {
+  "n": 216,
+  "nonnull_precip": 216,
+  "null_vars": []
+ },
+ "gfs_global [app vars]": {
+  "n": 216,
+  "nonnull_precip": 216,
+  "null_vars": []
+ },
+ "gfs_global": "URLError(TimeoutError('_ssl.c:1063: The handshake operation timed out'))"
+}
