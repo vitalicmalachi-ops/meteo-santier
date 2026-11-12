@@ -26,9 +26,8 @@ const MODELS = [
   { id: "ukmo_seamless", name: "UKMO", org: "Met Office · UK" },
   { id: "gem_seamless", name: "GEM", org: "ECCC · CA" },
   { id: "jma_seamless", name: "JMA", org: "JMA · JP" },
-  { id: "kma_seamless", name: "KMA", org: "KMA · KR" },
+  { id: "ncep_aigfs025", name: "AIGFS", org: "NOAA · AI" },
   { id: "cma_grapes_global", name: "GRAPES", org: "CMA · CN" },
-  { id: "bom_access_global", name: "ACCESS", org: "BoM · AU" },
   { id: "knmi_harmonie_arome_europe", name: "HARMONIE-NL", org: "KNMI · NL · 2–3 d" },
   { id: "dmi_harmonie_arome_europe", name: "HARMONIE-DK", org: "DMI · DK · 2–3 d" }
 ];
@@ -1753,7 +1752,7 @@ function toast(msg) {
 /* ---------- actualizare automată ----------
    Telefonul poate păstra fișierele vechi în cache. La pornire și la revenirea în aplicație citim version.json
    fără cache; dacă versiunea publicată e alta decât cea rulată, reîncărcăm pagina cu o adresă nouă (ocolește cache-ul). */
-const APP_VERSION = "20261112-164607";
+const APP_VERSION = "20261112-172428";
 async function checkVersion() {
   if (NATIVE || location.protocol === "file:") return;   // aplicația Android are fișierele în pachet; se actualizează prin magazin
   try {
