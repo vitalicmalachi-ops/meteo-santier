@@ -6,6 +6,8 @@ import json, sys, time, urllib.request, datetime as dt
 STATIONS = [{"id": "33815", "name": "Chișinău", "cc": "MD", "lat": 47.02, "lon": 28.87}]
 MODELS = {"ecmwf_ifs025": "ECMWF IFS", "ecmwf_aifs025_single": "ECMWF AIFS", "icon_seamless": "ICON", "gfs_seamless": "GFS",
           "meteofrance_seamless": "ARPEGE", "ukmo_seamless": "UKMO", "gem_seamless": "GEM", "jma_seamless": "JMA", "cma_grapes_global": "CMA"}
+import os
+for _m in filter(None, os.environ.get("EXTRA_MODELS", "").split(",")): MODELS[_m] = _m   # modele de probă, doar la cerere
 THR, DRIZZLE, OBS_WET = 1.0, 0.2, 1.0          # aceleași praguri ca în aplicație
 DAYS = int(sys.argv[2]) if len(sys.argv) > 2 else 30
 END = dt.datetime.utcnow().date()               # perioadele încheiate până azi la 06 UTC

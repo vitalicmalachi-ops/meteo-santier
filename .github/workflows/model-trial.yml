@@ -1,0 +1,20 @@
+# Probă la cerere: cât de bine ar fi prins ploaia modele noi, față de stația Chișinău (nu schimbă aplicația).
+name: Proba modele
+on:
+  workflow_dispatch:
+    inputs:
+      models: { default: "ncep_aigfs025,ecmwf_ifs" }
+      days: { default: "45" }
+permissions:
+  contents: write
+jobs:
+  trial:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: mkdir -p out && EXTRA_MODELS=${{ inputs.models }} python3 tools/accuracy.py out/trial.json ${{ inputs.days }}
+      - name: Salvează pe ramura diag-trial
+        if: always()
+        run: |
+          cd out && git init -q -b diag-trial && git config user.name github-actions && git config user.email github-actions@users.noreply.github.com
+          git add -A && git commit -q -m "Proba modele" && git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" diag-trial
