@@ -1,0 +1,19 @@
+# Verificare la cerere: verdictele pe lucrări ale aplicației față de ce a măsurat stația Chișinău.
+name: Verificare lucrari
+on:
+  workflow_dispatch:
+    inputs:
+      days: { default: "45" }
+permissions:
+  contents: write
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: mkdir -p out && python3 tools/verify_works.py out/verify.json ${{ inputs.days }}
+      - name: Salvează pe ramura diag-verify
+        if: always()
+        run: |
+          cd out && git init -q -b diag-verify && git config user.name github-actions && git config user.email github-actions@users.noreply.github.com
+          git add -A && git commit -q -m "Verificare lucrări" && git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" diag-verify
