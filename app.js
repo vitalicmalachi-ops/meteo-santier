@@ -320,7 +320,7 @@ function rainNow() {
 function consensus(date) {
   const c = consensusModels(date);
   const now = c.isToday && c.n ? rainNow() : null;
-  if (now) { c.nowRain = now; c.fracModels = c.frac; c.frac = Math.max(c.frac, 0.8); }
+  if (now) { c.nowRain = now; c.fracModels = c.frac; c.frac = Math.max(c.frac, 0.8); c.fracDay = c.fracDay == null ? null : Math.max(c.fracDay, 0.8); }
   return c;
 }
 function consensusModels(date) {
@@ -340,7 +340,13 @@ function consensusModels(date) {
   const snowy = kinds.filter(k => k === "s").length;
   const tRows = state.results.map(r => r.days[date]).filter(Boolean);
   const ens = ensWindow(date, slots, thr);
+  // aceeași numărătoare doar pentru ziua de lucru 07–19: ploaia căzută numai noaptea nu oprește lucrul de zi
+  // (verificarea pe 45 de zile cu stația: 5 din 16 zile „interzis” erau uscate pe timpul zilei)
+  const dslots = slots.filter(sl => !sl.off && sl.hr >= 8 && sl.hr <= 19);
+  const WD = dslots.length >= 3 ? state.results.map(r => winAgg(r.days, date, dslots)).filter(w => w.ok) : [];
+  const fracDay = WD.length >= 3 ? WD.filter(w => (isNum(w.s) && w.s >= 0.5) || w.p >= thr).length / WD.length : null;
   return {
+    fracDay,
     date, isToday, fromHour: isToday ? nowH : 0, earlier, n, wet, snowy, kinds: kinds.slice().sort((a, b) => (b === "s") - (a === "s") || (b === "r") - (a === "r")),
     frac: n ? wet / n : 0, snowFrac: n ? snowy / n : 0,
     // temperaturile zilei întregi: înghețul de noapte contează pentru beton și fațade
@@ -386,6 +392,10 @@ function judgeWorks(c) {
   const N = isNum, f = c.frac, g = c.gust, L = state.limits;
   const res = {};
   const pr = c.nowRain ? t(c.nowRain.src === "radar" ? "r_rainNowRadar" : "r_rainNowObs") : t("r_rainModels", { wet: c.wet, n: c.n });
+  // „nu” pentru ploaie doar dacă plouă și ziua; ploaia doar de noapte → „cu atenție” (acoperiți lucrarea proaspătă)
+  const rainStop = f >= 0.6 && (c.fracDay == null || c.fracDay >= 0.4);
+  const rainNight = f >= 0.6 && !rainStop;
+  const pn = t("r_rainNight");
   const pick = (id, rules, okText) => {
     for (const [cond, level, reason] of rules) if (cond) { res[id] = { level, reason }; return; }
     res[id] = { level: "ok", reason: okText };
@@ -394,7 +404,8 @@ function judgeWorks(c) {
   pick("beton", [
     [N(c.tmin) && c.tmin < L.beton.tminStop, "stop", t("r_frostNight", { t: T(c.tmin) })],
     [N(c.soil6) && c.soil6 < 0, "stop", t("r_soil6Frozen", { t: T(c.soil6) })],
-    [f >= 0.6, "stop", pr],
+    [rainStop, "stop", pr],
+    [rainNight, "warn", pn],
     [N(c.tmin) && c.tmin < L.beton.tminWarn, "warn", t("r_lowCold", { t: T(c.tmin) })],
     [N(c.soil0) && c.soil0 < 0, "warn", t("r_soil0Frozen", { t: T(c.soil0) })],
     [f >= 0.3, "warn", pr]
@@ -402,7 +413,8 @@ function judgeWorks(c) {
   const tw = N(c.wtmax) ? c.wtmax : c.tmax;   // maxima în orele de lucru
   pick("asfalt", [
     [N(tw) && tw < L.asfalt.tmaxStop, "stop", t("r_highBelow", { t: T(tw), lim: T(L.asfalt.tmaxStop) })],
-    [f >= 0.6, "stop", pr],
+    [rainStop, "stop", pr],
+    [rainNight, "warn", pn],
     [N(tw) && tw < L.asfalt.tmaxOk, "warn", t("r_asfaltThick", { t: T(tw), lim: T(L.asfalt.tmaxOk) })],
     [N(c.soil0) && c.soil0 < 0, "warn", t("r_baseFrozen", { t: T(c.soil0) })],
     [N(c.tmin) && c.tmin < 0, "warn", t("r_frostColdMorning")],
@@ -411,7 +423,8 @@ function judgeWorks(c) {
   pick("hidro", [
     [N(c.tmax) && c.tmax < 0, "stop", t("r_hardFrost", { t: T(c.tmax) })],
     [c.snowFrac >= 0.5, "stop", t("r_snow")],
-    [f >= 0.6, "stop", pr],
+    [rainStop, "stop", pr],
+    [rainNight, "warn", pn],
     [f >= 0.25, "warn", pr],
     [N(c.earlier) && c.earlier >= 1, "warn", t("r_wetToday", { v: fmtP(c.earlier) })],
     [N(c.prevPrecip) && c.prevPrecip >= state.thr, "warn", t("r_wetYesterday", { v: fmtP(c.prevPrecip) })],
@@ -420,7 +433,8 @@ function judgeWorks(c) {
   ], t("r_hidroOk"));
   pick("fatada", [
     [N(c.tmin) && c.tmin < 0, "stop", t("r_frostNight", { t: T(c.tmin) })],
-    [f >= 0.6, "stop", pr],
+    [rainStop, "stop", pr],
+    [rainNight, "warn", pn],
     [N(g) && g >= L.fatada.gustStop, "stop", t("r_gusts", { v: fmtW(g) })],
     [N(c.tmin) && c.tmin < L.fatada.tmin, "warn", t("r_lowBelow", { t: T(c.tmin), lim: T(L.fatada.tmin) })],
     [f >= 0.25, "warn", pr],
@@ -1739,7 +1753,7 @@ function toast(msg) {
 /* ---------- actualizare automată ----------
    Telefonul poate păstra fișierele vechi în cache. La pornire și la revenirea în aplicație citim version.json
    fără cache; dacă versiunea publicată e alta decât cea rulată, reîncărcăm pagina cu o adresă nouă (ocolește cache-ul). */
-const APP_VERSION = "20261112-162708";
+const APP_VERSION = "20261112-164607";
 async function checkVersion() {
   if (NATIVE || location.protocol === "file:") return;   // aplicația Android are fișierele în pachet; se actualizează prin magazin
   try {

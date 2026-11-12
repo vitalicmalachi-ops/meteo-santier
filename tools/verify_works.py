@@ -76,17 +76,18 @@ L = {"beton": {"tminWarn": 5, "tminStop": 0}, "asfalt": {"tmaxOk": 10, "tmaxStop
 def judge(c):
     N = lambda x: x is not None
     f, g = c["frac"], c["gust"]; res = {}
+    fd = c.get("fracDay"); rs = f >= 0.6 and (fd is None or fd >= 0.4); rn = f >= 0.6 and not rs
     def pick(w, rules):
         for cond, lv, why in rules:
             if cond: res[w] = (lv, why); return
         res[w] = ("ok", "")
-    pick("beton", [(N(c["tmin"]) and c["tmin"] < 0, "stop", "îngheț"), (f >= 0.6, "stop", "ploaie"), (N(c["tmin"]) and c["tmin"] < 5, "warn", "rece"), (f >= 0.3, "warn", "ploaie?")])
-    pick("asfalt", [(N(c["wtmax"]) and c["wtmax"] < 5, "stop", "prea rece"), (f >= 0.6, "stop", "ploaie"), (N(c["wtmax"]) and c["wtmax"] < 10, "warn", "rece"), (N(c["tmin"]) and c["tmin"] < 0, "warn", "îngheț dimineața"), (f >= 0.25, "warn", "ploaie?")])
-    pick("hidro", [(N(c["tmax"]) and c["tmax"] < 0, "stop", "ger"), (c["snow"], "stop", "zăpadă"), (f >= 0.6, "stop", "ploaie"), (f >= 0.25, "warn", "ploaie?"), (N(c["prev"]) and c["prev"] >= 1, "warn", "ud de ieri"), (c["fog"], "warn", "ceață"), (N(c["tmin"]) and c["tmin"] < 5, "warn", "rece")])
-    pick("fatada", [(N(c["tmin"]) and c["tmin"] < 0, "stop", "îngheț"), (f >= 0.6, "stop", "ploaie"), (N(g) and g >= 54, "stop", "rafale"), (N(c["tmin"]) and c["tmin"] < 5, "warn", "rece"), (f >= 0.25, "warn", "ploaie?"), (N(c["rh"]) and c["rh"] >= 85, "warn", "umed"), (c["fog"], "warn", "ceață"), (N(g) and g >= 40, "warn", "rafale")])
+    pick("beton", [(N(c["tmin"]) and c["tmin"] < 0, "stop", "îngheț"), (rs, "stop", "ploaie"), (rn, "warn", "ploaie noaptea"), (N(c["tmin"]) and c["tmin"] < 5, "warn", "rece"), (f >= 0.3, "warn", "ploaie?")])
+    pick("asfalt", [(N(c["wtmax"]) and c["wtmax"] < 5, "stop", "prea rece"), (rs, "stop", "ploaie"), (rn, "warn", "ploaie noaptea"), (N(c["wtmax"]) and c["wtmax"] < 10, "warn", "rece"), (N(c["tmin"]) and c["tmin"] < 0, "warn", "îngheț dimineața"), (f >= 0.25, "warn", "ploaie?")])
+    pick("hidro", [(N(c["tmax"]) and c["tmax"] < 0, "stop", "ger"), (c["snow"], "stop", "zăpadă"), (rs, "stop", "ploaie"), (rn, "warn", "ploaie noaptea"), (f >= 0.25, "warn", "ploaie?"), (N(c["prev"]) and c["prev"] >= 1, "warn", "ud de ieri"), (c["fog"], "warn", "ceață"), (N(c["tmin"]) and c["tmin"] < 5, "warn", "rece")])
+    pick("fatada", [(N(c["tmin"]) and c["tmin"] < 0, "stop", "îngheț"), (rs, "stop", "ploaie"), (rn, "warn", "ploaie noaptea"), (N(g) and g >= 54, "stop", "rafale"), (N(c["tmin"]) and c["tmin"] < 5, "warn", "rece"), (f >= 0.25, "warn", "ploaie?"), (N(c["rh"]) and c["rh"] >= 85, "warn", "umed"), (c["fog"], "warn", "ceață"), (N(g) and g >= 40, "warn", "rafale")])
     pick("acoperis", [(N(g) and g >= 50, "stop", "rafale"), (c["snow"], "stop", "zăpadă"), (N(g) and g >= 36, "warn", "rafale"), (N(c["tmin"]) and c["tmin"] < 0, "warn", "polei"), (f >= 0.5, "warn", "alunecos"), (c["fog"], "warn", "ceață")])
     pick("macara", [(N(g) and g >= 54, "stop", "rafale"), (N(g) and g >= 36, "warn", "rafale"), (c["fog"], "warn", "ceață")])
-    pick("sapaturi", [(N(c["rain3"]) and c["rain3"] >= 25, "stop", "apă"), (N(c["rain3"]) and c["rain3"] >= 10, "warn", "noroi"), (f >= 0.6, "warn", "ploaie")])
+    pick("sapaturi", [(N(c["rain3"]) and c["rain3"] >= 25, "stop", "apă"), ((c.get("today") or 0) >= 10, "stop", "noroi azi"), (N(c["rain3"]) and c["rain3"] >= 10, "warn", "noroi"), (f >= 0.5, "warn", "ploaie"), ((c.get("today") or 0) >= 2, "warn", "teren ud azi"), (N(c["prev"]) and c["prev"] >= 5, "warn", "ud de ieri")])
     return res
 def model_inputs(day):
     t0 = dt.datetime.combine(day, dt.time(0), TZ).astimezone(dt.timezone.utc)
@@ -103,7 +104,8 @@ def model_inputs(day):
             a = dt.datetime.combine(dd, dt.time(0), TZ).astimezone(dt.timezone.utc)
             v = [S.get(a + dt.timedelta(hours=k), {}).get("precipitation") for k in range(1, 25)]
             return sum(x for x in v if x is not None) if sum(x is not None for x in v) >= 18 else None
-        per.append({"p": sum(x for x in P if x is not None and x >= 0.2), "s": sum(x or 0 for x in Sn), "tmin": min([x for x in Tt if x is not None], default=None),
+        PD = P[7:19]
+        per.append({"pd": sum(x for x in PD if x is not None and x >= 0.2), "p": sum(x for x in P if x is not None and x >= 0.2), "s": sum(x or 0 for x in Sn), "tmin": min([x for x in Tt if x is not None], default=None),
                     "tmax": max([x for x in Tt if x is not None], default=None), "g": max([x for x in G if x is not None], default=None), "rh": med(R),
                     "prev": daysum(day - dt.timedelta(days=1)), "r3": (lambda a: None if None in a else sum(a))([daysum(day - dt.timedelta(days=k)) for k in range(3)]),
                     "fog": [ (lambda x: x is not None and ((x.get("visibility") is not None and x["visibility"] < 1000) or x.get("weather_code") in (45, 48) or ((x.get("relative_humidity_2m") or 0) >= 99 and (x.get("wind_speed_10m") or 99) <= 12)) and not ((S.get(h + dt.timedelta(hours=1), {}).get("precipitation") or 0) >= 0.2))(S.get(h)) for h in hrs]})
@@ -112,9 +114,9 @@ def model_inputs(day):
     wet = sum(1 for x in per if x["s"] >= 0.5 or x["p"] >= 1.0); snowy = sum(1 for x in per if x["s"] >= 0.5)
     ff = [sum(x["fog"][h] for x in per) / n >= 1 / 3 for h in range(24)]
     fog = any(ff[h] and ff[h + 1] for h in range(23))
-    return {"n": n, "wet": wet, "frac": wet / n, "snow": snowy / n >= 0.5, "tmin": med([x["tmin"] for x in per]), "tmax": med([x["tmax"] for x in per]), "wtmax": med([x["tmax"] for x in per]),
+    return {"fracDay": sum(1 for x in per if x["s"] >= 0.5 or x["pd"] >= 1.0) / n, "n": n, "wet": wet, "frac": wet / n, "snow": snowy / n >= 0.5, "tmin": med([x["tmin"] for x in per]), "tmax": med([x["tmax"] for x in per]), "wtmax": med([x["tmax"] for x in per]),
             "gust": med([x["g"] for x in per]), "rh": med([x["rh"] for x in per]), "prev": med([x["prev"] for x in per]), "rain3": med([x["r3"] for x in per]), "fog": fog,
-            "p_med": med([x["p"] for x in per])}
+            "p_med": med([x["p"] for x in per]), "today": med([x["p"] for x in per])}
 def obs_inputs(day, window):
     # window: "day" = 06–18 UTC (ziua de lucru, ~08–20 local); "full" = 18 UTC ziua precedentă – 18 UTC (aprox. ziua întreagă)
     e = dt.datetime.combine(day, dt.time(18), dt.timezone.utc)
@@ -131,7 +133,7 @@ def obs_inputs(day, window):
     snow = any(o.get("ww") is not None and (70 <= o["ww"] <= 79 or 85 <= o["ww"] <= 86) for _, o in O)
     def dsum(dd): x, y = rr12(dt.datetime.combine(dd, dt.time(6), dt.timezone.utc)), rr12(dt.datetime.combine(dd, dt.time(18), dt.timezone.utc)); return None if x is None or y is None else x + y
     r3 = [dsum(day - dt.timedelta(days=k)) for k in range(3)]
-    return {"rr": rr, "frac": 1.0 if rr >= 1.0 else 0.0, "snow": snow, "tmin": min(Ts) if Ts else None, "tmax": max(Tx) if Tx else None, "wtmax": max(Tx) if Tx else None,
+    return {"today": rr, "fracDay": None, "rr": rr, "frac": 1.0 if rr >= 1.0 else 0.0, "snow": snow, "tmin": min(Ts) if Ts else None, "tmax": max(Tx) if Tx else None, "wtmax": max(Tx) if Tx else None,
             "gust": gust, "rh": sorted(rhs)[len(rhs) // 2] if rhs else None, "prev": dsum(day - dt.timedelta(days=1)), "rain3": None if None in r3 else sum(r3), "fog": fog}
 out = {"from": str(START), "to": str(END), "models": list(mod), "days": []}
 day = START
