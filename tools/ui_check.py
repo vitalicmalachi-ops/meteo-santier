@@ -15,7 +15,7 @@ with sync_playwright() as p:
     pg.wait_for_selector(".day", timeout=60000); pg.wait_for_timeout(8000)
     out["state"] = pg.evaluate("""() => {
       const c = consensus(todayStr());
-      return { offset: state.offset, nowHour: nowHour(), today: todayStr(), now: state.now, wet: c.wet, n: c.n, fromHour: c.fromHour, earlier: c.earlier,
+      const J = c.n ? judgeWorks(c) : {}; return { works: J, cons: {frac: c.frac, rain3: c.rain3, prev: c.prevPrecip, gust: c.gust, tmin: c.tmin, earlier: c.earlier, nowRain: c.nowRain}, offset: state.offset, nowHour: nowHour(), today: todayStr(), now: state.now, wet: c.wet, n: c.n, fromHour: c.fromHour, earlier: c.earlier,
         models: state.results.map(r => { const d = r.days[todayStr()]; return { id: r.model.id, p: d ? d.hours.map(x => x.hr + ':' + x.p).join(' ') : null }; }) };
     }""")
     out["radar"] = pg.inner_text("#radar") if pg.locator("#radar").is_visible() else "hidden"
