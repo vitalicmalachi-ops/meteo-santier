@@ -347,6 +347,7 @@ function consensusModels(date) {
     tmin: median(tRows.map(r => r.tmin)), tmax: median(tRows.map(r => r.tmax)),
     wtmax: median(Wall.map(w => w.tmax)),
     precipWet: median(W.filter(w => w.p >= thr).map(w => w.p)),
+    pRest: median(W.map(w => w.p)),
     snow: median(W.filter(w => w.s >= 0.5).map(w => w.s)),
     gust: median(Wall.map(w => w.g)), dayGust: median(tRows.map(r => r.gust)), wind: median(tRows.map(r => r.wind)),
     dir: circMean(tRows.map(r => r.dir)), sun: median(tRows.map(r => r.sun)),
@@ -412,6 +413,7 @@ function judgeWorks(c) {
     [c.snowFrac >= 0.5, "stop", t("r_snow")],
     [f >= 0.6, "stop", pr],
     [f >= 0.25, "warn", pr],
+    [N(c.earlier) && c.earlier >= 1, "warn", t("r_wetToday", { v: fmtP(c.earlier) })],
     [N(c.prevPrecip) && c.prevPrecip >= state.thr, "warn", t("r_wetYesterday", { v: fmtP(c.prevPrecip) })],
     [!!c.fog, "warn", c.fog ? t("r_fogDamp", { h: c.fog.label }) : ""],
     [N(c.tmin) && c.tmin < L.hidro.tmin, "warn", t("r_coldAdhesion", { t: T(c.tmin) })]
@@ -422,6 +424,7 @@ function judgeWorks(c) {
     [N(g) && g >= L.fatada.gustStop, "stop", t("r_gusts", { v: fmtW(g) })],
     [N(c.tmin) && c.tmin < L.fatada.tmin, "warn", t("r_lowBelow", { t: T(c.tmin), lim: T(L.fatada.tmin) })],
     [f >= 0.25, "warn", pr],
+    [N(c.earlier) && c.earlier >= 1, "warn", t("r_wetToday", { v: fmtP(c.earlier) })],
     [N(c.rh) && c.rh >= L.fatada.rh, "warn", t("r_humid", { v: fmt(c.rh) })],
     [!!c.fog, "warn", c.fog ? t("r_fogDamp", { h: c.fog.label }) : ""],
     [N(g) && g >= L.fatada.gustWarn, "warn", t("r_gusts", { v: fmtW(g) })]
@@ -440,11 +443,16 @@ function judgeWorks(c) {
     [!!c.fog, "warn", c.fog ? t("r_fogVis", { h: c.fog.label }) : ""]
   ], t("r_gusts", { v: fmtW(g) }));
   else res.macara = { level: "na", reason: t("r_noGustData") };
+  // ploaia de azi (deja căzută + cât mai vine) contează pentru teren, nu doar suma pe 3 zile
+  const today = (N(c.earlier) ? c.earlier : 0) + (N(c.pRest) ? c.pRest : 0);
   pick("sapaturi", [
     [N(c.rain3) && c.rain3 >= L.sapaturi.rain3Stop, "stop", t("r_waterlogged", { v: fmtP(c.rain3) })],
+    [today >= 10, "stop", t("r_mudToday", { v: fmtP(today) })],
+    [f >= 0.5, "warn", pr],
+    [today >= 2, "warn", t("r_mudToday", { v: fmtP(today) })],
     [N(c.rain3) && c.rain3 >= L.sapaturi.rain3Warn, "warn", t("r_mud", { v: fmtP(c.rain3) })],
-    [N(c.soil6) && c.soil6 < 0, "warn", t("r_groundFrozen", { t: T(c.soil6) })],
-    [f >= 0.6, "warn", pr]
+    [N(c.prevPrecip) && c.prevPrecip >= 5, "warn", t("r_wetYesterday", { v: fmtP(c.prevPrecip) })],
+    [N(c.soil6) && c.soil6 < 0, "warn", t("r_groundFrozen", { t: T(c.soil6) })]
   ], N(c.rain3) ? t("r_rain3", { v: fmtP(c.rain3) }) : t("r_noRain"));
   return res;
 }
@@ -1731,7 +1739,7 @@ function toast(msg) {
 /* ---------- actualizare automată ----------
    Telefonul poate păstra fișierele vechi în cache. La pornire și la revenirea în aplicație citim version.json
    fără cache; dacă versiunea publicată e alta decât cea rulată, reîncărcăm pagina cu o adresă nouă (ocolește cache-ul). */
-const APP_VERSION = "20261103-061804";
+const APP_VERSION = "20261112-162708";
 async function checkVersion() {
   if (NATIVE || location.protocol === "file:") return;   // aplicația Android are fișierele în pachet; se actualizează prin magazin
   try {
