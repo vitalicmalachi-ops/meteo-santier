@@ -1,0 +1,71 @@
+{
+ "updated": "2026-11-12T17:21Z",
+ "days": 45,
+ "from": "2026-09-28",
+ "to": "2026-11-12",
+ "rule": {
+  "thr_mm": 1.0,
+  "drizzle_mm_h": 0.2,
+  "obs_wet_mm": 1.0,
+  "window_h": 12
+ },
+ "stations": [
+  {
+   "id": "33815",
+   "name": "Chișinău",
+   "cc": "MD",
+   "periods": 90,
+   "correct": 85,
+   "pct": 94,
+   "rain_periods": 18,
+   "rain_caught": 17,
+   "false_alarms": 4,
+   "models": [
+    {
+     "name": "ECMWF IFS",
+     "pct": 94
+    },
+    {
+     "name": "UKMO",
+     "pct": 93
+    },
+    {
+     "name": "ECMWF AIFS",
+     "pct": 91
+    },
+    {
+     "name": "ICON",
+     "pct": 91
+    },
+    {
+     "name": "ecmwf_ifs",
+     "pct": 91
+    },
+    {
+     "name": "JMA",
+     "pct": 90
+    },
+    {
+     "name": "ncep_aigfs025",
+     "pct": 90
+    },
+    {
+     "name": "ARPEGE",
+     "pct": 88
+    },
+    {
+     "name": "GEM",
+     "pct": 88
+    },
+    {
+     "name": "CMA",
+     "pct": 88
+    },
+    {
+     "name": "GFS",
+     "pct": 87
+    }
+   ]
+  }
+ ]
+}
