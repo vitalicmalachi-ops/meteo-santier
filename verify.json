@@ -1,0 +1,3501 @@
+{
+ "from": "2026-09-28",
+ "to": "2026-11-11",
+ "models": [
+  "ecmwf_ifs025",
+  "ecmwf_aifs025_single",
+  "icon_seamless",
+  "gfs_seamless",
+  "meteofrance_seamless",
+  "ukmo_seamless",
+  "gem_seamless",
+  "jma_seamless",
+  "cma_grapes_global"
+ ],
+ "days": [
+  {
+   "date": "2026-09-28",
+   "model": {
+    "fracDay": 0.0,
+    "n": 9,
+    "wet": 0,
+    "frac": 0.0,
+    "snow": false,
+    "tmin": 11.6,
+    "tmax": 20.3,
+    "wtmax": 20.3,
+    "gust": 43.9,
+    "rh": 63,
+    "prev": 0.0,
+    "rain3": 0.1,
+    "fog": false,
+    "p_med": 0,
+    "today": 0
+   },
+   "obs_full": null,
+   "obs_day": {
+    "today": 0.0,
+    "fracDay": null,
+    "rr": 0.0,
+    "frac": 0.0,
+    "snow": false,
+    "tmin": 10.6,
+    "tmax": 19.9,
+    "wtmax": 19.9,
+    "gust": null,
+    "rh": 50.1465390937208,
+    "prev": null,
+    "rain3": null,
+    "fog": false
+   },
+   "app": {
+    "beton": [
+     "ok",
+     ""
+    ],
+    "asfalt": [
+     "ok",
+     ""
+    ],
+    "hidro": [
+     "ok",
+     ""
+    ],
+    "fatada": [
+     "warn",
+     "rafale"
+    ],
+    "acoperis": [
+     "warn",
+     "rafale"
+    ],
+    "macara": [
+     "warn",
+     "rafale"
+    ],
+    "sapaturi": [
+     "ok",
+     ""
+    ]
+   },
+   "v_obs_day": {
+    "beton": [
+     "ok",
+     ""
+    ],
+    "asfalt": [
+     "ok",
+     ""
+    ],
+    "hidro": [
+     "ok",
+     ""
+    ],
+    "fatada": [
+     "ok",
+     ""
+    ],
+    "acoperis": [
+     "ok",
+     ""
+    ],
+    "macara": [
+     "ok",
+     ""
+    ],
+    "sapaturi": [
+     "ok",
+     ""
+    ]
+   }
+  },
+  {
+   "date": "2026-09-29",
+   "model": {
+    "fracDay": 0.0,
+    "n": 9,
+    "wet": 0,
+    "frac": 0.0,
+    "snow": false,
+    "tmin": 12.6,
+    "tmax": 22.0,
+    "wtmax": 22.0,
+    "gust": 40.0,
+    "rh": 58,
+    "prev": 0.0,
+    "rain3": 0.0,
+    "fog": false,
+    "p_med": 0,
+    "today": 0
+   },
+   "obs_full": null,
+   "obs_day": null,
+   "app": {
+    "beton": [
+     "ok",
+     ""
+    ],
+    "asfalt": [
+     "ok",
+     ""
+    ],
+    "hidro": [
+     "ok",
+     ""
+    ],
+    "fatada": [
+     "warn",
+     "rafale"
+    ],
+    "acoperis": [
+     "warn",
+     "rafale"
+    ],
+    "macara": [
+     "warn",
+     "rafale"
+    ],
+    "sapaturi": [
+     "ok",
+     ""
+    ]
+   }
+  },
+  {
+   "date": "2026-09-30",
+   "model": {
+    "fracDay": 0.0,
+    "n": 9,
+    "wet": 0,
+    "frac": 0.0,
+    "snow": false,
+    "tmin": 10.3,
+    "tmax": 20.4,
+    "wtmax": 20.4,
+    "gust": 34.6,
+    "rh": 58,
+    "prev": 0.0,
+    "rain3": 0.0,
+    "fog": false,
+    "p_med": 0,
+    "today": 0
+   },
+   "obs_full": null,
+   "obs_day": null,
+   "app": {
+    "beton": [
+     "ok",
+     ""
+    ],
+    "asfalt": [
+     "ok",
+     ""
+    ],
+    "hidro": [
+     "ok",
+     ""
+    ],
+    "fatada": [
+     "ok",
+     ""
+    ],
+    "acoperis": [
+     "ok",
+     ""
+    ],
+    "macara": [
+     "ok",
+     ""
+    ],
+    "sapaturi": [
+     "ok",
+     ""
+    ]
+   }
+  },
+  {
+   "date": "2026-10-01",
+   "model": {
+    "fracDay": 0.0,
+    "n": 9,
+    "wet": 0,
+    "frac": 0.0,
+    "snow": false,
+    "tmin": 9.1,
+    "tmax": 20.6,
+    "wtmax": 20.6,
+    "gust": 37.1,
+    "rh": 55,
+    "prev": 0.0,
+    "rain3": 0.0,
+    "fog": false,
+    "p_med": 0,
+    "today": 0
+   },
+   "obs_full": null,
+   "obs_day": null,
+   "app": {
+    "beton": [
+     "ok",
+     ""
+    ],
+    "asfalt": [
+     "ok",
+     ""
+    ],
+    "hidro": [
+     "ok",
+     ""
+    ],
+    "fatada": [
+     "ok",
+     ""
+    ],
+    "acoperis": [
+     "warn",
+     "rafale"
+    ],
+    "macara": [
+     "warn",
+     "rafale"
+    ],
+    "sapaturi": [
+     "ok",
+     ""
+    ]
+   }
+  },
+  {
+   "date": "2026-10-02",
+   "model": {
+    "fracDay": 0.0,
+    "n": 9,
+    "wet": 0,
+    "frac": 0.0,
+    "snow": false,
+    "tmin": 9.7,
+    "tmax": 19.4,
+    "wtmax": 19.4,
+    "gust": 35.3,
+    "rh": 54,
+    "prev": 0.0,
+    "rain3": 0.0,
+    "fog": false,
+    "p_med": 0,
+    "today": 0
+   },
+   "obs_full": null,
+   "obs_day": null,
+   "app": {
+    "beton": [
+     "ok",
+     ""
+    ],
+    "asfalt": [
+     "ok",
+     ""
+    ],
+    "hidro": [
+     "ok",
+     ""
+    ],
+    "fatada": [
+     "ok",
+     ""
+    ],
+    "acoperis": [
+     "ok",
+     ""
+    ],
+    "macara": [
+     "ok",
+     ""
+    ],
+    "sapaturi": [
+     "ok",
+     ""
+    ]
+   }
+  },
+  {
+   "date": "2026-10-03",
+   "model": {
+    "fracDay": 0.0,
+    "n": 9,
+    "wet": 0,
+    "frac": 0.0,
+    "snow": false,
+    "tmin": 6.5,
+    "tmax": 20.7,
+    "wtmax": 20.7,
+    "gust": 25.6,
+    "rh": 51,
+    "prev": 0.0,
+    "rain3": 0.0,
+    "fog": false,
+    "p_med": 0,
+    "today": 0
+   },
+   "obs_full": null,
+   "obs_day": null,
+   "app": {
+    "beton": [
+     "ok",
+     ""
+    ],
+    "asfalt": [
+     "ok",
+     ""
+    ],
+    "hidro": [
+     "ok",
+     ""
+    ],
+    "fatada": [
+     "ok",
+     ""
+    ],
+    "acoperis": [
+     "ok",
+     ""
+    ],
+    "macara": [
+     "ok",
+     ""
+    ],
+    "sapaturi": [
+     "ok",
+     ""
+    ]
+   }
+  },
+  {
+   "date": "2026-10-04",
+   "model": {
+    "fracDay": 0.0,
+    "n": 9,
+    "wet": 0,
+    "frac": 0.0,
+    "snow": false,
+    "tmin": 6.6,
+    "tmax": 22.9,
+    "wtmax": 22.9,
+    "gust": 13.0,
+    "rh": 53,
+    "prev": 0.0,
+    "rain3": 0.0,
+    "fog": false,
+    "p_med": 0,
+    "today": 0
+   },
+   "obs_full": null,
+   "obs_day": null,
+   "app": {
+    "beton": [
+     "ok",
+     ""
+    ],
+    "asfalt": [
+     "ok",
+     ""
+    ],
+    "hidro": [
+     "ok",
+     ""
+    ],
+    "fatada": [
+     "ok",
+     ""
+    ],
+    "acoperis": [
+     "ok",
+     ""
+    ],
+    "macara": [
+     "ok",
+     ""
+    ],
+    "sapaturi": [
+     "ok",
+     ""
+    ]
+   }
+  },
+  {
+   "date": "2026-10-05",
+   "model": {
+    "fracDay": 0.0,
+    "n": 9,
+    "wet": 0,
+    "frac": 0.0,
+    "snow": false,
+    "tmin": 10.0,
+    "tmax": 23.7,
+    "wtmax": 23.7,
+    "gust": 25.6,
+    "rh": 53,
+    "prev": 0.0,
+    "rain3": 0.0,
+    "fog": false,
+    "p_med": 0,
+    "today": 0
+   },
+   "obs_full": null,
+   "obs_day": null,
+   "app": {
+    "beton": [
+     "ok",
+     ""
+    ],
+    "asfalt": [
+     "ok",
+     ""
+    ],
+    "hidro": [
+     "ok",
+     ""
+    ],
+    "fatada": [
+     "ok",
+     ""
+    ],
+    "acoperis": [
+     "ok",
+     ""
+    ],
+    "macara": [
+     "ok",
+     ""
+    ],
+    "sapaturi": [
+     "ok",
+     ""
+    ]
+   }
+  },
+  {
+   "date": "2026-10-06",
+   "model": {
+    "fracDay": 0.0,
+    "n": 9,
+    "wet": 0,
+    "frac": 0.0,
+    "snow": false,
+    "tmin": 11.9,
+    "tmax": 22.9,
+    "wtmax": 22.9,
+    "gust": 20.5,
+    "rh": 60,
+    "prev": 0.0,
+    "rain3": 0.0,
+    "fog": false,
+    "p_med": 0,
+    "today": 0
+   },
+   "obs_full": null,
+   "obs_day": null,
+   "app": {
+    "beton": [
+     "ok",
+     ""
+    ],
+    "asfalt": [
+     "ok",
+     ""
+    ],
+    "hidro": [
+     "ok",
+     ""
+    ],
+    "fatada": [
+     "ok",
+     ""
+    ],
+    "acoperis": [
+     "ok",
+     ""
+    ],
+    "macara": [
+     "ok",
+     ""
+    ],
+    "sapaturi": [
+     "ok",
+     ""
+    ]
+   }
+  },
+  {
+   "date": "2026-10-07",
+   "model": {
+    "fracDay": 0.0,
+    "n": 9,
+    "wet": 0,
+    "frac": 0.0,
+    "snow": false,
+    "tmin": 11.4,
+    "tmax": 23.6,
+    "wtmax": 23.6,
+    "gust": 14.4,
+    "rh": 60,
+    "prev": 0.0,
+    "rain3": 0.0,
+    "fog": false,
+    "p_med": 0,
+    "today": 0
+   },
+   "obs_full": null,
+   "obs_day": null,
+   "app": {
+    "beton": [
+     "ok",
+     ""
+    ],
+    "asfalt": [
+     "ok",
+     ""
+    ],
+    "hidro": [
+     "ok",
+     ""
+    ],
+    "fatada": [
+     "ok",
+     ""
+    ],
+    "acoperis": [
+     "ok",
+     ""
+    ],
+    "macara": [
+     "ok",
+     ""
+    ],
+    "sapaturi": [
+     "ok",
+     ""
+    ]
+   }
+  },
+  {
+   "date": "2026-10-08",
+   "model": {
+    "fracDay": 0.0,
+    "n": 9,
+    "wet": 0,
+    "frac": 0.0,
+    "snow": false,
+    "tmin": 12.8,
+    "tmax": 25.0,
+    "wtmax": 25.0,
+    "gust": 37.4,
+    "rh": 59,
+    "prev": 0.0,
+    "rain3": 0.0,
+    "fog": false,
+    "p_med": 0,
+    "today": 0
+   },
+   "obs_full": null,
+   "obs_day": null,
+   "app": {
+    "beton": [
+     "ok",
+     ""
+    ],
+    "asfalt": [
+     "ok",
+     ""
+    ],
+    "hidro": [
+     "ok",
+     ""
+    ],
+    "fatada": [
+     "ok",
+     ""
+    ],
+    "acoperis": [
+     "warn",
+     "rafale"
+    ],
+    "macara": [
+     "warn",
+     "rafale"
+    ],
+    "sapaturi": [
+     "ok",
+     ""
+    ]
+   }
+  },
+  {
+   "date": "2026-10-09",
+   "model": {
+    "fracDay": 0.0,
+    "n": 9,
+    "wet": 0,
+    "frac": 0.0,
+    "snow": false,
+    "tmin": 13.4,
+    "tmax": 25.3,
+    "wtmax": 25.3,
+    "gust": 33.5,
+    "rh": 77,
+    "prev": 0.0,
+    "rain3": 0.0,
+    "fog": false,
+    "p_med": 0,
+    "today": 0
+   },
+   "obs_full": null,
+   "obs_day": null,
+   "app": {
+    "beton": [
+     "ok",
+     ""
+    ],
+    "asfalt": [
+     "ok",
+     ""
+    ],
+    "hidro": [
+     "ok",
+     ""
+    ],
+    "fatada": [
+     "ok",
+     ""
+    ],
+    "acoperis": [
+     "ok",
+     ""
+    ],
+    "macara": [
+     "ok",
+     ""
+    ],
+    "sapaturi": [
+     "ok",
+     ""
+    ]
+   }
+  },
+  {
+   "date": "2026-10-10",
+   "model": {
+    "fracDay": 0.0,
+    "n": 9,
+    "wet": 0,
+    "frac": 0.0,
+    "snow": false,
+    "tmin": 10.7,
+    "tmax": 23.7,
+    "wtmax": 23.7,
+    "gust": 23.0,
+    "rh": 70,
+    "prev": 0.0,
+    "rain3": 0.0,
+    "fog": false,
+    "p_med": 0,
+    "today": 0
+   },
+   "obs_full": null,
+   "obs_day": null,
+   "app": {
+    "beton": [
+     "ok",
+     ""
+    ],
+    "asfalt": [
+     "ok",
+     ""
+    ],
+    "hidro": [
+     "ok",
+     ""
+    ],
+    "fatada": [
+     "ok",
+     ""
+    ],
+    "acoperis": [
+     "ok",
+     ""
+    ],
+    "macara": [
+     "ok",
+     ""
+    ],
+    "sapaturi": [
+     "ok",
+     ""
+    ]
+   }
+  },
+  {
+   "date": "2026-10-11",
+   "model": {
+    "fracDay": 0.0,
+    "n": 9,
+    "wet": 0,
+    "frac": 0.0,
+    "snow": false,
+    "tmin": 13.8,
+    "tmax": 26.7,
+    "wtmax": 26.7,
+    "gust": 43.2,
+    "rh": 83,
+    "prev": 0.0,
+    "rain3": 0.0,
+    "fog": true,
+    "p_med": 0,
+    "today": 0
+   },
+   "obs_full": null,
+   "obs_day": null,
+   "app": {
+    "beton": [
+     "ok",
+     ""
+    ],
+    "asfalt": [
+     "ok",
+     ""
+    ],
+    "hidro": [
+     "warn",
+     "ceață"
+    ],
+    "fatada": [
+     "warn",
+     "ceață"
+    ],
+    "acoperis": [
+     "warn",
+     "rafale"
+    ],
+    "macara": [
+     "warn",
+     "rafale"
+    ],
+    "sapaturi": [
+     "ok",
+     ""
+    ]
+   }
+  },
+  {
+   "date": "2026-10-12",
+   "model": {
+    "fracDay": 0.6666666666666666,
+    "n": 9,
+    "wet": 6,
+    "frac": 0.6666666666666666,
+    "snow": false,
+    "tmin": 11.9,
+    "tmax": 16.4,
+    "wtmax": 16.4,
+    "gust": 37.8,
+    "rh": 88,
+    "prev": 0.0,
+    "rain3": 2.0,
+    "fog": false,
+    "p_med": 2.0,
+    "today": 2.0
+   },
+   "obs_full": null,
+   "obs_day": {
+    "today": 0.4,
+    "fracDay": null,
+    "rr": 0.4,
+    "frac": 0.0,
+    "snow": false,
+    "tmin": 12.2,
+    "tmax": 14.1,
+    "wtmax": 14.1,
+    "gust": null,
+    "rh": 84.28554478137718,
+    "prev": null,
+    "rain3": null,
+    "fog": false
+   },
+   "app": {
+    "beton": [
+     "stop",
+     "ploaie"
+    ],
+    "asfalt": [
+     "stop",
+     "ploaie"
+    ],
+    "hidro": [
+     "stop",
+     "ploaie"
+    ],
+    "fatada": [
+     "stop",
+     "ploaie"
+    ],
+    "acoperis": [
+     "warn",
+     "rafale"
+    ],
+    "macara": [
+     "warn",
+     "rafale"
+    ],
+    "sapaturi": [
+     "warn",
+     "ploaie"
+    ]
+   },
+   "v_obs_day": {
+    "beton": [
+     "ok",
+     ""
+    ],
+    "asfalt": [
+     "ok",
+     ""
+    ],
+    "hidro": [
+     "ok",
+     ""
+    ],
+    "fatada": [
+     "ok",
+     ""
+    ],
+    "acoperis": [
+     "ok",
+     ""
+    ],
+    "macara": [
+     "ok",
+     ""
+    ],
+    "sapaturi": [
+     "ok",
+     ""
+    ]
+   }
+  },
+  {
+   "date": "2026-10-13",
+   "model": {
+    "fracDay": 1.0,
+    "n": 9,
+    "wet": 9,
+    "frac": 1.0,
+    "snow": false,
+    "tmin": 10.1,
+    "tmax": 12.0,
+    "wtmax": 12.0,
+    "gust": 38.5,
+    "rh": 88,
+    "prev": 2.0,
+    "rain3": 15.0,
+    "fog": false,
+    "p_med": 12.9,
+    "today": 12.9
+   },
+   "obs_full": {
+    "today": 13.0,
+    "fracDay": null,
+    "rr": 13.0,
+    "frac": 1.0,
+    "snow": false,
+    "tmin": 9.5,
+    "tmax": 14.1,
+    "wtmax": 14.1,
+    "gust": null,
+    "rh": 91.01174702401053,
+    "prev": null,
+    "rain3": null,
+    "fog": false
+   },
+   "obs_day": {
+    "today": 10.0,
+    "fracDay": null,
+    "rr": 10.0,
+    "frac": 1.0,
+    "snow": false,
+    "tmin": 9.5,
+    "tmax": 10.5,
+    "wtmax": 10.5,
+    "gust": null,
+    "rh": 92.84810415659767,
+    "prev": null,
+    "rain3": null,
+    "fog": false
+   },
+   "app": {
+    "beton": [
+     "stop",
+     "ploaie"
+    ],
+    "asfalt": [
+     "stop",
+     "ploaie"
+    ],
+    "hidro": [
+     "stop",
+     "ploaie"
+    ],
+    "fatada": [
+     "stop",
+     "ploaie"
+    ],
+    "acoperis": [
+     "warn",
+     "rafale"
+    ],
+    "macara": [
+     "warn",
+     "rafale"
+    ],
+    "sapaturi": [
+     "stop",
+     "noroi azi"
+    ]
+   },
+   "v_obs_full": {
+    "beton": [
+     "stop",
+     "ploaie"
+    ],
+    "asfalt": [
+     "stop",
+     "ploaie"
+    ],
+    "hidro": [
+     "stop",
+     "ploaie"
+    ],
+    "fatada": [
+     "stop",
+     "ploaie"
+    ],
+    "acoperis": [
+     "warn",
+     "alunecos"
+    ],
+    "macara": [
+     "ok",
+     ""
+    ],
+    "sapaturi": [
+     "stop",
+     "noroi azi"
+    ]
+   },
+   "v_obs_day": {
+    "beton": [
+     "stop",
+     "ploaie"
+    ],
+    "asfalt": [
+     "stop",
+     "ploaie"
+    ],
+    "hidro": [
+     "stop",
+     "ploaie"
+    ],
+    "fatada": [
+     "stop",
+     "ploaie"
+    ],
+    "acoperis": [
+     "warn",
+     "alunecos"
+    ],
+    "macara": [
+     "ok",
+     ""
+    ],
+    "sapaturi": [
+     "stop",
+     "noroi azi"
+    ]
+   }
+  },
+  {
+   "date": "2026-10-14",
+   "model": {
+    "fracDay": 0.0,
+    "n": 9,
+    "wet": 0,
+    "frac": 0.0,
+    "snow": false,
+    "tmin": 7.7,
+    "tmax": 12.3,
+    "wtmax": 12.3,
+    "gust": 41.0,
+    "rh": 83,
+    "prev": 13.4,
+    "rain3": 15.0,
+    "fog": false,
+    "p_med": 0,
+    "today": 0
+   },
+   "obs_full": null,
+   "obs_day": null,
+   "app": {
+    "beton": [
+     "ok",
+     ""
+    ],
+    "asfalt": [
+     "ok",
+     ""
+    ],
+    "hidro": [
+     "warn",
+     "ud de ieri"
+    ],
+    "fatada": [
+     "warn",
+     "rafale"
+    ],
+    "acoperis": [
+     "warn",
+     "rafale"
+    ],
+    "macara": [
+     "warn",
+     "rafale"
+    ],
+    "sapaturi": [
+     "warn",
+     "noroi"
+    ]
+   }
+  },
+  {
+   "date": "2026-10-15",
+   "model": {
+    "fracDay": 0.0,
+    "n": 9,
+    "wet": 0,
+    "frac": 0.0,
+    "snow": false,
+    "tmin": 4.8,
+    "tmax": 12.6,
+    "wtmax": 12.6,
+    "gust": 34.2,
+    "rh": 87,
+    "prev": 0.0,
+    "rain3": 13.4,
+    "fog": false,
+    "p_med": 0,
+    "today": 0
+   },
+   "obs_full": null,
+   "obs_day": null,
+   "app": {
+    "beton": [
+     "warn",
+     "rece"
+    ],
+    "asfalt": [
+     "ok",
+     ""
+    ],
+    "hidro": [
+     "warn",
+     "rece"
+    ],
+    "fatada": [
+     "warn",
+     "rece"
+    ],
+    "acoperis": [
+     "ok",
+     ""
+    ],
+    "macara": [
+     "ok",
+     ""
+    ],
+    "sapaturi": [
+     "warn",
+     "noroi"
+    ]
+   }
+  },
+  {
+   "date": "2026-10-16",
+   "model": {
+    "fracDay": 0.0,
+    "n": 9,
+    "wet": 0,
+    "frac": 0.0,
+    "snow": false,
+    "tmin": 6.7,
+    "tmax": 12.0,
+    "wtmax": 12.0,
+    "gust": 43.2,
+    "rh": 85,
+    "prev": 0.0,
+    "rain3": 0.0,
+    "fog": false,
+    "p_med": 0,
+    "today": 0
+   },
+   "obs_full": null,
+   "obs_day": null,
+   "app": {
+    "beton": [
+     "ok",
+     ""
+    ],
+    "asfalt": [
+     "ok",
+     ""
+    ],
+    "hidro": [
+     "ok",
+     ""
+    ],
+    "fatada": [
+     "warn",
+     "umed"
+    ],
+    "acoperis": [
+     "warn",
+     "rafale"
+    ],
+    "macara": [
+     "warn",
+     "rafale"
+    ],
+    "sapaturi": [
+     "ok",
+     ""
+    ]
+   }
+  },
+  {
+   "date": "2026-10-17",
+   "model": {
+    "fracDay": 0.5555555555555556,
+    "n": 9,
+    "wet": 5,
+    "frac": 0.5555555555555556,
+    "snow": false,
+    "tmin": 8.0,
+    "tmax": 11.3,
+    "wtmax": 11.3,
+    "gust": 21.2,
+    "rh": 92,
+    "prev": 0.0,
+    "rain3": 1.8000000000000003,
+    "fog": false,
+    "p_med": 1.7000000000000002,
+    "today": 1.7000000000000002
+   },
+   "obs_full": {
+    "today": 1.0,
+    "fracDay": null,
+    "rr": 1.0,
+    "frac": 1.0,
+    "snow": false,
+    "tmin": 7.4,
+    "tmax": 11.8,
+    "wtmax": 11.8,
+    "gust": null,
+    "rh": 94.01755302261805,
+    "prev": null,
+    "rain3": null,
+    "fog": false
+   },
+   "obs_day": {
+    "today": 1.0,
+    "fracDay": null,
+    "rr": 1.0,
+    "frac": 1.0,
+    "snow": false,
+    "tmin": 7.4,
+    "tmax": 9.8,
+    "wtmax": 9.8,
+    "gust": null,
+    "rh": 96.04711660949586,
+    "prev": null,
+    "rain3": null,
+    "fog": false
+   },
+   "app": {
+    "beton": [
+     "warn",
+     "ploaie?"
+    ],
+    "asfalt": [
+     "warn",
+     "ploaie?"
+    ],
+    "hidro": [
+     "warn",
+     "ploaie?"
+    ],
+    "fatada": [
+     "warn",
+     "ploaie?"
+    ],
+    "acoperis": [
+     "warn",
+     "alunecos"
+    ],
+    "macara": [
+     "ok",
+     ""
+    ],
+    "sapaturi": [
+     "warn",
+     "ploaie"
+    ]
+   },
+   "v_obs_full": {
+    "beton": [
+     "stop",
+     "ploaie"
+    ],
+    "asfalt": [
+     "stop",
+     "ploaie"
+    ],
+    "hidro": [
+     "stop",
+     "ploaie"
+    ],
+    "fatada": [
+     "stop",
+     "ploaie"
+    ],
+    "acoperis": [
+     "warn",
+     "alunecos"
+    ],
+    "macara": [
+     "ok",
+     ""
+    ],
+    "sapaturi": [
+     "warn",
+     "ploaie"
+    ]
+   },
+   "v_obs_day": {
+    "beton": [
+     "stop",
+     "ploaie"
+    ],
+    "asfalt": [
+     "stop",
+     "ploaie"
+    ],
+    "hidro": [
+     "stop",
+     "ploaie"
+    ],
+    "fatada": [
+     "stop",
+     "ploaie"
+    ],
+    "acoperis": [
+     "warn",
+     "alunecos"
+    ],
+    "macara": [
+     "ok",
+     ""
+    ],
+    "sapaturi": [
+     "warn",
+     "ploaie"
+    ]
+   }
+  },
+  {
+   "date": "2026-10-18",
+   "model": {
+    "fracDay": 0.1111111111111111,
+    "n": 9,
+    "wet": 6,
+    "frac": 0.6666666666666666,
+    "snow": false,
+    "tmin": 8.3,
+    "tmax": 14.2,
+    "wtmax": 14.2,
+    "gust": 46.1,
+    "rh": 92,
+    "prev": 1.7000000000000002,
+    "rain3": 3.0,
+    "fog": true,
+    "p_med": 2.2,
+    "today": 2.2
+   },
+   "obs_full": null,
+   "obs_day": {
+    "today": 0.0,
+    "fracDay": null,
+    "rr": 0.0,
+    "frac": 0.0,
+    "snow": false,
+    "tmin": 8.8,
+    "tmax": 13.1,
+    "wtmax": 13.1,
+    "gust": null,
+    "rh": 92.85356942056053,
+    "prev": 1.0,
+    "rain3": null,
+    "fog": false
+   },
+   "app": {
+    "beton": [
+     "warn",
+     "ploaie noaptea"
+    ],
+    "asfalt": [
+     "warn",
+     "ploaie noaptea"
+    ],
+    "hidro": [
+     "warn",
+     "ploaie noaptea"
+    ],
+    "fatada": [
+     "warn",
+     "ploaie noaptea"
+    ],
+    "acoperis": [
+     "warn",
+     "rafale"
+    ],
+    "macara": [
+     "warn",
+     "rafale"
+    ],
+    "sapaturi": [
+     "warn",
+     "ploaie"
+    ]
+   },
+   "v_obs_day": {
+    "beton": [
+     "ok",
+     ""
+    ],
+    "asfalt": [
+     "ok",
+     ""
+    ],
+    "hidro": [
+     "warn",
+     "ud de ieri"
+    ],
+    "fatada": [
+     "warn",
+     "umed"
+    ],
+    "acoperis": [
+     "ok",
+     ""
+    ],
+    "macara": [
+     "ok",
+     ""
+    ],
+    "sapaturi": [
+     "ok",
+     ""
+    ]
+   }
+  },
+  {
+   "date": "2026-10-19",
+   "model": {
+    "fracDay": 1.0,
+    "n": 9,
+    "wet": 9,
+    "frac": 1.0,
+    "snow": false,
+    "tmin": 13.1,
+    "tmax": 16.0,
+    "wtmax": 16.0,
+    "gust": 47.5,
+    "rh": 94,
+    "prev": 2.4,
+    "rain3": 29.2,
+    "fog": false,
+    "p_med": 23.2,
+    "today": 23.2
+   },
+   "obs_full": {
+    "today": 39.0,
+    "fracDay": null,
+    "rr": 39.0,
+    "frac": 1.0,
+    "snow": false,
+    "tmin": 12.3,
+    "tmax": 15.9,
+    "wtmax": 15.9,
+    "gust": 50.4,
+    "rh": 96.76460113769306,
+    "prev": null,
+    "rain3": null,
+    "fog": false
+   },
+   "obs_day": {
+    "today": 5.0,
+    "fracDay": null,
+    "rr": 5.0,
+    "frac": 1.0,
+    "snow": false,
+    "tmin": 12.3,
+    "tmax": 15.9,
+    "wtmax": 15.9,
+    "gust": null,
+    "rh": 94.91852410667705,
+    "prev": null,
+    "rain3": null,
+    "fog": false
+   },
+   "app": {
+    "beton": [
+     "stop",
+     "ploaie"
+    ],
+    "asfalt": [
+     "stop",
+     "ploaie"
+    ],
+    "hidro": [
+     "stop",
+     "ploaie"
+    ],
+    "fatada": [
+     "stop",
+     "ploaie"
+    ],
+    "acoperis": [
+     "warn",
+     "rafale"
+    ],
+    "macara": [
+     "warn",
+     "rafale"
+    ],
+    "sapaturi": [
+     "stop",
+     "apă"
+    ]
+   },
+   "v_obs_full": {
+    "beton": [
+     "stop",
+     "ploaie"
+    ],
+    "asfalt": [
+     "stop",
+     "ploaie"
+    ],
+    "hidro": [
+     "stop",
+     "ploaie"
+    ],
+    "fatada": [
+     "stop",
+     "ploaie"
+    ],
+    "acoperis": [
+     "stop",
+     "rafale"
+    ],
+    "macara": [
+     "warn",
+     "rafale"
+    ],
+    "sapaturi": [
+     "stop",
+     "noroi azi"
+    ]
+   },
+   "v_obs_day": {
+    "beton": [
+     "stop",
+     "ploaie"
+    ],
+    "asfalt": [
+     "stop",
+     "ploaie"
+    ],
+    "hidro": [
+     "stop",
+     "ploaie"
+    ],
+    "fatada": [
+     "stop",
+     "ploaie"
+    ],
+    "acoperis": [
+     "warn",
+     "alunecos"
+    ],
+    "macara": [
+     "ok",
+     ""
+    ],
+    "sapaturi": [
+     "warn",
+     "ploaie"
+    ]
+   }
+  },
+  {
+   "date": "2026-10-20",
+   "model": {
+    "fracDay": 0.1111111111111111,
+    "n": 9,
+    "wet": 9,
+    "frac": 1.0,
+    "snow": false,
+    "tmin": 12.0,
+    "tmax": 16.5,
+    "wtmax": 16.5,
+    "gust": 28.1,
+    "rh": 94,
+    "prev": 23.4,
+    "rain3": 32.1,
+    "fog": true,
+    "p_med": 4.3,
+    "today": 4.3
+   },
+   "obs_full": null,
+   "obs_day": null,
+   "app": {
+    "beton": [
+     "warn",
+     "ploaie noaptea"
+    ],
+    "asfalt": [
+     "warn",
+     "ploaie noaptea"
+    ],
+    "hidro": [
+     "warn",
+     "ploaie noaptea"
+    ],
+    "fatada": [
+     "warn",
+     "ploaie noaptea"
+    ],
+    "acoperis": [
+     "warn",
+     "alunecos"
+    ],
+    "macara": [
+     "warn",
+     "ceață"
+    ],
+    "sapaturi": [
+     "stop",
+     "apă"
+    ]
+   }
+  },
+  {
+   "date": "2026-10-21",
+   "model": {
+    "fracDay": 0.3333333333333333,
+    "n": 9,
+    "wet": 5,
+    "frac": 0.5555555555555556,
+    "snow": false,
+    "tmin": 10.4,
+    "tmax": 16.1,
+    "wtmax": 16.1,
+    "gust": 27.4,
+    "rh": 95,
+    "prev": 4.5,
+    "rain3": 30.0,
+    "fog": true,
+    "p_med": 1.5,
+    "today": 1.5
+   },
+   "obs_full": {
+    "today": 0.0,
+    "fracDay": null,
+    "rr": 0.0,
+    "frac": 0.0,
+    "snow": false,
+    "tmin": 9.8,
+    "tmax": 16.6,
+    "wtmax": 16.6,
+    "gust": null,
+    "rh": 96.10178917116637,
+    "prev": null,
+    "rain3": null,
+    "fog": true
+   },
+   "obs_day": {
+    "today": 0.0,
+    "fracDay": null,
+    "rr": 0.0,
+    "frac": 0.0,
+    "snow": false,
+    "tmin": 9.8,
+    "tmax": 14.6,
+    "wtmax": 14.6,
+    "gust": null,
+    "rh": 91.86542289424025,
+    "prev": null,
+    "rain3": null,
+    "fog": false
+   },
+   "app": {
+    "beton": [
+     "warn",
+     "ploaie?"
+    ],
+    "asfalt": [
+     "warn",
+     "ploaie?"
+    ],
+    "hidro": [
+     "warn",
+     "ploaie?"
+    ],
+    "fatada": [
+     "warn",
+     "ploaie?"
+    ],
+    "acoperis": [
+     "warn",
+     "alunecos"
+    ],
+    "macara": [
+     "warn",
+     "ceață"
+    ],
+    "sapaturi": [
+     "stop",
+     "apă"
+    ]
+   },
+   "v_obs_full": {
+    "beton": [
+     "ok",
+     ""
+    ],
+    "asfalt": [
+     "ok",
+     ""
+    ],
+    "hidro": [
+     "warn",
+     "ceață"
+    ],
+    "fatada": [
+     "warn",
+     "umed"
+    ],
+    "acoperis": [
+     "warn",
+     "ceață"
+    ],
+    "macara": [
+     "warn",
+     "ceață"
+    ],
+    "sapaturi": [
+     "ok",
+     ""
+    ]
+   },
+   "v_obs_day": {
+    "beton": [
+     "ok",
+     ""
+    ],
+    "asfalt": [
+     "ok",
+     ""
+    ],
+    "hidro": [
+     "ok",
+     ""
+    ],
+    "fatada": [
+     "warn",
+     "umed"
+    ],
+    "acoperis": [
+     "ok",
+     ""
+    ],
+    "macara": [
+     "ok",
+     ""
+    ],
+    "sapaturi": [
+     "ok",
+     ""
+    ]
+   }
+  },
+  {
+   "date": "2026-10-22",
+   "model": {
+    "fracDay": 0.2222222222222222,
+    "n": 9,
+    "wet": 8,
+    "frac": 0.8888888888888888,
+    "snow": false,
+    "tmin": 13.6,
+    "tmax": 17.9,
+    "wtmax": 17.9,
+    "gust": 41.8,
+    "rh": 94,
+    "prev": 1.8,
+    "rain3": 11.7,
+    "fog": false,
+    "p_med": 5.4,
+    "today": 5.4
+   },
+   "obs_full": null,
+   "obs_day": {
+    "today": 0.6,
+    "fracDay": null,
+    "rr": 0.6,
+    "frac": 0.0,
+    "snow": false,
+    "tmin": 12.7,
+    "tmax": 16.8,
+    "wtmax": 16.8,
+    "gust": 43.2,
+    "rh": 78.11716846686802,
+    "prev": 0.0,
+    "rain3": null,
+    "fog": false
+   },
+   "app": {
+    "beton": [
+     "warn",
+     "ploaie noaptea"
+    ],
+    "asfalt": [
+     "warn",
+     "ploaie noaptea"
+    ],
+    "hidro": [
+     "warn",
+     "ploaie noaptea"
+    ],
+    "fatada": [
+     "warn",
+     "ploaie noaptea"
+    ],
+    "acoperis": [
+     "warn",
+     "rafale"
+    ],
+    "macara": [
+     "warn",
+     "rafale"
+    ],
+    "sapaturi": [
+     "warn",
+     "noroi"
+    ]
+   },
+   "v_obs_day": {
+    "beton": [
+     "ok",
+     ""
+    ],
+    "asfalt": [
+     "ok",
+     ""
+    ],
+    "hidro": [
+     "ok",
+     ""
+    ],
+    "fatada": [
+     "warn",
+     "rafale"
+    ],
+    "acoperis": [
+     "warn",
+     "rafale"
+    ],
+    "macara": [
+     "warn",
+     "rafale"
+    ],
+    "sapaturi": [
+     "ok",
+     ""
+    ]
+   }
+  },
+  {
+   "date": "2026-10-23",
+   "model": {
+    "fracDay": 1.0,
+    "n": 9,
+    "wet": 9,
+    "frac": 1.0,
+    "snow": false,
+    "tmin": 12.0,
+    "tmax": 15.5,
+    "wtmax": 15.5,
+    "gust": 33.5,
+    "rh": 96,
+    "prev": 5.4,
+    "rain3": 23.4,
+    "fog": false,
+    "p_med": 15.5,
+    "today": 15.5
+   },
+   "obs_full": {
+    "today": 9.0,
+    "fracDay": null,
+    "rr": 9.0,
+    "frac": 1.0,
+    "snow": false,
+    "tmin": 10.5,
+    "tmax": 16.8,
+    "wtmax": 16.8,
+    "gust": null,
+    "rh": 98.02614497730372,
+    "prev": null,
+    "rain3": null,
+    "fog": false
+   },
+   "obs_day": {
+    "today": 7.0,
+    "fracDay": null,
+    "rr": 7.0,
+    "frac": 1.0,
+    "snow": false,
+    "tmin": 10.5,
+    "tmax": 14.7,
+    "wtmax": 14.7,
+    "gust": null,
+    "rh": 98.02614497730372,
+    "prev": null,
+    "rain3": null,
+    "fog": false
+   },
+   "app": {
+    "beton": [
+     "stop",
+     "ploaie"
+    ],
+    "asfalt": [
+     "stop",
+     "ploaie"
+    ],
+    "hidro": [
+     "stop",
+     "ploaie"
+    ],
+    "fatada": [
+     "stop",
+     "ploaie"
+    ],
+    "acoperis": [
+     "warn",
+     "alunecos"
+    ],
+    "macara": [
+     "ok",
+     ""
+    ],
+    "sapaturi": [
+     "stop",
+     "noroi azi"
+    ]
+   },
+   "v_obs_full": {
+    "beton": [
+     "stop",
+     "ploaie"
+    ],
+    "asfalt": [
+     "stop",
+     "ploaie"
+    ],
+    "hidro": [
+     "stop",
+     "ploaie"
+    ],
+    "fatada": [
+     "stop",
+     "ploaie"
+    ],
+    "acoperis": [
+     "warn",
+     "alunecos"
+    ],
+    "macara": [
+     "ok",
+     ""
+    ],
+    "sapaturi": [
+     "warn",
+     "ploaie"
+    ]
+   },
+   "v_obs_day": {
+    "beton": [
+     "stop",
+     "ploaie"
+    ],
+    "asfalt": [
+     "stop",
+     "ploaie"
+    ],
+    "hidro": [
+     "stop",
+     "ploaie"
+    ],
+    "fatada": [
+     "stop",
+     "ploaie"
+    ],
+    "acoperis": [
+     "warn",
+     "alunecos"
+    ],
+    "macara": [
+     "ok",
+     ""
+    ],
+    "sapaturi": [
+     "warn",
+     "ploaie"
+    ]
+   }
+  },
+  {
+   "date": "2026-10-24",
+   "model": {
+    "fracDay": 0.7777777777777778,
+    "n": 9,
+    "wet": 8,
+    "frac": 0.8888888888888888,
+    "snow": false,
+    "tmin": 11.6,
+    "tmax": 16.0,
+    "wtmax": 16.0,
+    "gust": 23.4,
+    "rh": 97,
+    "prev": 16.2,
+    "rain3": 30.0,
+    "fog": true,
+    "p_med": 6.6,
+    "today": 6.6
+   },
+   "obs_full": {
+    "today": 10.0,
+    "fracDay": null,
+    "rr": 10.0,
+    "frac": 1.0,
+    "snow": false,
+    "tmin": 9.9,
+    "tmax": 14.7,
+    "wtmax": 14.7,
+    "gust": null,
+    "rh": 98.69051108975488,
+    "prev": 9.0,
+    "rain3": null,
+    "fog": true
+   },
+   "obs_day": {
+    "today": 4.0,
+    "fracDay": null,
+    "rr": 4.0,
+    "frac": 1.0,
+    "snow": false,
+    "tmin": 9.9,
+    "tmax": 14.7,
+    "wtmax": 14.7,
+    "gust": null,
+    "rh": 98.70668855579176,
+    "prev": 9.0,
+    "rain3": null,
+    "fog": true
+   },
+   "app": {
+    "beton": [
+     "stop",
+     "ploaie"
+    ],
+    "asfalt": [
+     "stop",
+     "ploaie"
+    ],
+    "hidro": [
+     "stop",
+     "ploaie"
+    ],
+    "fatada": [
+     "stop",
+     "ploaie"
+    ],
+    "acoperis": [
+     "warn",
+     "alunecos"
+    ],
+    "macara": [
+     "warn",
+     "ceață"
+    ],
+    "sapaturi": [
+     "stop",
+     "apă"
+    ]
+   },
+   "v_obs_full": {
+    "beton": [
+     "stop",
+     "ploaie"
+    ],
+    "asfalt": [
+     "stop",
+     "ploaie"
+    ],
+    "hidro": [
+     "stop",
+     "ploaie"
+    ],
+    "fatada": [
+     "stop",
+     "ploaie"
+    ],
+    "acoperis": [
+     "warn",
+     "alunecos"
+    ],
+    "macara": [
+     "warn",
+     "ceață"
+    ],
+    "sapaturi": [
+     "stop",
+     "noroi azi"
+    ]
+   },
+   "v_obs_day": {
+    "beton": [
+     "stop",
+     "ploaie"
+    ],
+    "asfalt": [
+     "stop",
+     "ploaie"
+    ],
+    "hidro": [
+     "stop",
+     "ploaie"
+    ],
+    "fatada": [
+     "stop",
+     "ploaie"
+    ],
+    "acoperis": [
+     "warn",
+     "alunecos"
+    ],
+    "macara": [
+     "warn",
+     "ceață"
+    ],
+    "sapaturi": [
+     "warn",
+     "ploaie"
+    ]
+   }
+  },
+  {
+   "date": "2026-10-25",
+   "model": {
+    "fracDay": 0.0,
+    "n": 9,
+    "wet": 1,
+    "frac": 0.1111111111111111,
+    "snow": false,
+    "tmin": 10.9,
+    "tmax": 16.3,
+    "wtmax": 16.3,
+    "gust": 23.0,
+    "rh": 91,
+    "prev": 6.6,
+    "rain3": 25.4,
+    "fog": true,
+    "p_med": 0.6000000000000001,
+    "today": 0.6000000000000001
+   },
+   "obs_full": null,
+   "obs_day": null,
+   "app": {
+    "beton": [
+     "ok",
+     ""
+    ],
+    "asfalt": [
+     "ok",
+     ""
+    ],
+    "hidro": [
+     "warn",
+     "ud de ieri"
+    ],
+    "fatada": [
+     "warn",
+     "umed"
+    ],
+    "acoperis": [
+     "warn",
+     "ceață"
+    ],
+    "macara": [
+     "warn",
+     "ceață"
+    ],
+    "sapaturi": [
+     "stop",
+     "apă"
+    ]
+   }
+  },
+  {
+   "date": "2026-10-26",
+   "model": {
+    "fracDay": 1.0,
+    "n": 9,
+    "wet": 9,
+    "frac": 1.0,
+    "snow": false,
+    "tmin": 9.4,
+    "tmax": 15.7,
+    "wtmax": 15.7,
+    "gust": 20.9,
+    "rh": 94,
+    "prev": 0.7000000000000001,
+    "rain3": 12.0,
+    "fog": false,
+    "p_med": 3.2,
+    "today": 3.2
+   },
+   "obs_full": null,
+   "obs_day": {
+    "today": 3.0,
+    "fracDay": null,
+    "rr": 3.0,
+    "frac": 1.0,
+    "snow": false,
+    "tmin": 8.7,
+    "tmax": 16.0,
+    "wtmax": 16.0,
+    "gust": null,
+    "rh": 93.09324767275571,
+    "prev": null,
+    "rain3": null,
+    "fog": false
+   },
+   "app": {
+    "beton": [
+     "stop",
+     "ploaie"
+    ],
+    "asfalt": [
+     "stop",
+     "ploaie"
+    ],
+    "hidro": [
+     "stop",
+     "ploaie"
+    ],
+    "fatada": [
+     "stop",
+     "ploaie"
+    ],
+    "acoperis": [
+     "warn",
+     "alunecos"
+    ],
+    "macara": [
+     "ok",
+     ""
+    ],
+    "sapaturi": [
+     "warn",
+     "noroi"
+    ]
+   },
+   "v_obs_day": {
+    "beton": [
+     "stop",
+     "ploaie"
+    ],
+    "asfalt": [
+     "stop",
+     "ploaie"
+    ],
+    "hidro": [
+     "stop",
+     "ploaie"
+    ],
+    "fatada": [
+     "stop",
+     "ploaie"
+    ],
+    "acoperis": [
+     "warn",
+     "alunecos"
+    ],
+    "macara": [
+     "ok",
+     ""
+    ],
+    "sapaturi": [
+     "warn",
+     "ploaie"
+    ]
+   }
+  },
+  {
+   "date": "2026-10-27",
+   "model": {
+    "fracDay": 1.0,
+    "n": 9,
+    "wet": 9,
+    "frac": 1.0,
+    "snow": false,
+    "tmin": 10.9,
+    "tmax": 13.6,
+    "wtmax": 13.6,
+    "gust": 28.8,
+    "rh": 94,
+    "prev": 3.5,
+    "rain3": 10.9,
+    "fog": true,
+    "p_med": 4.2,
+    "today": 4.2
+   },
+   "obs_full": {
+    "today": 1.1,
+    "fracDay": null,
+    "rr": 1.1,
+    "frac": 1.0,
+    "snow": false,
+    "tmin": 9.9,
+    "tmax": 16.0,
+    "wtmax": 16.0,
+    "gust": null,
+    "rh": 98.0184252693019,
+    "prev": null,
+    "rain3": null,
+    "fog": false
+   },
+   "obs_day": {
+    "today": 0.5,
+    "fracDay": null,
+    "rr": 0.5,
+    "frac": 0.0,
+    "snow": false,
+    "tmin": 9.9,
+    "tmax": 12.3,
+    "wtmax": 12.3,
+    "gust": null,
+    "rh": 96.0987814424289,
+    "prev": null,
+    "rain3": null,
+    "fog": false
+   },
+   "app": {
+    "beton": [
+     "stop",
+     "ploaie"
+    ],
+    "asfalt": [
+     "stop",
+     "ploaie"
+    ],
+    "hidro": [
+     "stop",
+     "ploaie"
+    ],
+    "fatada": [
+     "stop",
+     "ploaie"
+    ],
+    "acoperis": [
+     "warn",
+     "alunecos"
+    ],
+    "macara": [
+     "warn",
+     "ceață"
+    ],
+    "sapaturi": [
+     "warn",
+     "noroi"
+    ]
+   },
+   "v_obs_full": {
+    "beton": [
+     "stop",
+     "ploaie"
+    ],
+    "asfalt": [
+     "stop",
+     "ploaie"
+    ],
+    "hidro": [
+     "stop",
+     "ploaie"
+    ],
+    "fatada": [
+     "stop",
+     "ploaie"
+    ],
+    "acoperis": [
+     "warn",
+     "alunecos"
+    ],
+    "macara": [
+     "ok",
+     ""
+    ],
+    "sapaturi": [
+     "warn",
+     "ploaie"
+    ]
+   },
+   "v_obs_day": {
+    "beton": [
+     "ok",
+     ""
+    ],
+    "asfalt": [
+     "ok",
+     ""
+    ],
+    "hidro": [
+     "ok",
+     ""
+    ],
+    "fatada": [
+     "warn",
+     "umed"
+    ],
+    "acoperis": [
+     "ok",
+     ""
+    ],
+    "macara": [
+     "ok",
+     ""
+    ],
+    "sapaturi": [
+     "ok",
+     ""
+    ]
+   }
+  },
+  {
+   "date": "2026-10-28",
+   "model": {
+    "fracDay": 0.2222222222222222,
+    "n": 9,
+    "wet": 8,
+    "frac": 0.8888888888888888,
+    "snow": false,
+    "tmin": 10.6,
+    "tmax": 13.1,
+    "wtmax": 13.1,
+    "gust": 26.6,
+    "rh": 93,
+    "prev": 4.8,
+    "rain3": 13.6,
+    "fog": false,
+    "p_med": 3.6,
+    "today": 3.6
+   },
+   "obs_full": {
+    "today": 13.0,
+    "fracDay": null,
+    "rr": 13.0,
+    "frac": 1.0,
+    "snow": false,
+    "tmin": 9.8,
+    "tmax": 12.3,
+    "wtmax": 12.3,
+    "gust": null,
+    "rh": 98.02768352319721,
+    "prev": 1.1,
+    "rain3": null,
+    "fog": false
+   },
+   "obs_day": {
+    "today": 0.0,
+    "fracDay": null,
+    "rr": 0.0,
+    "frac": 0.0,
+    "snow": false,
+    "tmin": 9.8,
+    "tmax": 11.3,
+    "wtmax": 11.3,
+    "gust": null,
+    "rh": 98.67194678663951,
+    "prev": 1.1,
+    "rain3": null,
+    "fog": false
+   },
+   "app": {
+    "beton": [
+     "warn",
+     "ploaie noaptea"
+    ],
+    "asfalt": [
+     "warn",
+     "ploaie noaptea"
+    ],
+    "hidro": [
+     "warn",
+     "ploaie noaptea"
+    ],
+    "fatada": [
+     "warn",
+     "ploaie noaptea"
+    ],
+    "acoperis": [
+     "warn",
+     "alunecos"
+    ],
+    "macara": [
+     "ok",
+     ""
+    ],
+    "sapaturi": [
+     "warn",
+     "noroi"
+    ]
+   },
+   "v_obs_full": {
+    "beton": [
+     "stop",
+     "ploaie"
+    ],
+    "asfalt": [
+     "stop",
+     "ploaie"
+    ],
+    "hidro": [
+     "stop",
+     "ploaie"
+    ],
+    "fatada": [
+     "stop",
+     "ploaie"
+    ],
+    "acoperis": [
+     "warn",
+     "alunecos"
+    ],
+    "macara": [
+     "ok",
+     ""
+    ],
+    "sapaturi": [
+     "stop",
+     "noroi azi"
+    ]
+   },
+   "v_obs_day": {
+    "beton": [
+     "ok",
+     ""
+    ],
+    "asfalt": [
+     "ok",
+     ""
+    ],
+    "hidro": [
+     "warn",
+     "ud de ieri"
+    ],
+    "fatada": [
+     "warn",
+     "umed"
+    ],
+    "acoperis": [
+     "ok",
+     ""
+    ],
+    "macara": [
+     "ok",
+     ""
+    ],
+    "sapaturi": [
+     "ok",
+     ""
+    ]
+   }
+  },
+  {
+   "date": "2026-10-29",
+   "model": {
+    "fracDay": 0.0,
+    "n": 9,
+    "wet": 3,
+    "frac": 0.3333333333333333,
+    "snow": false,
+    "tmin": 10.1,
+    "tmax": 13.2,
+    "wtmax": 13.2,
+    "gust": 28.8,
+    "rh": 88,
+    "prev": 4.3,
+    "rain3": 11.0,
+    "fog": false,
+    "p_med": 0.4,
+    "today": 0.4
+   },
+   "obs_full": null,
+   "obs_day": null,
+   "app": {
+    "beton": [
+     "warn",
+     "ploaie?"
+    ],
+    "asfalt": [
+     "warn",
+     "ploaie?"
+    ],
+    "hidro": [
+     "warn",
+     "ploaie?"
+    ],
+    "fatada": [
+     "warn",
+     "ploaie?"
+    ],
+    "acoperis": [
+     "ok",
+     ""
+    ],
+    "macara": [
+     "ok",
+     ""
+    ],
+    "sapaturi": [
+     "warn",
+     "noroi"
+    ]
+   }
+  },
+  {
+   "date": "2026-10-30",
+   "model": {
+    "fracDay": 0.7777777777777778,
+    "n": 9,
+    "wet": 7,
+    "frac": 0.7777777777777778,
+    "snow": false,
+    "tmin": 9.0,
+    "tmax": 10.7,
+    "wtmax": 10.7,
+    "gust": 34.9,
+    "rh": 91,
+    "prev": 0.7000000000000001,
+    "rain3": 9.4,
+    "fog": false,
+    "p_med": 3.5,
+    "today": 3.5
+   },
+   "obs_full": {
+    "today": 10.0,
+    "fracDay": null,
+    "rr": 10.0,
+    "frac": 1.0,
+    "snow": false,
+    "tmin": 8.1,
+    "tmax": 13.5,
+    "wtmax": 13.5,
+    "gust": null,
+    "rh": 86.75194782273013,
+    "prev": null,
+    "rain3": null,
+    "fog": false
+   },
+   "obs_day": {
+    "today": 6.0,
+    "fracDay": null,
+    "rr": 6.0,
+    "frac": 1.0,
+    "snow": false,
+    "tmin": 8.1,
+    "tmax": 9.8,
+    "wtmax": 9.8,
+    "gust": null,
+    "rh": 87.27975037073345,
+    "prev": null,
+    "rain3": null,
+    "fog": false
+   },
+   "app": {
+    "beton": [
+     "stop",
+     "ploaie"
+    ],
+    "asfalt": [
+     "stop",
+     "ploaie"
+    ],
+    "hidro": [
+     "stop",
+     "ploaie"
+    ],
+    "fatada": [
+     "stop",
+     "ploaie"
+    ],
+    "acoperis": [
+     "warn",
+     "alunecos"
+    ],
+    "macara": [
+     "ok",
+     ""
+    ],
+    "sapaturi": [
+     "warn",
+     "ploaie"
+    ]
+   },
+   "v_obs_full": {
+    "beton": [
+     "stop",
+     "ploaie"
+    ],
+    "asfalt": [
+     "stop",
+     "ploaie"
+    ],
+    "hidro": [
+     "stop",
+     "ploaie"
+    ],
+    "fatada": [
+     "stop",
+     "ploaie"
+    ],
+    "acoperis": [
+     "warn",
+     "alunecos"
+    ],
+    "macara": [
+     "ok",
+     ""
+    ],
+    "sapaturi": [
+     "stop",
+     "noroi azi"
+    ]
+   },
+   "v_obs_day": {
+    "beton": [
+     "stop",
+     "ploaie"
+    ],
+    "asfalt": [
+     "stop",
+     "ploaie"
+    ],
+    "hidro": [
+     "stop",
+     "ploaie"
+    ],
+    "fatada": [
+     "stop",
+     "ploaie"
+    ],
+    "acoperis": [
+     "warn",
+     "alunecos"
+    ],
+    "macara": [
+     "ok",
+     ""
+    ],
+    "sapaturi": [
+     "warn",
+     "ploaie"
+    ]
+   }
+  },
+  {
+   "date": "2026-10-31",
+   "model": {
+    "fracDay": 0.0,
+    "n": 9,
+    "wet": 0,
+    "frac": 0.0,
+    "snow": false,
+    "tmin": 7.4,
+    "tmax": 11.8,
+    "wtmax": 11.8,
+    "gust": 38.9,
+    "rh": 85,
+    "prev": 3.5999999999999996,
+    "rain3": 4.8,
+    "fog": false,
+    "p_med": 0,
+    "today": 0
+   },
+   "obs_full": null,
+   "obs_day": null,
+   "app": {
+    "beton": [
+     "ok",
+     ""
+    ],
+    "asfalt": [
+     "ok",
+     ""
+    ],
+    "hidro": [
+     "warn",
+     "ud de ieri"
+    ],
+    "fatada": [
+     "warn",
+     "umed"
+    ],
+    "acoperis": [
+     "warn",
+     "rafale"
+    ],
+    "macara": [
+     "warn",
+     "rafale"
+    ],
+    "sapaturi": [
+     "ok",
+     ""
+    ]
+   }
+  },
+  {
+   "date": "2026-11-01",
+   "model": {
+    "fracDay": 0.0,
+    "n": 9,
+    "wet": 0,
+    "frac": 0.0,
+    "snow": false,
+    "tmin": 5.0,
+    "tmax": 12.5,
+    "wtmax": 12.5,
+    "gust": 19.1,
+    "rh": 86,
+    "prev": 0.0,
+    "rain3": 3.5999999999999996,
+    "fog": false,
+    "p_med": 0,
+    "today": 0
+   },
+   "obs_full": null,
+   "obs_day": null,
+   "app": {
+    "beton": [
+     "ok",
+     ""
+    ],
+    "asfalt": [
+     "ok",
+     ""
+    ],
+    "hidro": [
+     "ok",
+     ""
+    ],
+    "fatada": [
+     "warn",
+     "umed"
+    ],
+    "acoperis": [
+     "ok",
+     ""
+    ],
+    "macara": [
+     "ok",
+     ""
+    ],
+    "sapaturi": [
+     "ok",
+     ""
+    ]
+   }
+  },
+  {
+   "date": "2026-11-02",
+   "model": {
+    "fracDay": 0.0,
+    "n": 9,
+    "wet": 0,
+    "frac": 0.0,
+    "snow": false,
+    "tmin": 5.1,
+    "tmax": 9.9,
+    "wtmax": 9.9,
+    "gust": 25.9,
+    "rh": 87,
+    "prev": 0.0,
+    "rain3": 0.1,
+    "fog": false,
+    "p_med": 0,
+    "today": 0
+   },
+   "obs_full": null,
+   "obs_day": null,
+   "app": {
+    "beton": [
+     "ok",
+     ""
+    ],
+    "asfalt": [
+     "warn",
+     "rece"
+    ],
+    "hidro": [
+     "ok",
+     ""
+    ],
+    "fatada": [
+     "warn",
+     "umed"
+    ],
+    "acoperis": [
+     "ok",
+     ""
+    ],
+    "macara": [
+     "ok",
+     ""
+    ],
+    "sapaturi": [
+     "ok",
+     ""
+    ]
+   }
+  },
+  {
+   "date": "2026-11-03",
+   "model": {
+    "fracDay": 0.5555555555555556,
+    "n": 9,
+    "wet": 6,
+    "frac": 0.6666666666666666,
+    "snow": false,
+    "tmin": 7.2,
+    "tmax": 9.8,
+    "wtmax": 9.8,
+    "gust": 28.8,
+    "rh": 92,
+    "prev": 0.0,
+    "rain3": 3.0,
+    "fog": false,
+    "p_med": 2.4000000000000004,
+    "today": 2.4000000000000004
+   },
+   "obs_full": {
+    "today": 17.0,
+    "fracDay": null,
+    "rr": 17.0,
+    "frac": 1.0,
+    "snow": false,
+    "tmin": 6.3,
+    "tmax": 9.0,
+    "wtmax": 9.0,
+    "gust": null,
+    "rh": 92.17324990788339,
+    "prev": null,
+    "rain3": null,
+    "fog": false
+   },
+   "obs_day": {
+    "today": 9.0,
+    "fracDay": null,
+    "rr": 9.0,
+    "frac": 1.0,
+    "snow": false,
+    "tmin": 6.3,
+    "tmax": 9.0,
+    "wtmax": 9.0,
+    "gust": null,
+    "rh": 92.17922899749212,
+    "prev": null,
+    "rain3": null,
+    "fog": false
+   },
+   "app": {
+    "beton": [
+     "stop",
+     "ploaie"
+    ],
+    "asfalt": [
+     "stop",
+     "ploaie"
+    ],
+    "hidro": [
+     "stop",
+     "ploaie"
+    ],
+    "fatada": [
+     "stop",
+     "ploaie"
+    ],
+    "acoperis": [
+     "warn",
+     "alunecos"
+    ],
+    "macara": [
+     "ok",
+     ""
+    ],
+    "sapaturi": [
+     "warn",
+     "ploaie"
+    ]
+   },
+   "v_obs_full": {
+    "beton": [
+     "stop",
+     "ploaie"
+    ],
+    "asfalt": [
+     "stop",
+     "ploaie"
+    ],
+    "hidro": [
+     "stop",
+     "ploaie"
+    ],
+    "fatada": [
+     "stop",
+     "ploaie"
+    ],
+    "acoperis": [
+     "warn",
+     "alunecos"
+    ],
+    "macara": [
+     "ok",
+     ""
+    ],
+    "sapaturi": [
+     "stop",
+     "noroi azi"
+    ]
+   },
+   "v_obs_day": {
+    "beton": [
+     "stop",
+     "ploaie"
+    ],
+    "asfalt": [
+     "stop",
+     "ploaie"
+    ],
+    "hidro": [
+     "stop",
+     "ploaie"
+    ],
+    "fatada": [
+     "stop",
+     "ploaie"
+    ],
+    "acoperis": [
+     "warn",
+     "alunecos"
+    ],
+    "macara": [
+     "ok",
+     ""
+    ],
+    "sapaturi": [
+     "warn",
+     "ploaie"
+    ]
+   }
+  },
+  {
+   "date": "2026-11-04",
+   "model": {
+    "fracDay": 0.0,
+    "n": 9,
+    "wet": 0,
+    "frac": 0.0,
+    "snow": false,
+    "tmin": 5.3,
+    "tmax": 8.6,
+    "wtmax": 8.6,
+    "gust": 39.6,
+    "rh": 79,
+    "prev": 3.0,
+    "rain3": 3.0,
+    "fog": false,
+    "p_med": 0,
+    "today": 0
+   },
+   "obs_full": null,
+   "obs_day": null,
+   "app": {
+    "beton": [
+     "ok",
+     ""
+    ],
+    "asfalt": [
+     "warn",
+     "rece"
+    ],
+    "hidro": [
+     "warn",
+     "ud de ieri"
+    ],
+    "fatada": [
+     "ok",
+     ""
+    ],
+    "acoperis": [
+     "warn",
+     "rafale"
+    ],
+    "macara": [
+     "warn",
+     "rafale"
+    ],
+    "sapaturi": [
+     "ok",
+     ""
+    ]
+   }
+  },
+  {
+   "date": "2026-11-05",
+   "model": {
+    "fracDay": 0.0,
+    "n": 9,
+    "wet": 0,
+    "frac": 0.0,
+    "snow": false,
+    "tmin": 2.5,
+    "tmax": 8.5,
+    "wtmax": 8.5,
+    "gust": 31.7,
+    "rh": 74,
+    "prev": 0.0,
+    "rain3": 3.0,
+    "fog": false,
+    "p_med": 0,
+    "today": 0
+   },
+   "obs_full": null,
+   "obs_day": null,
+   "app": {
+    "beton": [
+     "warn",
+     "rece"
+    ],
+    "asfalt": [
+     "warn",
+     "rece"
+    ],
+    "hidro": [
+     "warn",
+     "rece"
+    ],
+    "fatada": [
+     "warn",
+     "rece"
+    ],
+    "acoperis": [
+     "ok",
+     ""
+    ],
+    "macara": [
+     "ok",
+     ""
+    ],
+    "sapaturi": [
+     "ok",
+     ""
+    ]
+   }
+  },
+  {
+   "date": "2026-11-06",
+   "model": {
+    "fracDay": 0.0,
+    "n": 9,
+    "wet": 0,
+    "frac": 0.0,
+    "snow": false,
+    "tmin": 2.8,
+    "tmax": 7.5,
+    "wtmax": 7.5,
+    "gust": 45.4,
+    "rh": 77,
+    "prev": 0.0,
+    "rain3": 0.2,
+    "fog": false,
+    "p_med": 0,
+    "today": 0
+   },
+   "obs_full": null,
+   "obs_day": {
+    "today": 0.3,
+    "fracDay": null,
+    "rr": 0.3,
+    "frac": 0.0,
+    "snow": false,
+    "tmin": 2.1,
+    "tmax": 7.3,
+    "wtmax": 7.3,
+    "gust": 43.2,
+    "rh": 70.80651440582405,
+    "prev": null,
+    "rain3": null,
+    "fog": false
+   },
+   "app": {
+    "beton": [
+     "warn",
+     "rece"
+    ],
+    "asfalt": [
+     "warn",
+     "rece"
+    ],
+    "hidro": [
+     "warn",
+     "rece"
+    ],
+    "fatada": [
+     "warn",
+     "rece"
+    ],
+    "acoperis": [
+     "warn",
+     "rafale"
+    ],
+    "macara": [
+     "warn",
+     "rafale"
+    ],
+    "sapaturi": [
+     "ok",
+     ""
+    ]
+   },
+   "v_obs_day": {
+    "beton": [
+     "warn",
+     "rece"
+    ],
+    "asfalt": [
+     "warn",
+     "rece"
+    ],
+    "hidro": [
+     "warn",
+     "rece"
+    ],
+    "fatada": [
+     "warn",
+     "rece"
+    ],
+    "acoperis": [
+     "warn",
+     "rafale"
+    ],
+    "macara": [
+     "warn",
+     "rafale"
+    ],
+    "sapaturi": [
+     "ok",
+     ""
+    ]
+   }
+  },
+  {
+   "date": "2026-11-07",
+   "model": {
+    "fracDay": 0.0,
+    "n": 9,
+    "wet": 0,
+    "frac": 0.0,
+    "snow": false,
+    "tmin": 0.7,
+    "tmax": 6.1,
+    "wtmax": 6.1,
+    "gust": 42.8,
+    "rh": 71,
+    "prev": 0.2,
+    "rain3": 0.2,
+    "fog": false,
+    "p_med": 0,
+    "today": 0
+   },
+   "obs_full": null,
+   "obs_day": null,
+   "app": {
+    "beton": [
+     "warn",
+     "rece"
+    ],
+    "asfalt": [
+     "warn",
+     "rece"
+    ],
+    "hidro": [
+     "warn",
+     "rece"
+    ],
+    "fatada": [
+     "warn",
+     "rece"
+    ],
+    "acoperis": [
+     "warn",
+     "rafale"
+    ],
+    "macara": [
+     "warn",
+     "rafale"
+    ],
+    "sapaturi": [
+     "ok",
+     ""
+    ]
+   }
+  },
+  {
+   "date": "2026-11-08",
+   "model": {
+    "fracDay": 0.0,
+    "n": 9,
+    "wet": 0,
+    "frac": 0.0,
+    "snow": false,
+    "tmin": -1.8,
+    "tmax": 7.8,
+    "wtmax": 7.8,
+    "gust": 15.8,
+    "rh": 77,
+    "prev": 0.0,
+    "rain3": 0.2,
+    "fog": false,
+    "p_med": 0,
+    "today": 0
+   },
+   "obs_full": null,
+   "obs_day": null,
+   "app": {
+    "beton": [
+     "stop",
+     "îngheț"
+    ],
+    "asfalt": [
+     "warn",
+     "rece"
+    ],
+    "hidro": [
+     "warn",
+     "rece"
+    ],
+    "fatada": [
+     "stop",
+     "îngheț"
+    ],
+    "acoperis": [
+     "warn",
+     "polei"
+    ],
+    "macara": [
+     "ok",
+     ""
+    ],
+    "sapaturi": [
+     "ok",
+     ""
+    ]
+   }
+  },
+  {
+   "date": "2026-11-09",
+   "model": {
+    "fracDay": 0.0,
+    "n": 9,
+    "wet": 0,
+    "frac": 0.0,
+    "snow": false,
+    "tmin": -2.8,
+    "tmax": 7.4,
+    "wtmax": 7.4,
+    "gust": 19.8,
+    "rh": 85,
+    "prev": 0.0,
+    "rain3": 0.0,
+    "fog": false,
+    "p_med": 0,
+    "today": 0
+   },
+   "obs_full": null,
+   "obs_day": null,
+   "app": {
+    "beton": [
+     "stop",
+     "îngheț"
+    ],
+    "asfalt": [
+     "warn",
+     "rece"
+    ],
+    "hidro": [
+     "warn",
+     "rece"
+    ],
+    "fatada": [
+     "stop",
+     "îngheț"
+    ],
+    "acoperis": [
+     "warn",
+     "polei"
+    ],
+    "macara": [
+     "ok",
+     ""
+    ],
+    "sapaturi": [
+     "ok",
+     ""
+    ]
+   }
+  },
+  {
+   "date": "2026-11-10",
+   "model": {
+    "fracDay": 0.0,
+    "n": 9,
+    "wet": 0,
+    "frac": 0.0,
+    "snow": false,
+    "tmin": 1.1,
+    "tmax": 11.7,
+    "wtmax": 11.7,
+    "gust": 37.1,
+    "rh": 90,
+    "prev": 0.0,
+    "rain3": 0.2,
+    "fog": false,
+    "p_med": 0,
+    "today": 0
+   },
+   "obs_full": null,
+   "obs_day": null,
+   "app": {
+    "beton": [
+     "warn",
+     "rece"
+    ],
+    "asfalt": [
+     "ok",
+     ""
+    ],
+    "hidro": [
+     "warn",
+     "rece"
+    ],
+    "fatada": [
+     "warn",
+     "rece"
+    ],
+    "acoperis": [
+     "warn",
+     "rafale"
+    ],
+    "macara": [
+     "warn",
+     "rafale"
+    ],
+    "sapaturi": [
+     "ok",
+     ""
+    ]
+   }
+  },
+  {
+   "date": "2026-11-11",
+   "model": {
+    "fracDay": 0.0,
+    "n": 9,
+    "wet": 3,
+    "frac": 0.3333333333333333,
+    "snow": false,
+    "tmin": 3.9,
+    "tmax": 10.4,
+    "wtmax": 10.4,
+    "gust": 39.6,
+    "rh": 85,
+    "prev": 0.2,
+    "rain3": 1.1,
+    "fog": false,
+    "p_med": 0.6000000000000001,
+    "today": 0.6000000000000001
+   },
+   "obs_full": null,
+   "obs_day": null,
+   "app": {
+    "beton": [
+     "warn",
+     "rece"
+    ],
+    "asfalt": [
+     "warn",
+     "ploaie?"
+    ],
+    "hidro": [
+     "warn",
+     "ploaie?"
+    ],
+    "fatada": [
+     "warn",
+     "rece"
+    ],
+    "acoperis": [
+     "warn",
+     "rafale"
+    ],
+    "macara": [
+     "warn",
+     "rafale"
+    ],
+    "sapaturi": [
+     "ok",
+     ""
+    ]
+   }
+  }
+ ]
+}
