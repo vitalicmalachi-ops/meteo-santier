@@ -1,8 +1,8 @@
 {
- "updated": "2026-11-16T12:45Z",
+ "updated": "2026-11-23T14:39Z",
  "days": 30,
- "from": "2026-10-17",
- "to": "2026-11-16",
+ "from": "2026-10-24",
+ "to": "2026-11-23",
  "rule": {
   "thr_mm": 1.0,
   "drizzle_mm_h": 0.2,
@@ -17,8 +17,8 @@
    "periods": 60,
    "correct": 57,
    "pct": 95,
-   "rain_periods": 17,
-   "rain_caught": 17,
+   "rain_periods": 13,
+   "rain_caught": 13,
    "false_alarms": 3,
    "models": [
     {
@@ -26,36 +26,36 @@
      "pct": 93
     },
     {
-     "name": "UKMO",
-     "pct": 90
-    },
-    {
      "name": "ECMWF AIFS",
-     "pct": 88
+     "pct": 93
     },
     {
      "name": "ICON",
-     "pct": 88
+     "pct": 93
     },
     {
-     "name": "ARPEGE",
-     "pct": 85
-    },
-    {
-     "name": "GEM",
-     "pct": 85
+     "name": "UKMO",
+     "pct": 93
     },
     {
      "name": "JMA",
-     "pct": 85
+     "pct": 90
+    },
+    {
+     "name": "GEM",
+     "pct": 88
     },
     {
      "name": "GFS",
-     "pct": 82
+     "pct": 87
+    },
+    {
+     "name": "ARPEGE",
+     "pct": 87
     },
     {
      "name": "CMA",
-     "pct": 80
+     "pct": 82
     }
    ]
   }
